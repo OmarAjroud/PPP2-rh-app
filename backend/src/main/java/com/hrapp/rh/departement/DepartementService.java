@@ -20,12 +20,12 @@ public class DepartementService {
 
     @Transactional(readOnly = true)
     public List<DepartementResponse> findAll() {
-        return repository.listerAvecNombreEmployes();
+        return repository.findAllWithEmployeeCount();
     }
 
     @Transactional(readOnly = true)
     public DepartementDetailResponse findById(Long id) {
-        Departement d = chargerOuErreur(id);
+        Departement d = findOrThrow(id);
         List<EmployeResume> employes = employeRepository.findByDepartementId(id).stream()
                 .map(e -> new EmployeResume(e.getId(), e.getNom(), e.getPrenom(), e.getEmail()))
                 .toList();
@@ -33,35 +33,35 @@ public class DepartementService {
     }
 
     @Transactional
-    public DepartementResponse creer(DepartementRequest requete) {
-        if (repository.existsByNomIgnoreCase(requete.nom())) {
-            throw new ConflitException("Un département nommé « " + requete.nom() + " » existe déjà");
+    public DepartementResponse create(DepartementRequest request) {
+        if (repository.existsByNomIgnoreCase(request.nom())) {
+            throw new ConflitException("Un département nommé « " + request.nom() + " » existe déjà");
         }
-        Departement d = repository.save(mapper.versEntite(requete));
+        Departement d = repository.save(mapper.toEntity(request));
         return new DepartementResponse(d.getId(), d.getNom(), d.getDescription(), 0L);
     }
 
     @Transactional
-    public DepartementResponse modifier(Long id, DepartementRequest requete) {
-        Departement d = chargerOuErreur(id);
-        if (repository.existsByNomIgnoreCaseAndIdNot(requete.nom(), id)) {
-            throw new ConflitException("Un département nommé « " + requete.nom() + " » existe déjà");
+    public DepartementResponse update(Long id, DepartementRequest request) {
+        Departement d = findOrThrow(id);
+        if (repository.existsByNomIgnoreCaseAndIdNot(request.nom(), id)) {
+            throw new ConflitException("Un département nommé « " + request.nom() + " » existe déjà");
         }
-        mapper.mettreAJour(requete, d);
+        mapper.updateEntity(request, d);
         return new DepartementResponse(d.getId(), d.getNom(), d.getDescription(),
                 employeRepository.countByDepartementId(id));
     }
 
     @Transactional
-    public void supprimer(Long id) {
-        Departement d = chargerOuErreur(id);
+    public void delete(Long id) {
+        Departement d = findOrThrow(id);
         if (employeRepository.countByDepartementId(id) > 0) {
             throw new ConflitException("Suppression impossible : ce département contient encore des employés");
         }
         repository.delete(d);
     }
 
-    private Departement chargerOuErreur(Long id) {
+    private Departement findOrThrow(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new RessourceIntrouvableException("Département introuvable (id=" + id + ")"));
     }

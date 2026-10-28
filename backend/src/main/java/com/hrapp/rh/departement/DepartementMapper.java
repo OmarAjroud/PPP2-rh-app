@@ -8,8 +8,8 @@ import org.mapstruct.MappingTarget;
 public interface DepartementMapper {
 
     @Mapping(target = "id", ignore = true)
-    Departement versEntite(DepartementRequest requete);
+    Departement toEntity(DepartementRequest request);
 
     @Mapping(target = "id", ignore = true)
-    void mettreAJour(DepartementRequest requete, @MappingTarget Departement departement);
+    void updateEntity(DepartementRequest request, @MappingTarget Departement departement);
 }

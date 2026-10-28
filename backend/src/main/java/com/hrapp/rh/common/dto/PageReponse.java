@@ -13,7 +13,7 @@ public record PageReponse<T>(
         int totalPages,
         boolean dernierePage
 ) {
-    public static <T> PageReponse<T> de(Page<T> page) {
+    public static <T> PageReponse<T> from(Page<T> page) {
         return new PageReponse<>(page.getContent(), page.getNumber(), page.getSize(),
                 page.getTotalElements(), page.getTotalPages(), page.isLast());
     }

@@ -15,30 +15,30 @@ public class DepartementController {
     private final DepartementService service;
 
     @GetMapping
-    public List<DepartementResponse> lister() {
+    public List<DepartementResponse> list() {
         return service.findAll();
     }
 
     @GetMapping("/{id}")
-    public DepartementDetailResponse details(@PathVariable Long id) {
+    public DepartementDetailResponse getById(@PathVariable Long id) {
         return service.findById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public DepartementResponse creer(@Valid @RequestBody DepartementRequest requete) {
-        return service.creer(requete);
+    public DepartementResponse create(@Valid @RequestBody DepartementRequest request) {
+        return service.create(request);
     }
 
     @PutMapping("/{id}")
-    public DepartementResponse modifier(@PathVariable Long id,
-                                        @Valid @RequestBody DepartementRequest requete) {
-        return service.modifier(id, requete);
+    public DepartementResponse update(@PathVariable Long id,
+                                        @Valid @RequestBody DepartementRequest request) {
+        return service.update(id, request);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void supprimer(@PathVariable Long id) {
-        service.supprimer(id);
+    public void delete(@PathVariable Long id) {
+        service.delete(id);
     }
 }

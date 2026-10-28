@@ -7,11 +7,11 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring")   // devient un bean Spring injectable
 public interface RoleMapper {
 
-    RoleResponse versReponse(Role role);
+    RoleResponse toResponse(Role role);
 
     @Mapping(target = "id", ignore = true)
-    Role versEntite(RoleRequest requete);
+    Role toEntity(RoleRequest request);
 
     @Mapping(target = "id", ignore = true)
-    void mettreAJour(RoleRequest requete, @MappingTarget Role role);
+    void updateEntity(RoleRequest request, @MappingTarget Role role);
 }

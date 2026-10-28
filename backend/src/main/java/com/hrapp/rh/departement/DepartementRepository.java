@@ -19,5 +19,5 @@ public interface DepartementRepository extends JpaRepository<Departement, Long> 
             group by d.id, d.nom, d.description
             order by d.nom
             """)
-    List<DepartementResponse> listerAvecNombreEmployes();
+    List<DepartementResponse> findAllWithEmployeeCount();
 }
