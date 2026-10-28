@@ -19,12 +19,12 @@ public class DepartementService {
     private final DepartementMapper mapper;
 
     @Transactional(readOnly = true)
-    public List<DepartementResponse> lister() {
+    public List<DepartementResponse> findAll() {
         return repository.listerAvecNombreEmployes();
     }
 
     @Transactional(readOnly = true)
-    public DepartementDetailResponse trouverParId(Long id) {
+    public DepartementDetailResponse findById(Long id) {
         Departement d = chargerOuErreur(id);
         List<EmployeResume> employes = employeRepository.findByDepartementId(id).stream()
                 .map(e -> new EmployeResume(e.getId(), e.getNom(), e.getPrenom(), e.getEmail()))

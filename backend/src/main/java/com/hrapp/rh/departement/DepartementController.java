@@ -16,12 +16,12 @@ public class DepartementController {
 
     @GetMapping
     public List<DepartementResponse> lister() {
-        return service.lister();
+        return service.findAll();
     }
 
     @GetMapping("/{id}")
     public DepartementDetailResponse details(@PathVariable Long id) {
-        return service.trouverParId(id);
+        return service.findById(id);
     }
 
     @PostMapping

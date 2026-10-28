@@ -18,7 +18,7 @@ public class RoleService {
     private final RoleMapper mapper;
 
     @Transactional(readOnly = true)
-    public List<RoleResponse> lister() {
+    public List<RoleResponse> findAll() {
         return repository.findAll().stream().map(mapper::versReponse).toList();
     }
 
