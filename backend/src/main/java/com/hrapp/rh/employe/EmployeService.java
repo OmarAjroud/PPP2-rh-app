@@ -34,7 +34,7 @@ public class EmployeService {
                                                  Long roleId, Pageable pageable) {
         pageable.getSort().forEach(ordre -> {
             if (!TRIS_AUTORISES.contains(ordre.getProperty())) {
-                throw new RequeteInvalideException("Tri non autorisÃ© sur : " + ordre.getProperty()
+                throw new RequeteInvalideException("Tri non autorisé sur : " + ordre.getProperty()
                         + ". Valeurs possibles : " + TRIS_AUTORISES);
             }
         });
@@ -54,7 +54,7 @@ public class EmployeService {
     @Transactional
     public EmployeDetailResponse create(EmployeRequest request) {
         if (repository.existsByEmailIgnoreCase(request.email())) {
-            throw new ConflitException("Un employÃ© avec l'email Â« " + request.email() + " Â» existe dÃ©jÃ ");
+            throw new ConflitException("Un employé avec l'email « " + request.email() + " » existe déjà");
         }
         Employe employe = mapper.toEntity(request);
         applyRelations(employe, request);
@@ -65,7 +65,7 @@ public class EmployeService {
     public EmployeDetailResponse update(Long id, EmployeRequest request) {
         Employe employe = findOrThrow(id);
         if (repository.existsByEmailIgnoreCaseAndIdNot(request.email(), id)) {
-            throw new ConflitException("Un employÃ© avec l'email Â« " + request.email() + " Â» existe dÃ©jÃ ");
+            throw new ConflitException("Un employé avec l'email « " + request.email() + " » existe déjà");
         }
         mapper.updateEntity(request, employe);
         applyRelations(employe, request);
@@ -76,7 +76,7 @@ public class EmployeService {
     public void delete(Long id) {
         Employe employe = findOrThrow(id);
         if (repository.existsByManagerId(id)) {
-            throw new ConflitException("Suppression impossible : cet employÃ© est le manager d'autres employÃ©s");
+            throw new ConflitException("Suppression impossible : cet employé est le manager d'autres employés");
         }
         repository.delete(employe);
     }
@@ -87,15 +87,15 @@ public class EmployeService {
     private void applyRelations(Employe employe, EmployeRequest request) {
         Departement departement = departementRepository.findById(request.departementId())
                 .orElseThrow(() -> new RessourceIntrouvableException(
-                        "DÃ©partement introuvable (id=" + request.departementId() + ")"));
+                        "Département introuvable (id=" + request.departementId() + ")"));
         Role role = roleRepository.findById(request.roleId())
                 .orElseThrow(() -> new RessourceIntrouvableException(
-                        "RÃ´le introuvable (id=" + request.roleId() + ")"));
+                        "Rôle introuvable (id=" + request.roleId() + ")"));
 
         Employe manager = null;
         if (request.managerId() != null) {
             if (request.managerId().equals(employe.getId())) {
-                throw new ConflitException("Un employÃ© ne peut pas Ãªtre son propre manager");
+                throw new ConflitException("Un employé ne peut pas être son propre manager");
             }
             manager = repository.findById(request.managerId())
                     .orElseThrow(() -> new RessourceIntrouvableException(
@@ -109,6 +109,6 @@ public class EmployeService {
 
     private Employe findOrThrow(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RessourceIntrouvableException("EmployÃ© introuvable (id=" + id + ")"));
+                .orElseThrow(() -> new RessourceIntrouvableException("Employé introuvable (id=" + id + ")"));
     }
 }

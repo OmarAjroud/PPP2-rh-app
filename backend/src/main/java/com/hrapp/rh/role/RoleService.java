@@ -30,7 +30,7 @@ public class RoleService {
     @Transactional
     public RoleResponse create(RoleRequest request) {
         if (repository.existsByNomIgnoreCase(request.nom())) {
-            throw new ConflitException("Un rÃ´le nommÃ© Â« " + request.nom() + " Â» existe dÃ©jÃ ");
+            throw new ConflitException("Un rôle nommé « " + request.nom() + " » existe déjà");
         }
         Role role = repository.save(mapper.toEntity(request));
         return mapper.toResponse(role);
@@ -40,7 +40,7 @@ public class RoleService {
     public RoleResponse update(Long id, RoleRequest request) {
         Role role = findOrThrow(id);
         if (repository.existsByNomIgnoreCaseAndIdNot(request.nom(), id)) {
-            throw new ConflitException("Un rÃ´le nommÃ© Â« " + request.nom() + " Â» existe dÃ©jÃ ");
+            throw new ConflitException("Un rôle nommé « " + request.nom() + " » existe déjà");
         }
         // pas besoin de save() : l'entitÃ© est Â« suivie Â» dans la transaction,
         // Hibernate enregistre les changements tout seul Ã  la fin
@@ -52,13 +52,13 @@ public class RoleService {
     public void delete(Long id) {
         Role role = findOrThrow(id);
         if (employeRepository.existsByRoleId(id)) {
-            throw new ConflitException("Suppression impossible : des employÃ©s utilisent ce rÃ´le");
+            throw new ConflitException("Suppression impossible : des employés utilisent ce rôle");
         }
         repository.delete(role);
     }
 
     private Role findOrThrow(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RessourceIntrouvableException("RÃ´le introuvable (id=" + id + ")"));
+                .orElseThrow(() -> new RessourceIntrouvableException("Rôle introuvable (id=" + id + ")"));
     }
 }

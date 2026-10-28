@@ -35,7 +35,7 @@ public class DepartementService {
     @Transactional
     public DepartementResponse create(DepartementRequest request) {
         if (repository.existsByNomIgnoreCase(request.nom())) {
-            throw new ConflitException("Un dÃ©partement nommÃ© Â« " + request.nom() + " Â» existe dÃ©jÃ ");
+            throw new ConflitException("Un département nommé « " + request.nom() + " » existe déjà");
         }
         Departement d = repository.save(mapper.toEntity(request));
         return new DepartementResponse(d.getId(), d.getNom(), d.getDescription(), 0L);
@@ -45,7 +45,7 @@ public class DepartementService {
     public DepartementResponse update(Long id, DepartementRequest request) {
         Departement d = findOrThrow(id);
         if (repository.existsByNomIgnoreCaseAndIdNot(request.nom(), id)) {
-            throw new ConflitException("Un dÃ©partement nommÃ© Â« " + request.nom() + " Â» existe dÃ©jÃ ");
+            throw new ConflitException("Un département nommé « " + request.nom() + " » existe déjà");
         }
         mapper.updateEntity(request, d);
         return new DepartementResponse(d.getId(), d.getNom(), d.getDescription(),
@@ -56,13 +56,13 @@ public class DepartementService {
     public void delete(Long id) {
         Departement d = findOrThrow(id);
         if (employeRepository.countByDepartementId(id) > 0) {
-            throw new ConflitException("Suppression impossible : ce dÃ©partement contient encore des employÃ©s");
+            throw new ConflitException("Suppression impossible : ce département contient encore des employés");
         }
         repository.delete(d);
     }
 
     private Departement findOrThrow(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RessourceIntrouvableException("DÃ©partement introuvable (id=" + id + ")"));
+                .orElseThrow(() -> new RessourceIntrouvableException("Département introuvable (id=" + id + ")"));
     }
 }
