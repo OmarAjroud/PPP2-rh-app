@@ -22,34 +22,34 @@ public class EmployeController {
      *   GET /api/employes?departementId=1&sort=departement.nom,desc
      */
     @GetMapping
-    public PageReponse<EmployeResponse> lister(
+    public PageReponse<EmployeResponse> list(
             @RequestParam(required = false) String recherche,
             @RequestParam(required = false) Long departementId,
             @RequestParam(required = false) Long roleId,
             @PageableDefault(size = 10, sort = "nom") Pageable pageable) {
-        return service.lister(recherche, departementId, roleId, pageable);
+        return service.search(recherche, departementId, roleId, pageable);
     }
 
     @GetMapping("/{id}")
-    public EmployeDetailResponse details(@PathVariable Long id) {
-        return service.trouverParId(id);
+    public EmployeDetailResponse getById(@PathVariable Long id) {
+        return service.findById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public EmployeDetailResponse creer(@Valid @RequestBody EmployeRequest requete) {
-        return service.creer(requete);
+    public EmployeDetailResponse create(@Valid @RequestBody EmployeRequest request) {
+        return service.create(request);
     }
 
     @PutMapping("/{id}")
-    public EmployeDetailResponse modifier(@PathVariable Long id,
-                                          @Valid @RequestBody EmployeRequest requete) {
-        return service.modifier(id, requete);
+    public EmployeDetailResponse update(@PathVariable Long id,
+                                          @Valid @RequestBody EmployeRequest request) {
+        return service.update(id, request);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void supprimer(@PathVariable Long id) {
-        service.supprimer(id);
+    public void delete(@PathVariable Long id) {
+        service.delete(id);
     }
 }

@@ -20,7 +20,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class EmployeService {
 
-    /** Colonnes sur lesquelles le tri est autorisé (évite les erreurs 500 sur un tri inconnu). */
+    /** Colonnes sur lesquelles le tri est autorisÃ© (Ã©vite les erreurs 500 sur un tri inconnu). */
     private static final Set<String> TRIS_AUTORISES =
             Set.of("id", "nom", "prenom", "email", "dateEmbauche", "departement.nom", "role.nom");
 
@@ -30,76 +30,76 @@ public class EmployeService {
     private final EmployeMapper mapper;
 
     @Transactional(readOnly = true)
-    public PageReponse<EmployeResponse> lister(String recherche, Long departementId,
-                                               Long roleId, Pageable pageable) {
+    public PageReponse<EmployeResponse> search(String recherche, Long departementId,
+                                                 Long roleId, Pageable pageable) {
         pageable.getSort().forEach(ordre -> {
             if (!TRIS_AUTORISES.contains(ordre.getProperty())) {
-                throw new RequeteInvalideException("Tri non autorisé sur : " + ordre.getProperty()
+                throw new RequeteInvalideException("Tri non autorisÃ© sur : " + ordre.getProperty()
                         + ". Valeurs possibles : " + TRIS_AUTORISES);
             }
         });
 
-        Specification<Employe> filtre = EmployeSpecification.recherche(recherche)
-                .and(EmployeSpecification.departement(departementId))
-                .and(EmployeSpecification.role(roleId));
+        Specification<Employe> filtre = EmployeSpecification.search(recherche)
+                .and(EmployeSpecification.inDepartement(departementId))
+                .and(EmployeSpecification.hasRole(roleId));
 
-        return PageReponse.de(repository.findAll(filtre, pageable).map(mapper::versReponse));
+        return PageReponse.from(repository.findAll(filtre, pageable).map(mapper::toResponse));
     }
 
     @Transactional(readOnly = true)
-    public EmployeDetailResponse trouverParId(Long id) {
-        return mapper.versDetail(chargerOuErreur(id));
+    public EmployeDetailResponse findById(Long id) {
+        return mapper.toDetail(findOrThrow(id));
     }
 
     @Transactional
-    public EmployeDetailResponse creer(EmployeRequest requete) {
-        if (repository.existsByEmailIgnoreCase(requete.email())) {
-            throw new ConflitException("Un employé avec l'email « " + requete.email() + " » existe déjà");
+    public EmployeDetailResponse create(EmployeRequest request) {
+        if (repository.existsByEmailIgnoreCase(request.email())) {
+            throw new ConflitException("Un employÃ© avec l'email Â« " + request.email() + " Â» existe dÃ©jÃ ");
         }
-        Employe employe = mapper.versEntite(requete);
-        appliquerRelations(employe, requete);
-        return mapper.versDetail(repository.save(employe));
+        Employe employe = mapper.toEntity(request);
+        applyRelations(employe, request);
+        return mapper.toDetail(repository.save(employe));
     }
 
     @Transactional
-    public EmployeDetailResponse modifier(Long id, EmployeRequest requete) {
-        Employe employe = chargerOuErreur(id);
-        if (repository.existsByEmailIgnoreCaseAndIdNot(requete.email(), id)) {
-            throw new ConflitException("Un employé avec l'email « " + requete.email() + " » existe déjà");
+    public EmployeDetailResponse update(Long id, EmployeRequest request) {
+        Employe employe = findOrThrow(id);
+        if (repository.existsByEmailIgnoreCaseAndIdNot(request.email(), id)) {
+            throw new ConflitException("Un employÃ© avec l'email Â« " + request.email() + " Â» existe dÃ©jÃ ");
         }
-        mapper.mettreAJour(requete, employe);
-        appliquerRelations(employe, requete);
-        return mapper.versDetail(employe);
+        mapper.updateEntity(request, employe);
+        applyRelations(employe, request);
+        return mapper.toDetail(employe);
     }
 
     @Transactional
-    public void supprimer(Long id) {
-        Employe employe = chargerOuErreur(id);
+    public void delete(Long id) {
+        Employe employe = findOrThrow(id);
         if (repository.existsByManagerId(id)) {
-            throw new ConflitException("Suppression impossible : cet employé est le manager d'autres employés");
+            throw new ConflitException("Suppression impossible : cet employÃ© est le manager d'autres employÃ©s");
         }
         repository.delete(employe);
     }
 
-    // ---------- méthodes privées ----------
+    // ---------- mÃ©thodes privÃ©es ----------
 
-    /** Charge département, rôle et manager depuis la base et les attache à l'employé. */
-    private void appliquerRelations(Employe employe, EmployeRequest requete) {
-        Departement departement = departementRepository.findById(requete.departementId())
+    /** Charge dÃ©partement, rÃ´le et manager depuis la base et les attache Ã  l'employÃ©. */
+    private void applyRelations(Employe employe, EmployeRequest request) {
+        Departement departement = departementRepository.findById(request.departementId())
                 .orElseThrow(() -> new RessourceIntrouvableException(
-                        "Département introuvable (id=" + requete.departementId() + ")"));
-        Role role = roleRepository.findById(requete.roleId())
+                        "DÃ©partement introuvable (id=" + request.departementId() + ")"));
+        Role role = roleRepository.findById(request.roleId())
                 .orElseThrow(() -> new RessourceIntrouvableException(
-                        "Rôle introuvable (id=" + requete.roleId() + ")"));
+                        "RÃ´le introuvable (id=" + request.roleId() + ")"));
 
         Employe manager = null;
-        if (requete.managerId() != null) {
-            if (requete.managerId().equals(employe.getId())) {
-                throw new ConflitException("Un employé ne peut pas être son propre manager");
+        if (request.managerId() != null) {
+            if (request.managerId().equals(employe.getId())) {
+                throw new ConflitException("Un employÃ© ne peut pas Ãªtre son propre manager");
             }
-            manager = repository.findById(requete.managerId())
+            manager = repository.findById(request.managerId())
                     .orElseThrow(() -> new RessourceIntrouvableException(
-                            "Manager introuvable (id=" + requete.managerId() + ")"));
+                            "Manager introuvable (id=" + request.managerId() + ")"));
         }
 
         employe.setDepartement(departement);
@@ -107,8 +107,8 @@ public class EmployeService {
         employe.setManager(manager);
     }
 
-    private Employe chargerOuErreur(Long id) {
+    private Employe findOrThrow(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RessourceIntrouvableException("Employé introuvable (id=" + id + ")"));
+                .orElseThrow(() -> new RessourceIntrouvableException("EmployÃ© introuvable (id=" + id + ")"));
     }
 }

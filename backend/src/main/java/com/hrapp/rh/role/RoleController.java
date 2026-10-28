@@ -15,29 +15,29 @@ public class RoleController {
     private final RoleService service;
 
     @GetMapping
-    public List<RoleResponse> lister() {
+    public List<RoleResponse> list() {
         return service.findAll();
     }
 
     @GetMapping("/{id}")
-    public RoleResponse details(@PathVariable Long id) {
-        return service.trouverParId(id);
+    public RoleResponse getById(@PathVariable Long id) {
+        return service.findById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public RoleResponse creer(@Valid @RequestBody RoleRequest requete) {
-        return service.creer(requete);
+    public RoleResponse create(@Valid @RequestBody RoleRequest request) {
+        return service.create(request);
     }
 
     @PutMapping("/{id}")
-    public RoleResponse modifier(@PathVariable Long id, @Valid @RequestBody RoleRequest requete) {
-        return service.modifier(id, requete);
+    public RoleResponse update(@PathVariable Long id, @Valid @RequestBody RoleRequest request) {
+        return service.update(id, request);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void supprimer(@PathVariable Long id) {
-        service.supprimer(id);
+    public void delete(@PathVariable Long id) {
+        service.delete(id);
     }
 }
