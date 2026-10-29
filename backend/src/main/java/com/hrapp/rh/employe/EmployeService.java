@@ -48,10 +48,10 @@ public class EmployeService {
                 .and(EmployeSpecification.inDepartement(departementId))
                 .and(EmployeSpecification.hasRole(roleId));
 
-        // Restriction imposée par le rôle de l'utilisateur connecté (matrice des permissions)
+        // Refus par défaut : seuls ADMIN et RH voient tout le monde
         if (utilisateur.hasRole(Roles.MANAGER)) {
             filtre = filtre.and(EmployeSpecification.inDepartement(utilisateur.getDepartementId()));
-        } else if (utilisateur.hasRole(Roles.EMPLOYE)) {
+        } else if (!utilisateur.isAdminOrRh()) {
             filtre = filtre.and(EmployeSpecification.hasId(utilisateur.getEmployeId()));
         }
 
@@ -68,33 +68,37 @@ public class EmployeService {
     }
 
     @Transactional
-    public EmployeDetailResponse create(EmployeRequest requete) {
+    public EmployeDetailResponse create(UtilisateurConnecte acteur, EmployeRequest requete) {
         if (repository.existsByEmailIgnoreCase(requete.email())) {
             throw new ConflitException("Un employé avec l'email « " + requete.email() + " » existe déjà");
         }
         Employe employe = mapper.toEntity(requete);
         applyRelations(employe, requete);
+        verifyCanManage(acteur, employe.getRole());          // le rôle demandé
         return mapper.toDetail(repository.save(employe));
     }
 
     @Transactional
-    public EmployeDetailResponse update(Long id, EmployeRequest requete) {
+    public EmployeDetailResponse update(UtilisateurConnecte acteur, Long id, EmployeRequest requete) {
         Employe employe = findOrThrow(id);
+        verifyCanManage(acteur, employe.getRole());          // la cible actuelle (est-ce un ADMIN ?)
         if (repository.existsByEmailIgnoreCaseAndIdNot(requete.email(), id)) {
             throw new ConflitException("Un employé avec l'email « " + requete.email() + " » existe déjà");
         }
         mapper.updateEntity(requete, employe);
         applyRelations(employe, requete);
+        verifyCanManage(acteur, employe.getRole());          // le nouveau rôle demandé
         return mapper.toDetail(employe);
     }
 
     @Transactional
-    public void delete(Long id) {
+    public void delete(UtilisateurConnecte acteur, Long id) {
         Employe employe = findOrThrow(id);
+        verifyCanManage(acteur, employe.getRole());
         if (repository.existsByManagerId(id)) {
             throw new ConflitException("Suppression impossible : cet employé est le manager d'autres employés");
         }
-        utilisateurRepository.deleteByEmployeId(id);   // supprime d'abord son compte de connexion
+        utilisateurRepository.deleteByEmployeId(id);         // supprime d'abord son compte de connexion
         repository.delete(employe);
     }
 
@@ -118,6 +122,13 @@ public class EmployeService {
     /** Salaire visible pour ADMIN/RH, et pour chacun sur sa propre fiche. */
     private boolean canSeeSalary(UtilisateurConnecte utilisateur, Employe employe) {
         return utilisateur.isAdminOrRh() || employe.getId().equals(utilisateur.getEmployeId());
+    }
+
+    /** Seul un ADMIN peut créer, modifier ou supprimer un ADMIN, ou attribuer le rôle ADMIN. */
+    private void verifyCanManage(UtilisateurConnecte acteur, Role role) {
+        if (Roles.ADMIN.equals(role.getNom()) && !acteur.hasRole(Roles.ADMIN)) {
+            throw new AccessDeniedException("Seul un administrateur peut gérer un compte ADMIN");
+        }
     }
 
     // ---------- méthodes privées ----------

@@ -38,20 +38,23 @@ public class EmployeController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN','RH')")
-    public EmployeDetailResponse create(@Valid @RequestBody EmployeRequest requete) {
-        return service.create(requete);
+    public EmployeDetailResponse create(@AuthenticationPrincipal UtilisateurConnecte utilisateur,
+                                        @Valid @RequestBody EmployeRequest requete) {
+        return service.create(utilisateur, requete);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','RH')")
-    public EmployeDetailResponse update(@PathVariable Long id, @Valid @RequestBody EmployeRequest requete) {
-        return service.update(id, requete);
+    public EmployeDetailResponse update(@AuthenticationPrincipal UtilisateurConnecte utilisateur,
+                                        @PathVariable Long id,
+                                        @Valid @RequestBody EmployeRequest requete) {
+        return service.update(utilisateur, id, requete);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAnyRole('ADMIN','RH')")
-    public void delete(@PathVariable Long id) {
-        service.delete(id);
+    public void delete(@AuthenticationPrincipal UtilisateurConnecte utilisateur, @PathVariable Long id) {
+        service.delete(utilisateur, id);
     }
 }

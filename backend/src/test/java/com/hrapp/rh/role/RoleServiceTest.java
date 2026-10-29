@@ -59,22 +59,44 @@ class RoleServiceTest {
     @Test
     @DisplayName("Modification : refusée si le nom est pris par un autre rôle")
     void update_shouldThrowConflict_whenNameUsedByAnotherRole() {
-        given(repository.findById(2L)).willReturn(Optional.of(role(2L, "RH")));
-        given(repository.existsByNomIgnoreCaseAndIdNot("ADMIN", 2L)).willReturn(true);
+        given(repository.findById(2L)).willReturn(Optional.of(role(2L, "CONSULTANT")));
+        given(repository.existsByNomIgnoreCaseAndIdNot("STAGIAIRE", 2L)).willReturn(true);
 
-        assertThatThrownBy(() -> service.update(2L, new RoleRequest("ADMIN", "x")))
+        assertThatThrownBy(() -> service.update(2L, new RoleRequest("STAGIAIRE", "x")))
                 .isInstanceOf(ConflitException.class);
+    }
+
+    @Test
+    @DisplayName("Modification : un rôle système ne peut pas être renommé")
+    void update_shouldThrowConflict_whenRoleIsSystemRole() {
+        given(repository.findById(1L)).willReturn(Optional.of(role(1L, "ADMIN")));
+
+        assertThatThrownBy(() -> service.update(1L, new RoleRequest("SUPERADMIN", "x")))
+                .isInstanceOf(ConflitException.class)
+                .hasMessageContaining("rôle système");
     }
 
     @Test
     @DisplayName("Suppression : refusée si des employés utilisent ce rôle")
     void delete_shouldThrowConflict_whenRoleIsUsedByEmployees() {
+        given(repository.findById(8L)).willReturn(Optional.of(role(8L, "STAGIAIRE")));
+        given(employeRepository.existsByRoleId(8L)).willReturn(true);
+
+        assertThatThrownBy(() -> service.delete(8L))
+                .isInstanceOf(ConflitException.class)
+                .hasMessageContaining("employés");
+
+        verify(repository, never()).delete(any(Role.class));
+    }
+
+    @Test
+    @DisplayName("Suppression : un rôle système (ADMIN) ne peut pas être supprimé")
+    void delete_shouldThrowConflict_whenRoleIsSystemRole() {
         given(repository.findById(1L)).willReturn(Optional.of(role(1L, "ADMIN")));
-        given(employeRepository.existsByRoleId(1L)).willReturn(true);
 
         assertThatThrownBy(() -> service.delete(1L))
                 .isInstanceOf(ConflitException.class)
-                .hasMessageContaining("employés");
+                .hasMessageContaining("rôle système");
 
         verify(repository, never()).delete(any(Role.class));
     }

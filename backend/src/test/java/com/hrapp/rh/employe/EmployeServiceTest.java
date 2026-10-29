@@ -51,7 +51,7 @@ class EmployeServiceTest {
     void create_shouldThrowConflict_whenEmailAlreadyExists() {
         given(repository.existsByEmailIgnoreCase("lina@rh.com")).willReturn(true);
 
-        assertThatThrownBy(() -> service.create(request("lina@rh.com", 1L, 4L, null)))
+        assertThatThrownBy(() -> service.create(user(1L, 1L, Roles.ADMIN), request("lina@rh.com", 1L, 4L, null)))
                 .isInstanceOf(ConflitException.class)
                 .hasMessageContaining("existe déjà");
 
@@ -70,7 +70,8 @@ class EmployeServiceTest {
             return saved;
         });
 
-        EmployeDetailResponse result = service.create(request("yassine@rh.com", 1L, 4L, null));
+        EmployeDetailResponse result = service.create(user(2L, 2L, Roles.RH),
+                request("yassine@rh.com", 1L, 4L, null));
 
         assertThat(result.id()).isEqualTo(10L);
         assertThat(result.email()).isEqualTo("yassine@rh.com");
@@ -85,9 +86,23 @@ class EmployeServiceTest {
         given(repository.existsByEmailIgnoreCase("yassine@rh.com")).willReturn(false);
         given(departementRepository.findById(99L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.create(request("yassine@rh.com", 99L, 4L, null)))
+        assertThatThrownBy(() -> service.create(user(1L, 1L, Roles.ADMIN),
+                request("yassine@rh.com", 99L, 4L, null)))
                 .isInstanceOf(RessourceIntrouvableException.class)
                 .hasMessageContaining("Département introuvable");
+
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Création : le RH ne peut pas attribuer le rôle ADMIN")
+    void create_shouldThrowAccessDenied_whenRhAssignsAdminRole() {
+        given(repository.existsByEmailIgnoreCase("x@rh.com")).willReturn(false);
+        given(departementRepository.findById(1L)).willReturn(Optional.of(departement(1L, "Informatique")));
+        given(roleRepository.findById(1L)).willReturn(Optional.of(role(1L, "ADMIN")));
+
+        assertThatThrownBy(() -> service.create(user(2L, 2L, Roles.RH), request("x@rh.com", 1L, 1L, null)))
+                .isInstanceOf(AccessDeniedException.class);
 
         verify(repository, never()).save(any());
     }
@@ -100,7 +115,8 @@ class EmployeServiceTest {
         given(repository.findById(1L)).willReturn(Optional.of(employe(1L, "lina@rh.com")));
         given(repository.existsByEmailIgnoreCaseAndIdNot("sara@rh.com", 1L)).willReturn(true);
 
-        assertThatThrownBy(() -> service.update(1L, request("sara@rh.com", 1L, 4L, null)))
+        assertThatThrownBy(() -> service.update(user(1L, 1L, Roles.ADMIN), 1L,
+                request("sara@rh.com", 1L, 4L, null)))
                 .isInstanceOf(ConflitException.class)
                 .hasMessageContaining("existe déjà");
     }
@@ -113,9 +129,35 @@ class EmployeServiceTest {
         given(departementRepository.findById(1L)).willReturn(Optional.of(departement(1L, "Informatique")));
         given(roleRepository.findById(4L)).willReturn(Optional.of(role(4L, "EMPLOYE")));
 
-        assertThatThrownBy(() -> service.update(1L, request("lina@rh.com", 1L, 4L, 1L)))
+        assertThatThrownBy(() -> service.update(user(1L, 1L, Roles.ADMIN), 1L,
+                request("lina@rh.com", 1L, 4L, 1L)))
                 .isInstanceOf(ConflitException.class)
                 .hasMessageContaining("propre manager");
+    }
+
+    @Test
+    @DisplayName("Modification : le RH ne peut pas modifier un ADMIN")
+    void update_shouldThrowAccessDenied_whenRhEditsAnAdmin() {
+        Employe admin = employe(1L, "admin@rh.com");
+        admin.setRole(role(1L, "ADMIN"));
+        given(repository.findById(1L)).willReturn(Optional.of(admin));
+
+        assertThatThrownBy(() -> service.update(user(2L, 2L, Roles.RH), 1L,
+                request("admin@rh.com", 1L, 1L, null)))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    @DisplayName("Modification : le RH ne peut pas promouvoir un employé en ADMIN")
+    void update_shouldThrowAccessDenied_whenRhPromotesToAdmin() {
+        given(repository.findById(4L)).willReturn(Optional.of(employe(4L, "employe@rh.com")));
+        given(repository.existsByEmailIgnoreCaseAndIdNot("employe@rh.com", 4L)).willReturn(false);
+        given(departementRepository.findById(1L)).willReturn(Optional.of(departement(1L, "Informatique")));
+        given(roleRepository.findById(1L)).willReturn(Optional.of(role(1L, "ADMIN")));
+
+        assertThatThrownBy(() -> service.update(user(2L, 2L, Roles.RH), 4L,
+                request("employe@rh.com", 1L, 1L, null)))
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     // ---------- suppression ----------
@@ -126,7 +168,7 @@ class EmployeServiceTest {
         given(repository.findById(3L)).willReturn(Optional.of(employe(3L, "manager@rh.com")));
         given(repository.existsByManagerId(3L)).willReturn(true);
 
-        assertThatThrownBy(() -> service.delete(3L))
+        assertThatThrownBy(() -> service.delete(user(1L, 1L, Roles.ADMIN), 3L))
                 .isInstanceOf(ConflitException.class)
                 .hasMessageContaining("manager");
 
@@ -141,7 +183,7 @@ class EmployeServiceTest {
         given(repository.findById(4L)).willReturn(Optional.of(employe));
         given(repository.existsByManagerId(4L)).willReturn(false);
 
-        service.delete(4L);
+        service.delete(user(2L, 2L, Roles.RH), 4L);
 
         verify(utilisateurRepository).deleteByEmployeId(4L);
         verify(repository).delete(employe);
@@ -152,8 +194,21 @@ class EmployeServiceTest {
     void delete_shouldThrowNotFound_whenEmployeeDoesNotExist() {
         given(repository.findById(999L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.delete(999L))
+        assertThatThrownBy(() -> service.delete(user(1L, 1L, Roles.ADMIN), 999L))
                 .isInstanceOf(RessourceIntrouvableException.class);
+    }
+
+    @Test
+    @DisplayName("Suppression : le RH ne peut pas supprimer un ADMIN")
+    void delete_shouldThrowAccessDenied_whenRhDeletesAnAdmin() {
+        Employe admin = employe(1L, "admin@rh.com");
+        admin.setRole(role(1L, "ADMIN"));
+        given(repository.findById(1L)).willReturn(Optional.of(admin));
+
+        assertThatThrownBy(() -> service.delete(user(2L, 2L, Roles.RH), 1L))
+                .isInstanceOf(AccessDeniedException.class);
+
+        verify(repository, never()).delete(any(Employe.class));
     }
 
     // ---------- recherche ----------
