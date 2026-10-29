@@ -8,9 +8,13 @@ import com.hrapp.rh.departement.Departement;
 import com.hrapp.rh.departement.DepartementRepository;
 import com.hrapp.rh.role.Role;
 import com.hrapp.rh.role.RoleRepository;
+import com.hrapp.rh.securite.Roles;
+import com.hrapp.rh.securite.UtilisateurConnecte;
+import com.hrapp.rh.utilisateur.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,18 +24,19 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class EmployeService {
 
-    /** Colonnes sur lesquelles le tri est autorisÃ© (Ã©vite les erreurs 500 sur un tri inconnu). */
+    /** Colonnes sur lesquelles le tri est autorisé (évite les erreurs 500 sur un tri inconnu). */
     private static final Set<String> TRIS_AUTORISES =
             Set.of("id", "nom", "prenom", "email", "dateEmbauche", "departement.nom", "role.nom");
 
     private final EmployeRepository repository;
     private final DepartementRepository departementRepository;
     private final RoleRepository roleRepository;
+    private final UtilisateurRepository utilisateurRepository;
     private final EmployeMapper mapper;
 
     @Transactional(readOnly = true)
-    public PageReponse<EmployeResponse> search(String recherche, Long departementId,
-                                                 Long roleId, Pageable pageable) {
+    public PageReponse<EmployeResponse> search(UtilisateurConnecte utilisateur, String recherche,
+                                               Long departementId, Long roleId, Pageable pageable) {
         pageable.getSort().forEach(ordre -> {
             if (!TRIS_AUTORISES.contains(ordre.getProperty())) {
                 throw new RequeteInvalideException("Tri non autorisé sur : " + ordre.getProperty()
@@ -43,32 +48,43 @@ public class EmployeService {
                 .and(EmployeSpecification.inDepartement(departementId))
                 .and(EmployeSpecification.hasRole(roleId));
 
+        // Restriction imposée par le rôle de l'utilisateur connecté (matrice des permissions)
+        if (utilisateur.hasRole(Roles.MANAGER)) {
+            filtre = filtre.and(EmployeSpecification.inDepartement(utilisateur.getDepartementId()));
+        } else if (utilisateur.hasRole(Roles.EMPLOYE)) {
+            filtre = filtre.and(EmployeSpecification.hasId(utilisateur.getEmployeId()));
+        }
+
         return PageReponse.from(repository.findAll(filtre, pageable).map(mapper::toResponse));
     }
 
     @Transactional(readOnly = true)
-    public EmployeDetailResponse findById(Long id) {
-        return mapper.toDetail(findOrThrow(id));
+    public EmployeDetailResponse findById(UtilisateurConnecte utilisateur, Long id) {
+        Employe employe = findOrThrow(id);
+        verifyCanView(utilisateur, employe);
+
+        EmployeDetailResponse detail = mapper.toDetail(employe);
+        return canSeeSalary(utilisateur, employe) ? detail : detail.withoutSalary();
     }
 
     @Transactional
-    public EmployeDetailResponse create(EmployeRequest request) {
-        if (repository.existsByEmailIgnoreCase(request.email())) {
-            throw new ConflitException("Un employé avec l'email « " + request.email() + " » existe déjà");
+    public EmployeDetailResponse create(EmployeRequest requete) {
+        if (repository.existsByEmailIgnoreCase(requete.email())) {
+            throw new ConflitException("Un employé avec l'email « " + requete.email() + " » existe déjà");
         }
-        Employe employe = mapper.toEntity(request);
-        applyRelations(employe, request);
+        Employe employe = mapper.toEntity(requete);
+        applyRelations(employe, requete);
         return mapper.toDetail(repository.save(employe));
     }
 
     @Transactional
-    public EmployeDetailResponse update(Long id, EmployeRequest request) {
+    public EmployeDetailResponse update(Long id, EmployeRequest requete) {
         Employe employe = findOrThrow(id);
-        if (repository.existsByEmailIgnoreCaseAndIdNot(request.email(), id)) {
-            throw new ConflitException("Un employé avec l'email « " + request.email() + " » existe déjà");
+        if (repository.existsByEmailIgnoreCaseAndIdNot(requete.email(), id)) {
+            throw new ConflitException("Un employé avec l'email « " + requete.email() + " » existe déjà");
         }
-        mapper.updateEntity(request, employe);
-        applyRelations(employe, request);
+        mapper.updateEntity(requete, employe);
+        applyRelations(employe, requete);
         return mapper.toDetail(employe);
     }
 
@@ -78,28 +94,51 @@ public class EmployeService {
         if (repository.existsByManagerId(id)) {
             throw new ConflitException("Suppression impossible : cet employé est le manager d'autres employés");
         }
+        utilisateurRepository.deleteByEmployeId(id);   // supprime d'abord son compte de connexion
         repository.delete(employe);
     }
 
-    // ---------- mÃ©thodes privÃ©es ----------
+    // ---------- règles d'accès ----------
 
-    /** Charge dÃ©partement, rÃ´le et manager depuis la base et les attache Ã  l'employÃ©. */
-    private void applyRelations(Employe employe, EmployeRequest request) {
-        Departement departement = departementRepository.findById(request.departementId())
+    /** ADMIN/RH : tout le monde ; MANAGER : son département ; EMPLOYE : lui-même. */
+    private void verifyCanView(UtilisateurConnecte utilisateur, Employe employe) {
+        if (utilisateur.isAdminOrRh()) {
+            return;
+        }
+        if (utilisateur.hasRole(Roles.MANAGER)
+                && employe.getDepartement().getId().equals(utilisateur.getDepartementId())) {
+            return;
+        }
+        if (employe.getId().equals(utilisateur.getEmployeId())) {
+            return;
+        }
+        throw new AccessDeniedException("Accès refusé à cet employé");
+    }
+
+    /** Salaire visible pour ADMIN/RH, et pour chacun sur sa propre fiche. */
+    private boolean canSeeSalary(UtilisateurConnecte utilisateur, Employe employe) {
+        return utilisateur.isAdminOrRh() || employe.getId().equals(utilisateur.getEmployeId());
+    }
+
+    // ---------- méthodes privées ----------
+
+    /** Charge département, rôle et manager depuis la base et les attache à l'employé. */
+    private void applyRelations(Employe employe, EmployeRequest requete) {
+        Departement departement = departementRepository.findById(requete.departementId())
                 .orElseThrow(() -> new RessourceIntrouvableException(
-                        "Département introuvable (id=" + request.departementId() + ")"));
-        Role role = roleRepository.findById(request.roleId())
+                        "Département introuvable (id=" + requete.departementId() + ")"));
+        Role role = roleRepository.findById(requete.roleId())
                 .orElseThrow(() -> new RessourceIntrouvableException(
-                        "Rôle introuvable (id=" + request.roleId() + ")"));
+                        "Rôle introuvable (id=" + requete.roleId() + ")"));
 
         Employe manager = null;
-        if (request.managerId() != null) {
-            if (request.managerId().equals(employe.getId())) {
+        if (requete.managerId() != null) {
+            if (requete.managerId().equals(employe.getId())) {
                 throw new ConflitException("Un employé ne peut pas être son propre manager");
             }
-            manager = repository.findById(request.managerId())
+            manager = repository.findById(requete.managerId())
                     .orElseThrow(() -> new RessourceIntrouvableException(
-                            "Manager introuvable (id=" + request.managerId() + ")"));
+                            "Manager introuvable (id=" + requete.managerId() + ")"));
         }
 
         employe.setDepartement(departement);

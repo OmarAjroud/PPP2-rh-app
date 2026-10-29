@@ -9,11 +9,17 @@ public record EmployeDetailResponse(
         String prenom,
         String email,
         LocalDate dateEmbauche,
-        BigDecimal salaire,          // semaine 3 : masqué pour les profils non autorisés
+        BigDecimal salaire,
         Long departementId,
         String departementNom,
         Long roleId,
         String roleNom,
         Long managerId,
         String managerNomComplet
-) {}
+) {
+    /** Copie de cette réponse sans le salaire (profils non autorisés). */
+    public EmployeDetailResponse withoutSalary() {
+        return new EmployeDetailResponse(id, nom, prenom, email, dateEmbauche, null,
+                departementId, departementNom, roleId, roleNom, managerId, managerNomComplet);
+    }
+}

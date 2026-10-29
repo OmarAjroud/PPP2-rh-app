@@ -1,5 +1,6 @@
 
 spring:
+
   application:
     name: rh
   datasource:
@@ -19,3 +20,16 @@ spring:
 
 server:
   port: 8080
+
+app:
+  security:
+    jwt:
+      # En production : définir la variable d'environnement JWT_SECRET (jamais de secret réel dans Git)
+      secret: ${JWT_SECRET:change-me-dev-only-0123456789-abcdefghijklmnopqrstuvwxyz-ABCDEFGH}
+      access-token-minutes: 15
+      refresh-token-days: 7
+    cors:
+      allowed-origins: http://localhost:4200
+  seed:
+    test-accounts: true            # crée les 4 comptes de test au démarrage (désactiver en production)
+    test-password: "Test1234!"
