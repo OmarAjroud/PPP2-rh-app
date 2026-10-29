@@ -32,4 +32,8 @@ public final class EmployeSpecification {
                 ? cb.conjunction()
                 : cb.equal(root.get("role").get("id"), roleId);
     }
+
+    public static Specification<Employe> hasId(Long id) {
+        return (root, query, cb) -> cb.equal(root.get("id"), id);
+    }
 }

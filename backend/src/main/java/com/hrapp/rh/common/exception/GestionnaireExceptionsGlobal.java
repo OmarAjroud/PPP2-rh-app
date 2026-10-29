@@ -16,10 +16,23 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 
 @Slf4j
 @RestControllerAdvice
 public class GestionnaireExceptionsGlobal {
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErreurApi> accessDenied(AccessDeniedException ex, HttpServletRequest req) {
+        return buildResponse(HttpStatus.FORBIDDEN,
+                "Accès refusé : vous n'avez pas les droits nécessaires", req, null);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErreurApi> authenticationFailed(AuthenticationException ex, HttpServletRequest req) {
+        return buildResponse(HttpStatus.UNAUTHORIZED,
+                "Authentification échouée : identifiants ou jeton invalides", req, null);
+    }
 
     @ExceptionHandler(RessourceIntrouvableException.class)
     public ResponseEntity<ErreurApi> notFound(RessourceIntrouvableException ex, HttpServletRequest req) {

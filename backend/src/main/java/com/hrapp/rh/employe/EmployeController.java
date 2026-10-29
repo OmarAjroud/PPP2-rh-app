@@ -1,11 +1,14 @@
 package com.hrapp.rh.employe;
 
 import com.hrapp.rh.common.dto.PageReponse;
+import com.hrapp.rh.securite.UtilisateurConnecte;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,40 +18,39 @@ public class EmployeController {
 
     private final EmployeService service;
 
-    /**
-     * Exemples :
-     *   GET /api/employes?page=0&size=10&sort=nom,asc
-     *   GET /api/employes?recherche=gharbi
-     *   GET /api/employes?departementId=1&sort=departement.nom,desc
-     */
+    // Tout utilisateur connecté : le service restreint les résultats selon son rôle
     @GetMapping
     public PageReponse<EmployeResponse> list(
+            @AuthenticationPrincipal UtilisateurConnecte utilisateur,
             @RequestParam(required = false) String recherche,
             @RequestParam(required = false) Long departementId,
             @RequestParam(required = false) Long roleId,
             @PageableDefault(size = 10, sort = "nom") Pageable pageable) {
-        return service.search(recherche, departementId, roleId, pageable);
+        return service.search(utilisateur, recherche, departementId, roleId, pageable);
     }
 
     @GetMapping("/{id}")
-    public EmployeDetailResponse getById(@PathVariable Long id) {
-        return service.findById(id);
+    public EmployeDetailResponse getById(@AuthenticationPrincipal UtilisateurConnecte utilisateur,
+                                         @PathVariable Long id) {
+        return service.findById(utilisateur, id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public EmployeDetailResponse create(@Valid @RequestBody EmployeRequest request) {
-        return service.create(request);
+    @PreAuthorize("hasAnyRole('ADMIN','RH')")
+    public EmployeDetailResponse create(@Valid @RequestBody EmployeRequest requete) {
+        return service.create(requete);
     }
 
     @PutMapping("/{id}")
-    public EmployeDetailResponse update(@PathVariable Long id,
-                                          @Valid @RequestBody EmployeRequest request) {
-        return service.update(id, request);
+    @PreAuthorize("hasAnyRole('ADMIN','RH')")
+    public EmployeDetailResponse update(@PathVariable Long id, @Valid @RequestBody EmployeRequest requete) {
+        return service.update(id, requete);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyRole('ADMIN','RH')")
     public void delete(@PathVariable Long id) {
         service.delete(id);
     }
