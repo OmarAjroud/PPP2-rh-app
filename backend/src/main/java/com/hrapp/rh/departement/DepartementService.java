@@ -4,6 +4,8 @@ import com.hrapp.rh.common.exception.ConflitException;
 import com.hrapp.rh.common.exception.RessourceIntrouvableException;
 import com.hrapp.rh.employe.EmployeRepository;
 import com.hrapp.rh.employe.EmployeResume;
+import com.hrapp.rh.securite.Roles;
+import com.hrapp.rh.securite.UtilisateurConnecte;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,31 +25,34 @@ public class DepartementService {
         return repository.findAllWithEmployeeCount();
     }
 
+    /** Détail d'un département ; la liste des employés dépend de qui demande. */
     @Transactional(readOnly = true)
-    public DepartementDetailResponse findById(Long id) {
+    public DepartementDetailResponse findById(UtilisateurConnecte utilisateur, Long id) {
         Departement d = findOrThrow(id);
-        List<EmployeResume> employes = employeRepository.findByDepartementId(id).stream()
+        List<EmployeResume> employes = canSeeEmployees(utilisateur, id)
+                ? employeRepository.findByDepartementId(id).stream()
                 .map(e -> new EmployeResume(e.getId(), e.getNom(), e.getPrenom(), e.getEmail()))
-                .toList();
+                .toList()
+                : List.of();
         return new DepartementDetailResponse(d.getId(), d.getNom(), d.getDescription(), employes);
     }
 
     @Transactional
-    public DepartementResponse create(DepartementRequest request) {
-        if (repository.existsByNomIgnoreCase(request.nom())) {
-            throw new ConflitException("Un département nommé « " + request.nom() + " » existe déjà");
+    public DepartementResponse create(DepartementRequest requete) {
+        if (repository.existsByNomIgnoreCase(requete.nom())) {
+            throw new ConflitException("Un département nommé « " + requete.nom() + " » existe déjà");
         }
-        Departement d = repository.save(mapper.toEntity(request));
+        Departement d = repository.save(mapper.toEntity(requete));
         return new DepartementResponse(d.getId(), d.getNom(), d.getDescription(), 0L);
     }
 
     @Transactional
-    public DepartementResponse update(Long id, DepartementRequest request) {
+    public DepartementResponse update(Long id, DepartementRequest requete) {
         Departement d = findOrThrow(id);
-        if (repository.existsByNomIgnoreCaseAndIdNot(request.nom(), id)) {
-            throw new ConflitException("Un département nommé « " + request.nom() + " » existe déjà");
+        if (repository.existsByNomIgnoreCaseAndIdNot(requete.nom(), id)) {
+            throw new ConflitException("Un département nommé « " + requete.nom() + " » existe déjà");
         }
-        mapper.updateEntity(request, d);
+        mapper.updateEntity(requete, d);
         return new DepartementResponse(d.getId(), d.getNom(), d.getDescription(),
                 employeRepository.countByDepartementId(id));
     }
@@ -59,6 +64,16 @@ public class DepartementService {
             throw new ConflitException("Suppression impossible : ce département contient encore des employés");
         }
         repository.delete(d);
+    }
+
+    // ---------- méthodes privées ----------
+
+    /** ADMIN/RH : tous les départements ; MANAGER : le sien ; les autres : aucune liste. */
+    private boolean canSeeEmployees(UtilisateurConnecte utilisateur, Long departementId) {
+        if (utilisateur.isAdminOrRh()) {
+            return true;
+        }
+        return utilisateur.hasRole(Roles.MANAGER) && departementId.equals(utilisateur.getDepartementId());
     }
 
     private Departement findOrThrow(Long id) {
