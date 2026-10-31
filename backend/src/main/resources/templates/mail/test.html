@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Test d'envoi</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f6f8;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f6f8;">
+    <tr>
+        <td align="center" style="padding:24px;">
+            <table role="presentation" width="600" cellspacing="0" cellpadding="0"
+                   style="max-width:600px;width:100%;background:#ffffff;border-radius:6px;">
+
+                <tr th:replace="~{mail/fragments :: header}"></tr>
+
+                <tr>
+                    <td style="padding:28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;
+                               color:#333333;line-height:1.5;">
+                        <p>Bonjour <span th:text="${prenom}">Prénom</span>,</p>
+                        <p>Si vous lisez ce message, l'envoi d'emails de l'application fonctionne correctement.</p>
+                    </td>
+                </tr>
+
+                <tr th:replace="~{mail/fragments :: footer}"></tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

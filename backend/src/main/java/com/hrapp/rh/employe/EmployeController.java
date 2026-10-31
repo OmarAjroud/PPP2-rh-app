@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springdoc.core.annotations.ParameterObject;
 
 @RestController
 @RequestMapping("/api/employes")
@@ -25,7 +26,7 @@ public class EmployeController {
             @RequestParam(required = false) String recherche,
             @RequestParam(required = false) Long departementId,
             @RequestParam(required = false) Long roleId,
-            @PageableDefault(size = 10, sort = "nom") Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 10, sort = "nom") Pageable pageable) {
         return service.search(utilisateur, recherche, departementId, roleId, pageable);
     }
 

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- En-tête commun à tous les emails -->
+<tr th:fragment="header">
+    <td style="background:#1f4e79;color:#ffffff;padding:20px 28px;font-size:20px;font-weight:bold;
+               font-family:Arial,Helvetica,sans-serif;border-radius:6px 6px 0 0;">
+        Application RH
+    </td>
+</tr>
+
+<!-- Pied de page commun -->
+<tr th:fragment="footer">
+    <td style="padding:16px 28px;font-size:12px;color:#888888;font-family:Arial,Helvetica,sans-serif;
+               border-top:1px solid #eeeeee;">
+        Ceci est un message automatique, merci de ne pas y répondre.
+    </td>
+</tr>
+
+</body>
+</html>
