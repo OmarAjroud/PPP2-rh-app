@@ -21,9 +21,25 @@ public class Utilisateur {
     @Column(name = "nom_utilisateur", nullable = false, unique = true, length = 100)
     private String nomUtilisateur;
 
-    @Column(name = "mot_de_passe_hash", nullable = false)
+    /** Vide tant que l'employé n'a pas activé son compte. */
+    @Column(name = "mot_de_passe_hash")
     private String motDePasseHash;
 
     @Column(nullable = false)
     private boolean actif = true;
+
+    /** Incrémentée à chaque changement de mot de passe : invalide tous les jetons déjà émis. */
+    @Column(name = "version_jeton", nullable = false)
+    private int versionJeton = 0;
+
+    public boolean isEnAttenteActivation() {
+        return motDePasseHash == null;
+    }
+
+    public StatutCompte statut() {
+        if (isEnAttenteActivation()) {
+            return StatutCompte.EN_ATTENTE;
+        }
+        return actif ? StatutCompte.ACTIF : StatutCompte.DESACTIVE;
+    }
 }

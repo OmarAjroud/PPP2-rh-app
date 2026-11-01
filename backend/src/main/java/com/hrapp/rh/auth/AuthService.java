@@ -21,9 +21,15 @@ public class AuthService {
     private final UtilisateurDetailsService userDetailsService;
 
     public AuthResponse login(LoginRequest request) {
-        // vérifie le mot de passe (BCrypt) ; lève une exception si incorrect ou compte désactivé
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.nomUtilisateur(), request.motDePasse()));
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.nomUtilisateur(), request.motDePasse()));
+        } catch (DisabledException e) {
+            // Compte non activé ou désactivé : même réponse qu'un mauvais mot de passe,
+            // pour ne pas révéler qu'un compte existe.
+            throw new BadCredentialsException("Identifiants invalides");
+        }
         return buildResponse((UtilisateurConnecte) authentication.getPrincipal());
     }
 
@@ -33,10 +39,15 @@ public class AuthService {
                 .orElseThrow(() -> new BadCredentialsException("Jeton de rafraîchissement invalide ou expiré"));
 
         UtilisateurConnecte utilisateur = userDetailsService.loadUserByUsername(claims.getSubject());
-        if (!utilisateur.isEnabled()) {
-            throw new DisabledException("Compte désactivé");
+        if (!utilisateur.isEnabled() || !jwtService.matchesVersion(claims, utilisateur)) {
+            throw new BadCredentialsException("Jeton de rafraîchissement invalide ou expiré");
         }
         return buildResponse(utilisateur);
+    }
+
+    /** Émet de nouveaux jetons pour un utilisateur existant (après un changement de mot de passe). */
+    public AuthResponse issueTokens(String nomUtilisateur) {
+        return buildResponse(userDetailsService.loadUserByUsername(nomUtilisateur));
     }
 
     public ProfilResponse toProfile(UtilisateurConnecte utilisateur) {

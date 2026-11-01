@@ -30,6 +30,12 @@ public class EmployeController {
         return service.search(utilisateur, recherche, departementId, roleId, pageable);
     }
 
+    /** Mon profil : l'utilisateur connecté consulte sa propre fiche (salaire inclus). */
+    @GetMapping("/me")
+    public EmployeDetailResponse getMyProfile(@AuthenticationPrincipal UtilisateurConnecte utilisateur) {
+        return service.findById(utilisateur, utilisateur.getEmployeId());
+    }
+
     @GetMapping("/{id}")
     public EmployeDetailResponse getById(@AuthenticationPrincipal UtilisateurConnecte utilisateur,
                                          @PathVariable Long id) {

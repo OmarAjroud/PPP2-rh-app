@@ -54,6 +54,9 @@ app:
     from: ${MAIL_FROM:no-reply@rh-app.local}
     from-name: Application RH
   security:
+    tokens:
+      activation-hours: 48
+      reset-minutes: 60
     jwt:
       # En production : définir la variable d'environnement JWT_SECRET (jamais de secret réel dans Git)
       secret: ${JWT_SECRET:change-me-dev-only-0123456789-abcdefghijklmnopqrstuvwxyz-ABCDEFGH}
