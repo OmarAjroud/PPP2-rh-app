@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Mot de passe modifié</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f6f8;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f6f8;">
+    <tr>
+        <td align="center" style="padding:24px;">
+            <table role="presentation" width="600" cellspacing="0" cellpadding="0"
+                   style="max-width:600px;width:100%;background:#ffffff;border-radius:6px;">
+
+                <tr th:replace="~{mail/fragments :: header}"></tr>
+
+                <tr>
+                    <td style="padding:28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;
+                               color:#333333;line-height:1.5;">
+                        <p>Bonjour <span th:text="${prenom}">Prénom</span>,</p>
+                        <p>Le mot de passe de votre compte vient d'être modifié.
+                            Toutes vos autres sessions ont été déconnectées.</p>
+                        <p style="font-size:13px;color:#666666;">
+                            Si vous n'êtes pas à l'origine de ce changement, contactez immédiatement
+                            le service des ressources humaines.
+                        </p>
+                    </td>
+                </tr>
+
+                <tr th:replace="~{mail/fragments :: footer}"></tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

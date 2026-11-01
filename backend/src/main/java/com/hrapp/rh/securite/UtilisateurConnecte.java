@@ -21,6 +21,13 @@ public class UtilisateurConnecte implements UserDetails {
     private final String motDePasseHash;
     private final String role;
     private final boolean actif;
+    private final int versionJeton;
+
+    /** Constructeur sans version (version 0) : pratique pour les tests. */
+    public UtilisateurConnecte(Long utilisateurId, Long employeId, Long departementId, String nomUtilisateur,
+                               String motDePasseHash, String role, boolean actif) {
+        this(utilisateurId, employeId, departementId, nomUtilisateur, motDePasseHash, role, actif, 0);
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

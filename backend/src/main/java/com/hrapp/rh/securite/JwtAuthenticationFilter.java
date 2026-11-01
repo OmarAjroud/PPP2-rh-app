@@ -36,7 +36,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         try {
                             UtilisateurConnecte utilisateur =
                                     userDetailsService.loadUserByUsername(claims.getSubject());
-                            if (utilisateur.isEnabled()) {
+                            if (utilisateur.isEnabled() && jwtService.matchesVersion(claims, utilisateur)) {
                                 var authentication = new UsernamePasswordAuthenticationToken(
                                         utilisateur, null, utilisateur.getAuthorities());
                                 authentication.setDetails(

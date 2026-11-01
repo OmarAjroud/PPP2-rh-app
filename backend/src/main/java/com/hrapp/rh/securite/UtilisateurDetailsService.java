@@ -28,6 +28,7 @@ public class UtilisateurDetailsService implements UserDetailsService {
                 utilisateur.getNomUtilisateur(),
                 utilisateur.getMotDePasseHash(),
                 employe.getRole().getNom(),
-                utilisateur.isActif());
+                utilisateur.isActif(),
+                utilisateur.getVersionJeton());
     }
 }

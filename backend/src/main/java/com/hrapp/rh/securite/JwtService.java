@@ -21,6 +21,7 @@ public class JwtService {
     private static final String CLAIM_TYPE = "type";
     private static final String TYPE_ACCESS = "access";
     private static final String TYPE_REFRESH = "refresh";
+    private static final String CLAIM_VERSION = "ver";
 
     private final SecretKey key;
     private final Duration accessValidity;
@@ -78,6 +79,13 @@ public class JwtService {
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(validity)))
                 .signWith(key, Jwts.SIG.HS256)
+                .claim(CLAIM_VERSION, utilisateur.getVersionJeton())
                 .compact();
+
+    }
+    /** Le jeton a-t-il été émis avec la version actuelle du compte ? (non si le mot de passe a changé depuis.) */
+    public boolean matchesVersion(Claims claims, UtilisateurConnecte utilisateur) {
+        Integer version = claims.get(CLAIM_VERSION, Integer.class);
+        return version != null && version == utilisateur.getVersionJeton();
     }
 }
