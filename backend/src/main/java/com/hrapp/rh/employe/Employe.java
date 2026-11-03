@@ -7,8 +7,11 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import com.hrapp.rh.audit.Audited;
+
 
 /** Employé de l'entreprise (table « employes »). */
+@Audited
 @Entity
 @Table(name = "employes")
 @Getter @Setter @NoArgsConstructor

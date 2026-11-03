@@ -2,8 +2,9 @@ package com.hrapp.rh.departement;
 
 import jakarta.persistence.*;
 import lombok.*;
-
+import com.hrapp.rh.audit.Audited;
 /** Département de l'entreprise (table « departements »). */
+@Audited
 @Entity
 @Table(name = "departements")
 @Getter @Setter @NoArgsConstructor
