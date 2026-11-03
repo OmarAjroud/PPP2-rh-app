@@ -1,5 +1,7 @@
 package com.hrapp.rh.utilisateur;
 
+import com.hrapp.rh.audit.AuditAction;
+import com.hrapp.rh.audit.AuditService;
 import com.hrapp.rh.common.exception.ConflitException;
 import com.hrapp.rh.common.exception.RequeteInvalideException;
 import com.hrapp.rh.common.exception.RessourceIntrouvableException;
@@ -21,11 +23,14 @@ import java.util.Map;
 @Service
 public class CompteService {
 
+    private static final String ENTITE = "Utilisateur";
+
     private final UtilisateurRepository repository;
     private final EmployeRepository employeRepository;
     private final JetonService jetonService;
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
+    private final AuditService auditService;
     private final String frontendUrl;
 
     public CompteService(UtilisateurRepository repository,
@@ -33,12 +38,14 @@ public class CompteService {
                          JetonService jetonService,
                          PasswordEncoder passwordEncoder,
                          ApplicationEventPublisher eventPublisher,
+                         AuditService auditService,
                          @Value("${app.frontend-url}") String frontendUrl) {
         this.repository = repository;
         this.employeRepository = employeRepository;
         this.jetonService = jetonService;
         this.passwordEncoder = passwordEncoder;
         this.eventPublisher = eventPublisher;
+        this.auditService = auditService;
         this.frontendUrl = frontendUrl.replaceAll("/+$", "");   // sans « / » final
     }
 
@@ -69,6 +76,8 @@ public class CompteService {
             throw new ConflitException("Le compte de cet employé est déjà activé");
         }
         sendActivationEmail(utilisateur, employe);
+        auditService.record(AuditAction.INVITATION, ENTITE, utilisateur.getId(),
+                "Invitation d'activation envoyée à l'employé n°" + employe.getId());
         return toResponse(utilisateur);
     }
 
@@ -80,6 +89,8 @@ public class CompteService {
         Utilisateur utilisateur = jetonService.consume(request.jeton(), TypeJeton.ACTIVATION);
         utilisateur.setMotDePasseHash(passwordEncoder.encode(request.motDePasse()));
         utilisateur.setActif(true);
+        auditService.recordAs(utilisateur.getId(), utilisateur.getNomUtilisateur(),
+                AuditAction.ACTIVATION_COMPTE, ENTITE, utilisateur.getId(), null);
     }
 
     /**
@@ -111,6 +122,8 @@ public class CompteService {
             throw new RequeteInvalideException("Ce lien est invalide ou a expiré");
         }
         applyNewPassword(utilisateur, request.nouveauMotDePasse());
+        auditService.recordAs(utilisateur.getId(), utilisateur.getNomUtilisateur(),
+                AuditAction.REINITIALISATION_MOT_DE_PASSE, ENTITE, utilisateur.getId(), null);
     }
 
     /** Un utilisateur connecté change son propre mot de passe (il faut connaître l'actuel). */
@@ -126,6 +139,8 @@ public class CompteService {
             throw new RequeteInvalideException("Le nouveau mot de passe doit être différent de l'ancien");
         }
         applyNewPassword(utilisateur, request.nouveauMotDePasse());
+        auditService.recordAs(connecte.getUtilisateurId(), connecte.getUsername(),
+                AuditAction.CHANGEMENT_MOT_DE_PASSE, ENTITE, connecte.getUtilisateurId(), null);
     }
 
     // ---------- méthodes privées ----------

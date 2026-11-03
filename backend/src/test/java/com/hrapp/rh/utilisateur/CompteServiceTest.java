@@ -5,6 +5,7 @@ import com.hrapp.rh.common.exception.RequeteInvalideException;
 import com.hrapp.rh.common.exception.RessourceIntrouvableException;
 import com.hrapp.rh.employe.Employe;
 import com.hrapp.rh.employe.EmployeRepository;
+import com.hrapp.rh.audit.AuditService;
 import com.hrapp.rh.mail.MailMessage;
 import com.hrapp.rh.role.Role;
 import com.hrapp.rh.securite.Roles;
@@ -31,6 +32,9 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import com.hrapp.rh.audit.AuditAction;
+import com.hrapp.rh.audit.AuditService;
+import static org.mockito.ArgumentMatchers.isNull;
 
 @ExtendWith(MockitoExtension.class)
 class CompteServiceTest {
@@ -40,6 +44,8 @@ class CompteServiceTest {
     @Mock private JetonService jetonService;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock private AuditService auditService;
+
 
     private CompteService service;
 
@@ -47,7 +53,7 @@ class CompteServiceTest {
     void setUp() {
         // l'adresse se termine par « / » exprès : le service doit l'enlever
         service = new CompteService(repository, employeRepository, jetonService, passwordEncoder,
-                eventPublisher, "http://localhost:4200/");
+                eventPublisher, auditService, "http://localhost:4200/");
     }
 
     // ---------- invitation (RH / ADMIN) ----------
@@ -103,6 +109,7 @@ class CompteServiceTest {
         assertThat(mail.variables())
                 .containsEntry("lien", "http://localhost:4200/activer-compte?jeton=RAWTOKEN")
                 .containsEntry("prenom", "Lina");
+        verify(auditService).record(eq(AuditAction.INVITATION), eq("Utilisateur"), eq(7L), anyString());
     }
 
     @Test
@@ -161,6 +168,8 @@ class CompteServiceTest {
 
         assertThat(compte.getMotDePasseHash()).isEqualTo("HASH");
         assertThat(compte.isActif()).isTrue();
+        verify(auditService).recordAs(eq(10L), eq("compte10"), eq(AuditAction.ACTIVATION_COMPTE),
+                eq("Utilisateur"), eq(10L), isNull());
     }
 
     @Test
@@ -185,6 +194,7 @@ class CompteServiceTest {
         service.requestPasswordReset("inconnu@rh.com");
 
         verifyNoInteractions(jetonService, eventPublisher);
+        verifyNoInteractions(auditService);
     }
 
     @Test
@@ -277,6 +287,7 @@ class CompteServiceTest {
 
         verify(passwordEncoder, never()).encode(anyString());
         verifyNoInteractions(eventPublisher);
+        verifyNoInteractions(auditService);
     }
 
     @Test
