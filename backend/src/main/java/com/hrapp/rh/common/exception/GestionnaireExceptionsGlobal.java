@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -86,5 +88,18 @@ public class GestionnaireExceptionsGlobal {
         ErreurApi corps = new ErreurApi(LocalDateTime.now(), statut.value(),
                 statut.getReasonPhrase(), message, req.getRequestURI(), champs);
         return ResponseEntity.status(statut).body(corps);
+    }
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErreurApi> missingParameter(MissingServletRequestParameterException ex,
+                                                      HttpServletRequest req) {
+        return buildResponse(HttpStatus.BAD_REQUEST,
+                "Paramètre obligatoire manquant : " + ex.getParameterName(), req, null);
+    }
+
+    /** Deux personnes ont modifié la même donnée en même temps : la seconde doit recharger. */
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ErreurApi> optimisticLock(OptimisticLockingFailureException ex, HttpServletRequest req) {
+        return buildResponse(HttpStatus.CONFLICT,
+                "Cette donnée a été modifiée entre-temps : rechargez et réessayez", req, null);
     }
 }

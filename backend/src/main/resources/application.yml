@@ -53,6 +53,8 @@ app:
   mail:
     from: ${MAIL_FROM:no-reply@rh-app.local}
     from-name: Application RH
+  leave:
+    weekend-days: SATURDAY,SUNDAY    # jours non ouvrables (mettre SUNDAY seul si le samedi est travaillé)
   security:
     tokens:
       activation-hours: 48

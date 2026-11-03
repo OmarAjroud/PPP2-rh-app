@@ -6,12 +6,22 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface EmployeRepository
         extends JpaRepository<Employe, Long>, JpaSpecificationExecutor<Employe> {
+
+
+    /** Verrouille la ligne de l'employé jusqu'à la fin de la transaction (sérialise ses demandes de congé). */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select e from Employe e where e.id = :id")
+    Optional<Employe> findByIdForUpdate(@Param("id") Long id);
 
     // Utilisées par RoleService et DepartementService (étape 2)
     boolean existsByRoleId(Long roleId);
