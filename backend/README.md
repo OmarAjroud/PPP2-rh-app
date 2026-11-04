@@ -52,3 +52,20 @@ Les liens reçus par email pointent vers `FRONTEND_URL` (voir la section Configu
 - Compteur de la cloche (à interroger régulièrement, ex. toutes les 30 s) : `GET /api/notifications/non-lues/nombre`
 - Marquer comme lue : `POST /api/notifications/{id}/lecture` ; tout marquer comme lu : `POST /api/notifications/lecture`
 - Un email accompagne chaque notification (lien vers `FRONTEND_URL`) ; à désactiver avec `NOTIFICATIONS_EMAIL_ENABLED=false`.
+
+## Notifications (partie 2 : temps réel avec SSE)
+
+`EventSource` (navigateur) ne peut pas envoyer d'en-tête `Authorization` : on échange d'abord le JWT contre un ticket.
+
+1. `POST /api/notifications/flux/ticket` (avec le JWT) → `{"ticket": "...", "expireDans": 30}` : usage unique, 30 secondes.
+2. `new EventSource('/api/notifications/flux?ticket=...')` (un client capable d'envoyer des en-têtes peut aussi passer le JWT en `Authorization`).
+
+Événements reçus :
+- `non-lues` : `{"nombre": 3}`, dès l'ouverture (la cloche est juste même après une reconnexion), puis à chaque lecture depuis un autre onglet ;
+- `notification` : `{"notification": {...}, "nombreNonLues": 4}` à chaque nouvelle notification ;
+- un commentaire `:ping` toutes les 25 secondes (garde la connexion ouverte à travers les proxys).
+
+Le flux se ferme après la durée de vie d'un jeton d'accès (15 min) ; le client redemande alors un ticket et se reconnecte.
+Un compte désactivé ou un mot de passe changé perd donc le temps réel en 15 minutes au plus. Au plus 5 flux par utilisateur.
+Les tickets et les connexions sont gardés en mémoire : valable pour une seule instance de l'application.
+Les événements ne partent qu'après validation de la transaction ; le polling de la partie 1 reste disponible en secours.

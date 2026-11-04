@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -58,8 +59,11 @@ public class NotificationService {
         notification.setTitre(truncate(titre, MAX_TITRE));
         notification.setMessage(truncate(message, MAX_MESSAGE));
         notification.setLien(lien);
-        notification.setDateCreation(LocalDateTime.now(clock));
+        // à la seconde, comme la colonne DATETIME : la version poussée en direct et la version relue sont identiques
+        notification.setDateCreation(LocalDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS));
         repository.save(notification);
+        eventPublisher.publishEvent(new NotificationEvenements.Creee(destinataire.getId(),
+                NotificationResponse.from(notification)));        // poussée en direct après validation
 
         if (properties.emailEnabled() && destinataire.getEmail() != null) {
             Map<String, Object> variables = new HashMap<>();
@@ -100,7 +104,8 @@ public class NotificationService {
                 .orElseThrow(() -> new RessourceIntrouvableException("Notification introuvable (id=" + id + ")"));
         if (!notification.isLue()) {
             notification.setLue(true);
-            notification.setDateLecture(LocalDateTime.now(clock));
+            notification.setDateLecture(LocalDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS));
+            eventPublisher.publishEvent(new NotificationEvenements.NonLuesModifiees(employeId));
         }
         return NotificationResponse.from(notification);
     }
@@ -108,7 +113,11 @@ public class NotificationService {
     /** Marque toutes mes notifications comme lues ; renvoie combien l'ont été. */
     @Transactional
     public int markAllRead(Long employeId) {
-        return repository.markAllRead(employeId, LocalDateTime.now(clock));
+        int nombre = repository.markAllRead(employeId, LocalDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS));
+        if (nombre > 0) {
+            eventPublisher.publishEvent(new NotificationEvenements.NonLuesModifiees(employeId));
+        }
+        return nombre;
     }
 
     private static String truncate(String texte, int max) {
