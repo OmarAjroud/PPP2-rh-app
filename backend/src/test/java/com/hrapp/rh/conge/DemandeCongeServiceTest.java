@@ -244,14 +244,15 @@ class DemandeCongeServiceTest {
     @Test
     @DisplayName("Annulation : refusée si la demande n'est plus en attente")
     void cancel_shouldThrowConflict_whenRequestIsNotPending() {
-        DemandeConge demande = demande(10L, lina, StatutDemandeConge.APPROUVEE);
+        DemandeConge demande = demande(10L, lina, StatutDemandeConge.REFUSEE);
         given(repository.findById(10L)).willReturn(Optional.of(demande));
 
         assertThatThrownBy(() -> service.cancel(user(), 10L))
                 .isInstanceOf(ConflitException.class)
-                .hasMessageContaining("en attente");
+                .hasMessageContaining("ne peut plus être annulée");
+        assertThat(demande.getStatut()).isEqualTo(StatutDemandeConge.REFUSEE);
 
-        assertThat(demande.getStatut()).isEqualTo(StatutDemandeConge.APPROUVEE);
+
     }
 
     @Test

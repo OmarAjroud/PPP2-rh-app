@@ -8,6 +8,7 @@ public record DemandeCongeResponse(
         Long id,
         Long employeId,
         String employeNomComplet,
+        String employeDepartementNom,
         Long typeCongeId,
         String typeCongeCode,
         String typeCongeLibelle,
