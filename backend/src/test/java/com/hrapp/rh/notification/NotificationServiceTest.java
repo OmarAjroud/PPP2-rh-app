@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -55,14 +56,47 @@ class NotificationServiceTest {
         assertThat(n.getDateCreation()).isEqualTo(maintenant);
         assertThat(n.getDestinataire().getId()).isEqualTo(3L);
 
-        ArgumentCaptor<MailMessage> mail = ArgumentCaptor.forClass(MailMessage.class);
-        verify(eventPublisher).publishEvent(mail.capture());
-        assertThat(mail.getValue().to()).isEqualTo("manager@rh.com");
-        assertThat(mail.getValue().template()).isEqualTo("notification");
-        assertThat(mail.getValue().subject()).startsWith("Nouvelle demande de congé");
-        assertThat(mail.getValue().variables())
+        MailMessage mail = published(MailMessage.class).getFirst();
+        assertThat(mail.to()).isEqualTo("manager@rh.com");
+        assertThat(mail.template()).isEqualTo("notification");
+        assertThat(mail.subject()).startsWith("Nouvelle demande de congé");
+        assertThat(mail.variables())
                 .containsEntry("prenom", "Karim")
                 .containsEntry("lien", "http://localhost:4200/conges/demandes/10");   // pas de « // »
+    }
+
+    @Test
+    @DisplayName("Création : annonce la notification pour la poussée en direct (SSE)")
+    void notify_shouldPublishCreatedEvent_forLivePush() {
+        service(false).notify(karim(), TypeNotification.CONGE_DEMANDE, "Titre", "Message", "/conges/demandes/10");
+
+        NotificationEvenements.Creee evenement = published(NotificationEvenements.Creee.class).getFirst();
+        assertThat(evenement.destinataireId()).isEqualTo(3L);
+        assertThat(evenement.notification().titre()).isEqualTo("Titre");
+        assertThat(published(MailMessage.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Lecture : prévient les autres onglets, seulement si le compteur change")
+    void markRead_shouldAnnounceUnreadChange_onlyWhenSomethingChanged() {
+        given(repository.findByIdAndDestinataireId(7L, 3L)).willReturn(Optional.of(notification(7L, false)));
+        given(repository.findByIdAndDestinataireId(8L, 3L)).willReturn(Optional.of(notification(8L, true)));
+
+        service(true).markRead(3L, 7L);
+        service(true).markRead(3L, 8L);                        // déjà lue : rien à annoncer
+
+        assertThat(published(NotificationEvenements.NonLuesModifiees.class))
+                .containsExactly(new NotificationEvenements.NonLuesModifiees(3L));
+    }
+
+    @Test
+    @DisplayName("Tout marquer comme lu : aucune annonce s'il n'y avait rien à lire")
+    void markAllRead_shouldNotAnnounce_whenNothingWasUnread() {
+        given(repository.markAllRead(3L, maintenant)).willReturn(0);
+
+        service(true).markAllRead(3L);
+
+        verifyNoInteractions(eventPublisher);
     }
 
     @Test
@@ -71,7 +105,7 @@ class NotificationServiceTest {
         service(false).notify(karim(), TypeNotification.CONGE_DEMANDE, "Titre", "Message", null);
 
         verify(repository).save(any(Notification.class));
-        verifyNoInteractions(eventPublisher);
+        assertThat(published(MailMessage.class)).isEmpty();
     }
 
     @Test
@@ -81,6 +115,18 @@ class NotificationServiceTest {
                 "Titre", "x".repeat(800), null);
 
         assertThat(n.getMessage()).hasSize(500).endsWith("…");
+    }
+
+    @Test
+    @DisplayName("Création : la date est arrondie à la seconde, comme en base (version poussée = version relue)")
+    void notify_shouldTruncateCreationDateToSeconds() {
+        Clock precise = Clock.fixed(Instant.parse("2026-11-05T09:30:00.539824Z"), ZoneOffset.UTC);
+        NotificationService service = new NotificationService(repository, eventPublisher,
+                new NotificationProperties(false), precise, "http://localhost:4200");
+
+        Notification n = service.notify(karim(), TypeNotification.CONGE_DEMANDE, "Titre", "Message", null);
+
+        assertThat(n.getDateCreation()).isEqualTo(maintenant);
     }
 
     @Test
@@ -139,6 +185,13 @@ class NotificationServiceTest {
     }
 
     // ---------- méthodes utilitaires ----------
+
+    /** Événements d'un type donné publiés par le service (il en publie de plusieurs types). */
+    private <T> List<T> published(Class<T> type) {
+        ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher, atLeast(0)).publishEvent(captor.capture());
+        return captor.getAllValues().stream().filter(type::isInstance).map(type::cast).toList();
+    }
 
     private Employe karim() {
         Employe e = new Employe();

@@ -14,6 +14,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -64,6 +65,15 @@ public class GestionnaireExceptionsGlobal {
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ErreurApi> unknownUrl(NoResourceFoundException ex, HttpServletRequest req) {
         return buildResponse(HttpStatus.NOT_FOUND, "URL inconnue", req, null);
+    }
+
+    /**
+     * Le client est parti (onglet fermé pendant un flux SSE, connexion coupée) : il n'y a plus personne
+     * à qui répondre. Ce n'est pas une erreur du serveur, on ne la journalise pas comme telle.
+     */
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void clientGone(AsyncRequestNotUsableException ex, HttpServletRequest req) {
+        log.debug("Client déconnecté sur {} : {}", req.getRequestURI(), ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

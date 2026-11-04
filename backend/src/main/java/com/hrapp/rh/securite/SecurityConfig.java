@@ -1,6 +1,7 @@
 package com.hrapp.rh.securite;
 
 import com.hrapp.rh.common.exception.ErreurApi;
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +48,12 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Fin d'un flux SSE : Spring refait passer la requête (dispatch ASYNC) ; elle a déjà été
+                        // autorisée à l'ouverture, et sans session le contexte de sécurité serait perdu ici.
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // Flux SSE : EventSource ne peut pas envoyer de JWT ; le contrôleur exige un ticket
+                        .requestMatchers(HttpMethod.GET, "/api/notifications/flux").permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/refresh", "/api/auth/activation",
                                 "/api/auth/mot-de-passe-oublie", "/api/auth/reinitialisation").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
