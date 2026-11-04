@@ -43,4 +43,7 @@ public interface EmployeRepository
     Page<Employe> findAll(Specification<Employe> spec, Pageable pageable);
 
     Optional<Employe> findByEmailIgnoreCase(String email);
+
+    /** Employés ayant un rôle donné (ex. tous les RH, destinataires des demandes sans manager). */
+    List<Employe> findByRoleNom(String nomRole);
 }

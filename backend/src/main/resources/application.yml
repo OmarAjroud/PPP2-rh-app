@@ -55,6 +55,8 @@ app:
     from-name: Application RH
   leave:
     weekend-days: SATURDAY,SUNDAY    # jours non ouvrables (mettre SUNDAY seul si le samedi est travaillé)
+  notifications:
+    email-enabled: ${NOTIFICATIONS_EMAIL_ENABLED:true}   # un email accompagne chaque notification
   security:
     tokens:
       activation-hours: 48

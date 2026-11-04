@@ -41,3 +41,14 @@ Les liens reçus par email pointent vers `FRONTEND_URL` (voir la section Configu
 - Soldes : `GET /api/conges/soldes/{employeId}` ; historique : `GET /api/conges/soldes/{employeId}/mouvements`
 - Ajustement RH : `POST /api/conges/soldes/{employeId}/ajustements` (commentaire obligatoire)
 - Règles : nul ne valide sa propre demande ; une demande n'est visible que de son auteur, de son manager d'équipe, des RH et des administrateurs.
+
+## Notifications (partie 1 : stockage, consultation, emails)
+
+- Nouvelle demande de congé : notifie le manager direct ; s'il n'y en a pas, tous les RH ; à défaut, les administrateurs.
+- Demande approuvée ou refusée : notifie le demandeur (avec le commentaire ou le motif).
+- Demande annulée : notifie les mêmes valideurs, ainsi que la personne qui l'avait approuvée.
+- Personne n'est jamais notifié de sa propre action. La notification est enregistrée dans la même transaction que l'action.
+- Mes notifications : `GET /api/notifications?nonLues=true&page=0&size=10`
+- Compteur de la cloche (à interroger régulièrement, ex. toutes les 30 s) : `GET /api/notifications/non-lues/nombre`
+- Marquer comme lue : `POST /api/notifications/{id}/lecture` ; tout marquer comme lu : `POST /api/notifications/lecture`
+- Un email accompagne chaque notification (lien vers `FRONTEND_URL`) ; à désactiver avec `NOTIFICATIONS_EMAIL_ENABLED=false`.
