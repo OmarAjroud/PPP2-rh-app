@@ -10,7 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import com.hrapp.rh.employe.EmployeRepository;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -34,6 +34,8 @@ class SoldeCongeServiceTest {
     @Mock private SoldeCongeRepository soldeRepository;
     @Mock private DemandeCongeRepository demandeRepository;
     @Mock private TypeCongeRepository typeCongeRepository;
+    @Mock private MouvementSoldeRepository mouvementRepository;
+    @Mock private EmployeRepository employeRepository;
 
     // « Aujourd'hui » = mardi 3 novembre 2026
     private final Clock clock = Clock.fixed(Instant.parse("2026-11-03T10:00:00Z"), ZoneOffset.UTC);
@@ -42,7 +44,8 @@ class SoldeCongeServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new SoldeCongeService(soldeRepository, demandeRepository, typeCongeRepository, clock);
+        service = new SoldeCongeService(soldeRepository, demandeRepository, typeCongeRepository,
+                mouvementRepository, employeRepository, clock);
     }
 
     @Test
@@ -63,6 +66,7 @@ class SoldeCongeServiceTest {
     @Test
     @DisplayName("Disponible : crée le solde de l'année avec la valeur par défaut du type s'il n'existe pas")
     void calculateAvailable_shouldCreateBalanceFromTypeDefault_whenNoneExists() {
+
         TypeConge annuel = annuel();
         Employe lina = employe(4L);
         given(soldeRepository.findByEmployeIdAndTypeCongeIdAndAnnee(4L, 1L, 2026)).willReturn(Optional.empty());
@@ -77,6 +81,10 @@ class SoldeCongeServiceTest {
         assertThat(captor.getValue().getJoursPris()).isEqualByComparingTo("0");
         assertThat(captor.getValue().getAnnee()).isEqualTo(2026);
         assertThat(captor.getValue().getEmploye()).isSameAs(lina);
+        ArgumentCaptor<MouvementSolde> mouvement = ArgumentCaptor.forClass(MouvementSolde.class);
+        verify(mouvementRepository).save(mouvement.capture());
+        assertThat(mouvement.getValue().getTypeMouvement()).isEqualTo(TypeMouvement.ALLOCATION);
+        assertThat(mouvement.getValue().getJours()).isEqualByComparingTo("22");
     }
 
     @Test

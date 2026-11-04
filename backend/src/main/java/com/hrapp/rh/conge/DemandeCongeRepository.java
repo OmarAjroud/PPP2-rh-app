@@ -18,7 +18,7 @@ public interface DemandeCongeRepository
 
     /** Recherche paginée avec chargement de l'employé, du type et du décideur en une seule requête. */
     @Override
-    @EntityGraph(attributePaths = {"employe", "typeConge", "decidePar"})
+    @EntityGraph(attributePaths = {"employe", "employe.departement", "typeConge", "decidePar"})
     Page<DemandeConge> findAll(Specification<DemandeConge> spec, Pageable pageable);
 
     /**

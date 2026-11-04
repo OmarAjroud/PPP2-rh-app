@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +36,8 @@ public class DemandeCongeService {
     private final JoursOuvrablesService joursOuvrablesService;
     private final DemandeCongeMapper mapper;
     private final Clock clock;
+
+    // ---------- demande ----------
 
     /** Crée une demande pour l'utilisateur connecté (jamais pour quelqu'un d'autre). */
     @Transactional
@@ -82,6 +85,8 @@ public class DemandeCongeService {
         return mapper.toResponse(repository.save(demande));
     }
 
+    // ---------- consultation ----------
+
     /** Mes demandes, la plus récente d'abord, avec filtres optionnels. */
     @Transactional(readOnly = true)
     public PageReponse<DemandeCongeResponse> listMine(UtilisateurConnecte utilisateur, StatutDemandeConge statut,
@@ -89,22 +94,83 @@ public class DemandeCongeService {
         Specification<DemandeConge> filtre = DemandeCongeSpecification.employe(utilisateur.getEmployeId())
                 .and(DemandeCongeSpecification.statut(statut))
                 .and(DemandeCongeSpecification.annee(annee));
-        PageRequest pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(taille, 1), 100),
-                Sort.by(Sort.Direction.DESC, "dateDebut", "id"));
-        return PageReponse.from(repository.findAll(filtre, pageable).map(mapper::toResponse));
+        return PageReponse.from(repository.findAll(filtre, pageRequest(page, taille)).map(mapper::toResponse));
     }
 
+    /** Demandes de mon équipe (les employés dont je suis le manager direct) : la « boîte de réception ». */
     @Transactional(readOnly = true)
-    public DemandeCongeResponse findById(UtilisateurConnecte utilisateur, Long id) {
-        return mapper.toResponse(findOwnOrThrow(utilisateur, id));
+    public PageReponse<DemandeCongeResponse> listTeam(UtilisateurConnecte acteur, StatutDemandeConge statut,
+                                                      Integer annee, int page, int taille) {
+        Specification<DemandeConge> filtre = DemandeCongeSpecification.equipeDe(acteur.getEmployeId())
+                .and(DemandeCongeSpecification.statut(statut))
+                .and(DemandeCongeSpecification.annee(annee));
+        return PageReponse.from(repository.findAll(filtre, pageRequest(page, taille)).map(mapper::toResponse));
     }
 
-    /** Annule ma demande tant qu'elle est en attente. */
+    /** Vue globale pour les RH : toutes les demandes, avec filtres (statut, employé, département, période). */
+    @Transactional(readOnly = true)
+    public PageReponse<DemandeCongeResponse> listAll(StatutDemandeConge statut, Long employeId, Long departementId,
+                                                     LocalDate du, LocalDate au, int page, int taille) {
+        if (du != null && au != null && du.isAfter(au)) {
+            throw new RequeteInvalideException("La date de début doit précéder la date de fin");
+        }
+        Specification<DemandeConge> filtre = DemandeCongeSpecification.employe(employeId)
+                .and(DemandeCongeSpecification.departement(departementId))
+                .and(DemandeCongeSpecification.statut(statut))
+                .and(DemandeCongeSpecification.chevauche(du, au));
+        return PageReponse.from(repository.findAll(filtre, pageRequest(page, taille)).map(mapper::toResponse));
+    }
+
+    /** Détail : visible par le demandeur, son manager d'équipe, ADMIN et RH (sinon 404). */
+    @Transactional(readOnly = true)
+    public DemandeCongeResponse findById(UtilisateurConnecte acteur, Long id) {
+        return mapper.toResponse(findVisibleOrThrow(acteur, id));
+    }
+
+    // ---------- décision ----------
+
+    /** Approuve une demande en attente. Un seul bloc transactionnel : déduction du solde, mouvement, décision. */
+    @Transactional
+    public DemandeCongeResponse approve(UtilisateurConnecte acteur, Long id, String motif) {
+        DemandeConge demande = findVisibleOrThrow(acteur, id);
+        verifyNotOwnRequest(acteur, demande);
+        verifyPending(demande);
+        Employe decideur = loadActor(acteur);
+
+        if (demande.getTypeConge().isDeduitDuSolde()) {
+            soldeService.deductDays(demande, decideur);       // verrou + vérification + mouvement
+        }
+        demande.setStatut(StatutDemandeConge.APPROUVEE);
+        decide(demande, decideur, motif);
+        return mapper.toResponse(demande);
+    }
+
+    /** Refuse une demande en attente (le motif est obligatoire, le solde ne change pas). */
+    @Transactional
+    public DemandeCongeResponse reject(UtilisateurConnecte acteur, Long id, String motif) {
+        if (motif == null || motif.isBlank()) {
+            throw new RequeteInvalideException("Le motif du refus est obligatoire");
+        }
+        DemandeConge demande = findVisibleOrThrow(acteur, id);
+        verifyNotOwnRequest(acteur, demande);
+        verifyPending(demande);
+        Employe decideur = loadActor(acteur);
+
+        demande.setStatut(StatutDemandeConge.REFUSEE);
+        decide(demande, decideur, motif);
+        return mapper.toResponse(demande);
+    }
+
+    // ---------- annulation ----------
+
+    /** Annule ma demande : en attente, ou approuvée tant que le congé n'a pas commencé (les jours sont alors rendus). */
     @Transactional
     public DemandeCongeResponse cancel(UtilisateurConnecte utilisateur, Long id) {
         DemandeConge demande = findOwnOrThrow(utilisateur, id);
-        if (demande.getStatut() != StatutDemandeConge.EN_ATTENTE) {
-            throw new ConflitException("Seule une demande en attente peut être annulée (statut actuel : "
+        switch (demande.getStatut()) {
+            case EN_ATTENTE -> { /* rien à rendre : les jours n'étaient que réservés */ }
+            case APPROUVEE -> cancelApproved(demande);
+            default -> throw new ConflitException("Cette demande ne peut plus être annulée (statut actuel : "
                     + demande.getStatut().getLibelle() + ")");
         }
         demande.setStatut(StatutDemandeConge.ANNULEE);
@@ -112,6 +178,16 @@ public class DemandeCongeService {
     }
 
     // ---------- méthodes privées ----------
+
+    private void cancelApproved(DemandeConge demande) {
+        if (!demande.getDateDebut().isAfter(LocalDate.now(clock))) {
+            throw new ConflitException(
+                    "Un congé déjà commencé ne peut plus être annulé : contactez les ressources humaines");
+        }
+        if (demande.getTypeConge().isDeduitDuSolde()) {
+            soldeService.refundDays(demande, demande.getEmploye());
+        }
+    }
 
     private void verifyDates(TypeConge type, LocalDate debut, LocalDate fin) {
         if (fin.isBefore(debut)) {
@@ -138,6 +214,43 @@ public class DemandeCongeService {
         return repository.findById(id)
                 .filter(d -> d.getEmploye().getId().equals(utilisateur.getEmployeId()))
                 .orElseThrow(() -> new RessourceIntrouvableException("Demande de congé introuvable (id=" + id + ")"));
+    }
+
+    /** Visible par le demandeur, son manager d'équipe, ADMIN et RH ; introuvable pour tous les autres. */
+    private DemandeConge findVisibleOrThrow(UtilisateurConnecte acteur, Long id) {
+        return repository.findById(id)
+                .filter(d -> AccesConge.canView(acteur, d.getEmploye()))
+                .orElseThrow(() -> new RessourceIntrouvableException("Demande de congé introuvable (id=" + id + ")"));
+    }
+
+    /** Personne ne valide ni ne refuse sa propre demande (ADMIN et RH compris). */
+    private void verifyNotOwnRequest(UtilisateurConnecte acteur, DemandeConge demande) {
+        if (demande.getEmploye().getId().equals(acteur.getEmployeId())) {
+            throw new AccessDeniedException("Vous ne pouvez pas valider ou refuser votre propre demande");
+        }
+    }
+
+    private void verifyPending(DemandeConge demande) {
+        if (demande.getStatut() != StatutDemandeConge.EN_ATTENTE) {
+            throw new ConflitException("Cette demande a déjà été traitée (statut actuel : "
+                    + demande.getStatut().getLibelle() + ")");
+        }
+    }
+
+    private Employe loadActor(UtilisateurConnecte acteur) {
+        return employeRepository.findById(acteur.getEmployeId())
+                .orElseThrow(() -> new RessourceIntrouvableException("Employé introuvable"));
+    }
+
+    private void decide(DemandeConge demande, Employe decideur, String motif) {
+        demande.setDecidePar(decideur);
+        demande.setDateDecision(LocalDateTime.now(clock));
+        demande.setMotifDecision(cleanComment(motif));
+    }
+
+    private PageRequest pageRequest(int page, int taille) {
+        return PageRequest.of(Math.max(page, 0), Math.min(Math.max(taille, 1), 100),
+                Sort.by(Sort.Direction.DESC, "dateDebut", "id"));
     }
 
     private String cleanComment(String commentaire) {

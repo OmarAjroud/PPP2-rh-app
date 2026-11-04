@@ -21,3 +21,23 @@ cd backend && ./mvnw spring-boot:run
 5. Changer son mot de passe : `PUT /api/auth/mot-de-passe` (les autres sessions sont fermées)
 
 Les liens reçus par email pointent vers `FRONTEND_URL` (voir la section Configuration).
+
+## Congés (partie 1 : demandes)
+
+- Types : `GET /api/types-conge` (annuel, maladie, sans solde)
+- Mes soldes : `GET /api/conges/soldes/moi`
+- Aperçu du décompte : `GET /api/conges/demandes/jours-ouvrables?dateDebut=...&dateFin=...`
+- Demander : `POST /api/conges/demandes` ; mes demandes : `GET /api/conges/demandes/moi` ; annuler : `POST /api/conges/demandes/{id}/annulation`
+- Jours fériés : `GET /api/jours-feries?annee=2026` ; ajout/suppression réservés à RH et ADMIN
+  (les fêtes religieuses changent chaque année : à saisir dès l'annonce officielle).
+- Week-end configurable : `app.leave.weekend-days` (par défaut samedi et dimanche).
+
+## Congés (partie 2 : validation)
+
+- Manager : `GET /api/conges/demandes/equipe?statut=EN_ATTENTE` (son équipe = les employés dont il est le manager direct)
+- Valider : `POST /api/conges/demandes/{id}/validation` ; refuser (motif obligatoire) : `POST /api/conges/demandes/{id}/refus`
+- RH : vue globale `GET /api/conges/demandes` (filtres : statut, employeId, departementId, du, au)
+- Annuler un congé approuvé qui n'a pas commencé : `POST /api/conges/demandes/{id}/annulation` (les jours sont rendus)
+- Soldes : `GET /api/conges/soldes/{employeId}` ; historique : `GET /api/conges/soldes/{employeId}/mouvements`
+- Ajustement RH : `POST /api/conges/soldes/{employeId}/ajustements` (commentaire obligatoire)
+- Règles : nul ne valide sa propre demande ; une demande n'est visible que de son auteur, de son manager d'équipe, des RH et des administrateurs.
