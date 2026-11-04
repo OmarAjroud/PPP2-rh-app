@@ -69,3 +69,13 @@ Le flux se ferme après la durée de vie d'un jeton d'accès (15 min) ; le clien
 Un compte désactivé ou un mot de passe changé perd donc le temps réel en 15 minutes au plus. Au plus 5 flux par utilisateur.
 Les tickets et les connexions sont gardés en mémoire : valable pour une seule instance de l'application.
 Les événements ne partent qu'après validation de la transaction ; le polling de la partie 1 reste disponible en secours.
+
+## Tableau de bord
+
+`GET /api/tableau-de-bord?annee=2026&departementId=1` (les deux paramètres sont facultatifs ; année en cours par défaut).
+
+- Indicateurs : nombre d'employés, demandes de congé en attente, embauches du mois en cours, absents aujourd'hui (congé approuvé).
+- Graphiques : effectif par département, embauches par mois (les 12 mois, 0 compris), répartition des congés approuvés de l'année par type,
+  masse salariale par département (total, moyenne sur les salaires renseignés, effectif).
+- ADMIN / RH : toute l'entreprise, ou un département au choix. MANAGER : son département uniquement (403 pour un autre), sans masse salariale (`null`).
+  EMPLOYE : 403.
