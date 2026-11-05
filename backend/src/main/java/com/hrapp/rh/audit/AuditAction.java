@@ -10,5 +10,6 @@ public enum AuditAction {
     INVITATION,
     ACTIVATION_COMPTE,
     CHANGEMENT_MOT_DE_PASSE,
-    REINITIALISATION_MOT_DE_PASSE
+    REINITIALISATION_MOT_DE_PASSE,
+    APPEL_ASSISTANT              // un outil de l'assistant RH a été exécuté (chat ou MCP)
 }

@@ -42,6 +42,11 @@ public class GestionnaireExceptionsGlobal {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), req, null);
     }
 
+    @ExceptionHandler(ServiceIndisponibleException.class)
+    public ResponseEntity<ErreurApi> unavailable(ServiceIndisponibleException ex, HttpServletRequest req) {
+        return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), req, null);
+    }
+
     @ExceptionHandler(ConflitException.class)
     public ResponseEntity<ErreurApi> conflict(ConflitException ex, HttpServletRequest req) {
         return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), req, null);

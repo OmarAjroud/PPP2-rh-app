@@ -79,3 +79,48 @@ Les événements ne partent qu'après validation de la transaction ; le polling 
   masse salariale par département (total, moyenne sur les salaires renseignés, effectif).
 - ADMIN / RH : toute l'entreprise, ou un département au choix. MANAGER : son département uniquement (403 pour un autre), sans masse salariale (`null`).
   EMPLOYE : 403.
+
+## Assistant RH (Claude + MCP)
+
+Outils en lecture seule, partagés par le chat et le serveur MCP : `lister_departements`, `rechercher_employes`, `consulter_employe`,
+`statistiques_departement`, `solde_conges`, `demandes_en_attente`, `absences_periode`.
+
+- **Droits** : chaque outil appelle le même service que l'écran correspondant, avec l'utilisateur connecté. Mêmes règles que l'API :
+  un manager reste dans son département, le salaire n'est visible que des ADMIN / RH (et de l'intéressé), un employé ne voit que lui-même.
+- **Journal d'audit** : chaque appel d'outil est enregistré (action `APPEL_ASSISTANT`, entité `AssistantRH`) avec l'outil, la source (CHAT ou MCP),
+  les arguments et l'éventuelle erreur.
+
+### Chat dans l'application
+
+- `POST /api/assistant/chat` : `{"messages": [{"role": "utilisateur", "contenu": "Qui est en congé la semaine prochaine en informatique ?"}]}`
+  → `{"reponse": "...", "outilsUtilises": ["lister_departements", "absences_periode"]}`.
+  L'API ne garde pas d'historique : le front-end renvoie toute la conversation (20 messages au plus).
+- `GET /api/assistant/statut` : moteur, modèle, disponibilité (pour afficher ou masquer le chat).
+
+**Moteur par défaut : un modèle local avec [Ollama](https://ollama.com)** (gratuit, sans clé, les données RH ne quittent pas la machine).
+
+```bash
+winget install Ollama.Ollama          # puis rouvrir le terminal ; Ollama démarre en arrière-plan
+ollama pull qwen3:4b-instruct         # ~2,5 Go, à télécharger avant la démonstration
+```
+
+- Modèle : `OLLAMA_MODEL` (par défaut `qwen3:4b-instruct`, la variante *sans réflexion* : rapide, même sans carte graphique ;
+  la variante `qwen3:4b` raisonne longuement avant chaque réponse). Adresse : `OLLAMA_URL` (par défaut `http://localhost:11434`).
+- Le modèle est préchargé au démarrage de l'application et reste en mémoire 30 minutes entre deux questions.
+- Temps de réponse indicatifs : ~1 à 2 s avec une carte graphique NVIDIA ; 10 à 25 s sur un portable sans carte graphique.
+- Ollama arrêté ou modèle absent : le chat répond 503 avec la commande à lancer ; le reste de l'application fonctionne.
+
+**Moteur optionnel : l'API Claude** (`ASSISTANT_PROVIDER=claude`, clé `ANTHROPIC_API_KEY`, usage facturé), plus fiable sur les questions complexes.
+`CLAUDE_MODEL` (par défaut `claude-opus-5-5`), `CLAUDE_EFFORT` (par défaut `medium`). Si le modèle refuse une demande,
+l'API la relance sur un modèle de repli (`fallbacks: default`).
+
+### Serveur MCP
+
+`POST /mcp` (MCP « streamable HTTP », mode sans état), avec le même JWT que le reste de l'API. Exemple de configuration d'un client MCP :
+
+```json
+{ "mcpServers": { "rh": { "type": "http", "url": "http://localhost:8080/mcp",
+                          "headers": { "Authorization": "Bearer <jeton d'accès>" } } } }
+```
+
+Le jeton d'accès expire au bout de 15 minutes : à renouveler dans la configuration du client.
