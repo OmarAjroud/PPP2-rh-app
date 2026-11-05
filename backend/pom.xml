@@ -29,6 +29,8 @@
 	<properties>
 		<java.version>21</java.version>
 		<org.mapstruct.version>1.6.3</org.mapstruct.version>
+		<anthropic.version>3.5.0</anthropic.version>
+		<mcp.version>2.1.0</mcp.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -64,6 +66,22 @@
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+		<!-- Assistant RH : API Claude (SDK officiel) et serveur MCP -->
+		<dependency>
+			<groupId>com.anthropic</groupId>
+			<artifactId>anthropic-java</artifactId>
+			<version>${anthropic.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.modelcontextprotocol.sdk</groupId>
+			<artifactId>mcp-core</artifactId>
+			<version>${mcp.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.modelcontextprotocol.sdk</groupId>
+			<artifactId>mcp-json-jackson3</artifactId>
+			<version>${mcp.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mapstruct</groupId>
