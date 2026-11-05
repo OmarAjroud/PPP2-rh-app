@@ -1,0 +1,90 @@
+# Application complète : MySQL + Mailpit + back-end (+ Ollama en option).
+#
+#   cp .env.example .env        # puis renseigner JWT_SECRET (voir le fichier)
+#   docker compose up -d --build
+#
+# Le back-end répond sur http://localhost:8080 (Swagger : /swagger-ui.html si SWAGGER_ENABLED=true),
+# les emails envoyés sont visibles sur http://localhost:8025.
+# Assistant RH : utilise par défaut l'Ollama installé sur la machine ; pour le lancer aussi dans Docker :
+#   docker compose --profile ollama up -d --build   (et OLLAMA_URL=http://ollama:11434 dans .env)
+#
+# Pour le développement (back-end lancé depuis l'IDE), utiliser plutôt backend/docker-compose.yml.
+
+name: rh-app
+
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: rh_db
+      MYSQL_USER: ${DB_USERNAME:-rh_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Définissez DB_PASSWORD dans .env (voir .env.example)}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Définissez MYSQL_ROOT_PASSWORD dans .env (voir .env.example)}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    # Pas de port publié : la base n'est joignable que par le back-end, à l'intérieur de Docker
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "${MAILPIT_PORT:-8025}:8025"     # boîte de réception de test (interface web)
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:mysql://mysql:3306/rh_db?serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      DB_USERNAME: ${DB_USERNAME:-rh_user}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Définissez JWT_SECRET dans .env (au moins 32 caractères aléatoires, voir .env.example)}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4200}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200}
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      MAIL_FROM: ${MAIL_FROM:-no-reply@rh-app.local}
+      SEED_TEST_ACCOUNTS: ${SEED_TEST_ACCOUNTS:-false}
+      SEED_TEST_PASSWORD: ${SEED_TEST_PASSWORD:-Test1234!}
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-false}
+      ASSISTANT_PROVIDER: ${ASSISTANT_PROVIDER:-ollama}
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:4b-instruct}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # sous Linux : accès à l'Ollama installé sur la machine
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    restart: unless-stopped
+
+  # ---------- Optionnel : Ollama dans Docker (docker compose --profile ollama up -d) ----------
+  ollama:
+    image: ollama/ollama
+    profiles: ["ollama"]
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
+  # Télécharge le modèle une fois (≈ 2,5 Go), puis s'arrête
+  ollama-pull:
+    image: ollama/ollama
+    profiles: ["ollama"]
+    depends_on:
+      - ollama
+    environment:
+      OLLAMA_HOST: ollama:11434
+    entrypoint: ["sh", "-c", "sleep 3 && ollama pull ${OLLAMA_MODEL:-qwen3:4b-instruct}"]
+    restart: "no"
+
+volumes:
+  mysql_data:
+  ollama_data:

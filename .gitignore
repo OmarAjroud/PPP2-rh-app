@@ -1,0 +1,2 @@
+# Variables locales (secrets) : jamais dans Git
+.env

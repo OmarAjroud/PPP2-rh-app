@@ -2,6 +2,7 @@ package com.hrapp.rh.auth;
 
 import com.hrapp.rh.audit.AuditAction;
 import com.hrapp.rh.audit.AuditService;
+import com.hrapp.rh.securite.LimiteurConnexions;
 import com.hrapp.rh.securite.JwtService;
 import com.hrapp.rh.securite.Roles;
 import com.hrapp.rh.securite.UtilisateurConnecte;
@@ -32,6 +33,7 @@ class AuthServiceTest {
     @Mock private JwtService jwtService;
     @Mock private UtilisateurDetailsService userDetailsService;
     @Mock private AuditService auditService;
+    @Mock private LimiteurConnexions limiteur;
 
     @InjectMocks private AuthService service;
 

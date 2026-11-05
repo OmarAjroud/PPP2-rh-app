@@ -31,6 +31,32 @@ class SecuriteIT extends IntegrationTest {
     }
 
     @Test
+    @DisplayName("Connexion : après 5 échecs, 429 avec Retry-After, même avec le bon mot de passe ; les autres comptes passent")
+    void login_shouldBeTemporarilyBlocked_afterRepeatedFailures() {
+        Map<String, String> mauvais = Map.of("nomUtilisateur", "employe", "motDePasse", "faux");
+        for (int i = 0; i < 5; i++) {
+            assertThat(api.post("/api/auth/login", null, mauvais).statut()).isEqualTo(401);
+        }
+
+        Api.Reponse bloque = api.post("/api/auth/login", null,
+                Map.of("nomUtilisateur", "employe", "motDePasse", Api.MOT_DE_PASSE));
+        assertThat(bloque.statut()).isEqualTo(429);
+        assertThat(bloque.get("message").asString()).contains("Trop de tentatives");
+        assertThat(api.login("rh")).isNotBlank();                                   // un autre compte n'est pas touché
+    }
+
+    @Test
+    @DisplayName("Santé : /actuator/health public, « UP », sans aucun détail ; les autres endpoints Actuator fermés")
+    void health_shouldBePublicAndOpaque() {
+        Api.Reponse sante = api.get("/actuator/health", null);
+
+        assertThat(sante.statut()).isEqualTo(200);
+        assertThat(sante.get("status").asString()).isEqualTo("UP");
+        assertThat(sante.json().has("components")).isFalse();
+        assertThat(api.get("/actuator/env", api.login("admin")).statut()).isEqualTo(404);
+    }
+
+    @Test
     @DisplayName("Rafraîchissement : un jeton de rafraîchissement donne un nouveau jeton d'accès valable")
     void refresh_shouldIssueWorkingAccessToken() {
         Api.Reponse login = api.post("/api/auth/login", null, Map.of("nomUtilisateur", "employe", "motDePasse", Api.MOT_DE_PASSE));

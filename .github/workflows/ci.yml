@@ -1,0 +1,60 @@
+# Intégration continue : à chaque push sur main et à chaque pull request, on compile, on lance tous les tests
+# (unitaires + intégration avec une vraie base MySQL via Testcontainers) et on vérifie que l'image Docker se construit.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:        # lancement manuel depuis l'onglet « Actions »
+
+concurrency:                # un nouveau push annule l'exécution précédente de la même branche
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Back-end – tests (unitaires + intégration)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Compilation et tests (./mvnw verify)
+        run: ./mvnw -B verify
+
+      - name: Rapports de tests (en cas d'échec)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapports-de-tests
+          path: |
+            backend/target/surefire-reports/
+            backend/target/failsafe-reports/
+          retention-days: 7
+
+  docker:
+    name: Back-end – image Docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construction de l'image
+        run: docker build -t rh-backend:ci backend
+      - name: Configuration docker compose valide
+        run: |
+          cp .env.example .env
+          sed -i "s|^JWT_SECRET=.*|JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')|; s|^DB_PASSWORD=.*|DB_PASSWORD=ci|; s|^MYSQL_ROOT_PASSWORD=.*|MYSQL_ROOT_PASSWORD=ci|" .env
+          docker compose config --quiet

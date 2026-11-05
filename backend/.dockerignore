@@ -1,0 +1,13 @@
+# Seul le nécessaire est envoyé à Docker pour construire l'image
+target/
+.idea/
+.vscode/
+*.iml
+*.log
+HELP.md
+docker-compose.yml
+Dockerfile
+.dockerignore
+.git
+.gitignore
+.gitattributes

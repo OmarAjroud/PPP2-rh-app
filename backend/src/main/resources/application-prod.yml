@@ -1,0 +1,43 @@
+# Profil « prod » (SPRING_PROFILES_ACTIVE=prod) : réglages de déploiement.
+# Les secrets viennent UNIQUEMENT de variables d'environnement, sans valeur par défaut :
+# s'il en manque une, l'application refuse de démarrer (plutôt que d'utiliser une valeur de développement).
+
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+server:
+  # Derrière un proxy (nginx, Traefik...) : l'adresse IP du client est lue dans X-Forwarded-For (journal d'audit).
+  # À n'activer que si l'application n'est joignable QUE par ce proxy.
+  forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:none}
+  error:
+    include-stacktrace: never
+
+# Documentation de l'API : désactivée par défaut en production
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:false}
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:false}
+
+app:
+  frontend-url: ${FRONTEND_URL}
+  seed:
+    test-accounts: ${SEED_TEST_ACCOUNTS:false}   # jamais de comptes de test en production (sauf démonstration)
+  security:
+    jwt:
+      secret: ${JWT_SECRET}                      # au moins 32 caractères, aléatoire : openssl rand -base64 48
+    cors:
+      allowed-origins: ${CORS_ALLOWED_ORIGINS}
+
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: WARN

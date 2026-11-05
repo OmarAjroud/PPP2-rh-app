@@ -1,0 +1,3 @@
+# Fichiers exécutés sous Linux (conteneurs, CI) : toujours avec des fins de ligne Unix
+*.sh        text eol=lf
+Dockerfile  text eol=lf

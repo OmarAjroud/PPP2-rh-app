@@ -139,3 +139,44 @@ Le jeton d'accès expire au bout de 15 minutes : à renouveler dans la configura
   chaque test part des données de départ connues. Les emails sont simulés ; aucun modèle Ollama n'est requis.
   Couverts : sécurité et rôles, cycle complet d'une demande de congé (solde, historique, notifications, emails),
   tableau de bord sur données réelles, journal d'audit, serveur MCP avec les droits du jeton, flux SSE.
+
+## Lancer l'application complète avec Docker
+
+Tout se lance depuis la **racine du dépôt** (fichier `docker-compose.yml`) : MySQL, Mailpit et le back-end,
+compilé dans Docker (ni Java ni Maven requis sur la machine).
+
+```bash
+cp .env.example .env            # puis renseigner JWT_SECRET, DB_PASSWORD et MYSQL_ROOT_PASSWORD
+docker compose up -d --build    # première fois : quelques minutes (téléchargements et compilation)
+```
+
+- API : http://localhost:8080 — Swagger : http://localhost:8080/swagger-ui.html (si `SWAGGER_ENABLED=true`)
+- Emails envoyés : http://localhost:8025 (Mailpit)
+- État de santé : http://localhost:8080/actuator/health
+- Arrêter : `docker compose down` (les données sont conservées) ; tout effacer : `docker compose down -v`
+- Mettre à jour après un `git pull` : `docker compose up -d --build`
+
+L'image démarre avec le profil `prod` : secrets lus uniquement dans les variables d'environnement (refus de démarrer si
+`JWT_SECRET` manque ou vaut la valeur de développement), pas de journalisation SQL, Swagger et comptes de test désactivés
+sauf si `.env` les active (c'est le cas dans `.env.example`, prévu pour une démonstration).
+
+### Sur un nouveau poste (ex. un portable pour une démonstration)
+
+1. Installer **Docker Desktop**, **Git** et **Ollama** (`winget install Docker.DockerDesktop Git.Git Ollama.Ollama`).
+2. `git clone https://github.com/OmarAjroud/PPP2-rh-app.git` puis `cd PPP2-rh-app`.
+3. `ollama pull qwen3:4b-instruct` (≈ 2,5 Go, à faire avant le jour J).
+4. `cp .env.example .env`, renseigner les trois secrets, puis `docker compose up -d --build`.
+5. Se connecter avec `admin`, `rh`, `manager` ou `employe` (mot de passe `Test1234!`).
+
+Pour faire tourner Ollama dans Docker plutôt que sur la machine : `docker compose --profile ollama up -d --build`
+avec `OLLAMA_URL=http://ollama:11434` dans `.env` (le modèle est téléchargé automatiquement au premier lancement).
+
+## Sécurité en production
+
+- **Connexion** : après 5 échecs pour un même compte depuis une même adresse IP en 15 minutes, refus temporaire (429,
+  en-tête `Retry-After`), même avec le bon mot de passe. Réglable : `app.security.login.*`.
+- **Derrière un proxy** (nginx…) : `FORWARD_HEADERS_STRATEGY=framework` pour enregistrer la vraie adresse IP des clients
+  dans le journal d'audit, uniquement si l'application n'est joignable que par ce proxy.
+- **Supervision** : seul `/actuator/health` est exposé, sans détail interne.
+- **Intégration continue** (`.github/workflows/ci.yml`) : à chaque pull request et sur `main`, `./mvnw verify`
+  (tous les tests, dont l'intégration avec MySQL) et construction de l'image Docker.
