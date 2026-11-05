@@ -2,6 +2,8 @@ package com.hrapp.rh.integration;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 
 import java.util.Map;
 
@@ -43,6 +45,23 @@ class SecuriteIT extends IntegrationTest {
         assertThat(bloque.statut()).isEqualTo(429);
         assertThat(bloque.get("message").asString()).contains("Trop de tentatives");
         assertThat(api.login("rh")).isNotBlank();                                   // un autre compte n'est pas touché
+    }
+
+    @Test
+    @DisplayName("Erreurs de protocole : formulaire au lieu de JSON → 415, mauvaise méthode → 405 (jamais 500)")
+    void protocolErrors_shouldBeClientErrors_notServerErrors() {
+        String karim = api.login("manager");
+
+        // ce qu'envoie PowerShell (Invoke-RestMethod) quand on oublie -ContentType : un formulaire vide
+        Api.Reponse formulaire = api.call(HttpMethod.POST, "/api/conges/demandes/1/validation", karim,
+                "", MediaType.APPLICATION_FORM_URLENCODED);
+        assertThat(formulaire.statut()).isEqualTo(415);
+        assertThat(formulaire.get("message").asString()).contains("application/json");
+
+        Api.Reponse methode = api.call(HttpMethod.PUT, "/api/notifications/non-lues/nombre", karim,
+                Map.of(), MediaType.APPLICATION_JSON);
+        assertThat(methode.statut()).isEqualTo(405);
+        assertThat(methode.get("statut").asInt()).isEqualTo(405);
     }
 
     @Test

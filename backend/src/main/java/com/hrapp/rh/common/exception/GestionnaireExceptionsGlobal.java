@@ -6,6 +6,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -78,6 +81,25 @@ public class GestionnaireExceptionsGlobal {
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ErreurApi> unknownUrl(NoResourceFoundException ex, HttpServletRequest req) {
         return buildResponse(HttpStatus.NOT_FOUND, "URL inconnue", req, null);
+    }
+
+    /** Erreurs de protocole HTTP : ce sont des erreurs du client (4xx), jamais des erreurs internes (500). */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErreurApi> methodNotAllowed(HttpRequestMethodNotSupportedException ex, HttpServletRequest req) {
+        return buildResponse(HttpStatus.METHOD_NOT_ALLOWED,
+                "Méthode " + ex.getMethod() + " non autorisée sur cette URL", req, null);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErreurApi> unsupportedMediaType(HttpMediaTypeNotSupportedException ex, HttpServletRequest req) {
+        return buildResponse(HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                "Format de requête non pris en charge : envoyez du JSON (Content-Type: application/json)", req, null);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
+    public ResponseEntity<ErreurApi> notAcceptable(HttpMediaTypeNotAcceptableException ex, HttpServletRequest req) {
+        // aucun corps : le format demandé par le client (Accept) est justement celui qu'on ne sait pas produire
+        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
     }
 
     /**

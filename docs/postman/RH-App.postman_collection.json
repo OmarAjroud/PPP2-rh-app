@@ -1,0 +1,389 @@
+{
+  "info": {
+    "name": "RH App – démonstration",
+    "_postman_id": "8a1f6f0e-3c2b-4d7a-9a51-6e2f1c0b7d42",
+    "description": "Scénario de démonstration de l'API RH, à lancer dans l'ordre (Runner : « Run collection »).\n\n1. Choisir l'environnement « RH App – local ».\n2. Lancer d'abord le dossier « 0. Connexion » : les jetons des 4 comptes sont enregistrés automatiquement.\n3. Chaque requête vérifie automatiquement le résultat attendu (onglet « Test Results »).\n\nLes demandes de congé sont posées l'an prochain : la collection peut être relancée à volonté.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "motDePasse", "value": "Test1234!" },
+    { "key": "tokenAdmin", "value": "" },
+    { "key": "tokenRh", "value": "" },
+    { "key": "tokenManager", "value": "" },
+    { "key": "tokenEmploye", "value": "" },
+    { "key": "demandeId", "value": "" },
+    { "key": "dateDebut", "value": "" },
+    { "key": "dateFin", "value": "" },
+    { "key": "annee", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "0. Connexion",
+      "description": "Connecte les 4 comptes de démonstration et enregistre leurs jetons.",
+      "item": [
+        {
+          "name": "Connexion admin (ADMIN)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 et jeton reçu', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.collectionVariables.set('tokenAdmin', pm.response.json().accessToken);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\"nomUtilisateur\": \"admin\", \"motDePasse\": \"{{motDePasse}}\"}" }
+          }
+        },
+        {
+          "name": "Connexion rh (RH)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 et jeton reçu', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.collectionVariables.set('tokenRh', pm.response.json().accessToken);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\"nomUtilisateur\": \"rh\", \"motDePasse\": \"{{motDePasse}}\"}" }
+          }
+        },
+        {
+          "name": "Connexion manager (MANAGER)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 et jeton reçu', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.collectionVariables.set('tokenManager', pm.response.json().accessToken);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\"nomUtilisateur\": \"manager\", \"motDePasse\": \"{{motDePasse}}\"}" }
+          }
+        },
+        {
+          "name": "Connexion employe (EMPLOYE)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 et jeton reçu', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.collectionVariables.set('tokenEmploye', pm.response.json().accessToken);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\"nomUtilisateur\": \"employe\", \"motDePasse\": \"{{motDePasse}}\"}" }
+          }
+        },
+        {
+          "name": "Sans jeton → 401",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('401 au format commun', () => {",
+            "  pm.expect(pm.response.code).to.eql(401);",
+            "  pm.expect(pm.response.json().statut).to.eql(401);",
+            "});"
+          ] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/employes" }
+        }
+      ]
+    },
+    {
+      "name": "1. Droits selon le rôle",
+      "description": "Une même requête, des résultats différents selon qui la fait.",
+      "item": [
+        {
+          "name": "Employés vus par RH (tous)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('RH voit les 4 employés', () => pm.expect(pm.response.json().totalElements).to.eql(4));"
+          ] } }],
+          "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenRh}}" }] },
+            "url": "{{baseUrl}}/api/employes?sort=nom" }
+        },
+        {
+          "name": "Employés vus par le manager (son département)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Karim voit son département : 3 employés', () => pm.expect(pm.response.json().totalElements).to.eql(3));"
+          ] } }],
+          "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenManager}}" }] },
+            "url": "{{baseUrl}}/api/employes" }
+        },
+        {
+          "name": "Employés vus par l'employée (elle-même)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Lina ne voit qu\\'elle-même', () => pm.expect(pm.response.json().totalElements).to.eql(1));"
+          ] } }],
+          "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenEmploye}}" }] },
+            "url": "{{baseUrl}}/api/employes" }
+        },
+        {
+          "name": "Fiche de Lina vue par RH (salaire visible)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('salaire visible', () => pm.expect(pm.response.json().salaire).to.eql(2500));"
+          ] } }],
+          "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenRh}}" }] },
+            "url": "{{baseUrl}}/api/employes/4" }
+        },
+        {
+          "name": "Fiche de Lina vue par le manager (salaire masqué)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('salaire masqué', () => pm.expect(pm.response.json().salaire).to.be.null);"
+          ] } }],
+          "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenManager}}" }] },
+            "url": "{{baseUrl}}/api/employes/4" }
+        },
+        {
+          "name": "Recherche « Lina Gharbi »",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('prénom + nom trouvés', () => pm.expect(pm.response.json().totalElements).to.eql(1));"
+          ] } }],
+          "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenRh}}" }] },
+            "url": { "raw": "{{baseUrl}}/api/employes?recherche=Lina Gharbi", "host": ["{{baseUrl}}"], "path": ["api", "employes"],
+              "query": [{ "key": "recherche", "value": "Lina Gharbi" }] } }
+        },
+        {
+          "name": "Création d'un rôle par RH → 403 (réservé à l'ADMIN)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403', () => pm.expect(pm.response.code).to.eql(403));"
+          ] } }],
+          "request": { "method": "POST", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenRh}}" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/roles",
+            "body": { "mode": "raw", "raw": "{\"nom\": \"STAGIAIRE\", \"description\": \"Stagiaire\"}" } }
+        },
+        {
+          "name": "Tableau de bord RH (complet)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const t = pm.response.json();",
+            "pm.test('4 employés, masse salariale présente', () => {",
+            "  pm.expect(t.indicateurs.nombreEmployes).to.eql(4);",
+            "  pm.expect(t.masseSalariale.length).to.be.above(0);",
+            "});"
+          ] } }],
+          "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenRh}}" }] },
+            "url": "{{baseUrl}}/api/tableau-de-bord" }
+        },
+        {
+          "name": "Tableau de bord du manager (son département, sans masse salariale)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const t = pm.response.json();",
+            "pm.test('département 1, masse salariale masquée', () => {",
+            "  pm.expect(t.departementId).to.eql(1);",
+            "  pm.expect(t.masseSalariale).to.be.null;",
+            "});"
+          ] } }],
+          "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenManager}}" }] },
+            "url": "{{baseUrl}}/api/tableau-de-bord" }
+        },
+        {
+          "name": "Journal d'audit par RH → 403 (réservé à l'ADMIN)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403', () => pm.expect(pm.response.code).to.eql(403));"
+          ] } }],
+          "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenRh}}" }] },
+            "url": "{{baseUrl}}/api/admin/audit" }
+        }
+      ]
+    },
+    {
+      "name": "2. Cycle d'une demande de congé",
+      "description": "Lina demande, Karim valide, le solde est déduit, Lina annule et récupère ses jours. Ouvrir Mailpit (http://localhost:8025) pour voir les emails.",
+      "item": [
+        {
+          "name": "Aperçu : jours ouvrables de la période",
+          "event": [
+            { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+              "// un lundi de l'an prochain, choisi au hasard : la collection peut être relancée sans chevauchement",
+              "const d = new Date(Date.UTC(new Date().getUTCFullYear() + 1, 2, 1));",
+              "while (d.getUTCDay() !== 1) d.setUTCDate(d.getUTCDate() + 1);",
+              "d.setUTCDate(d.getUTCDate() + 7 * Math.floor(Math.random() * 30));",
+              "const fin = new Date(d); fin.setUTCDate(fin.getUTCDate() + 2);",
+              "pm.collectionVariables.set('dateDebut', d.toISOString().slice(0, 10));",
+              "pm.collectionVariables.set('dateFin', fin.toISOString().slice(0, 10));",
+              "pm.collectionVariables.set('annee', String(d.getUTCFullYear()));"
+            ] } },
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('jours ouvrables calculés (week-ends et jours fériés exclus)', () => pm.expect(pm.response.json().joursOuvrables).to.be.above(0));"
+            ] } }
+          ],
+          "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenEmploye}}" }] },
+            "url": "{{baseUrl}}/api/conges/demandes/jours-ouvrables?dateDebut={{dateDebut}}&dateFin={{dateFin}}" }
+        },
+        {
+          "name": "Lina demande un congé annuel",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('201, en attente', () => {",
+            "  pm.expect(pm.response.code).to.eql(201);",
+            "  pm.expect(pm.response.json().statut).to.eql('EN_ATTENTE');",
+            "});",
+            "pm.collectionVariables.set('demandeId', String(pm.response.json().id));"
+          ] } }],
+          "request": { "method": "POST", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenEmploye}}" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/conges/demandes",
+            "body": { "mode": "raw", "raw": "{\"typeCongeId\": 1, \"dateDebut\": \"{{dateDebut}}\", \"dateFin\": \"{{dateFin}}\", \"commentaire\": \"Vacances en famille\"}" } }
+        },
+        {
+          "name": "Même période une seconde fois → 409 (chevauchement)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('409', () => pm.expect(pm.response.code).to.eql(409));"
+          ] } }],
+          "request": { "method": "POST", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenEmploye}}" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/conges/demandes",
+            "body": { "mode": "raw", "raw": "{\"typeCongeId\": 1, \"dateDebut\": \"{{dateDebut}}\", \"dateFin\": \"{{dateFin}}\"}" } }
+        },
+        {
+          "name": "Karim : sa cloche (notification reçue)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('au moins une notification non lue', () => pm.expect(pm.response.json().nombre).to.be.above(0));"
+          ] } }],
+          "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenManager}}" }] },
+            "url": "{{baseUrl}}/api/notifications/non-lues/nombre" }
+        },
+        {
+          "name": "Karim : demandes de son équipe en attente",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('la demande de Lina est dans sa boîte', () => pm.expect(pm.response.json().totalElements).to.be.above(0));"
+          ] } }],
+          "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenManager}}" }] },
+            "url": "{{baseUrl}}/api/conges/demandes/equipe?statut=EN_ATTENTE" }
+        },
+        {
+          "name": "Lina (employée) tente de valider → 403 (réservé aux managers, RH, ADMIN)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403', () => pm.expect(pm.response.code).to.eql(403));"
+          ] } }],
+          "request": { "method": "POST", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenEmploye}}" }] },
+            "url": "{{baseUrl}}/api/conges/demandes/{{demandeId}}/validation" }
+        },
+        {
+          "name": "Karim valide la demande",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('approuvée par Karim', () => {",
+            "  pm.expect(pm.response.json().statut).to.eql('APPROUVEE');",
+            "  pm.expect(pm.response.json().decideParNomComplet).to.eql('Karim Mansour');",
+            "});"
+          ] } }],
+          "request": { "method": "POST", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenManager}}" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/conges/demandes/{{demandeId}}/validation",
+            "body": { "mode": "raw", "raw": "{\"motif\": \"Bonnes vacances !\"}" } }
+        },
+        {
+          "name": "Lina : son solde (jours déduits)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const annuel = pm.response.json().find(s => s.typeCongeCode === 'ANNUEL');",
+            "pm.test('jours pris > 0', () => pm.expect(annuel.joursPris).to.be.above(0));"
+          ] } }],
+          "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenEmploye}}" }] },
+            "url": "{{baseUrl}}/api/conges/soldes/moi?annee={{annee}}" }
+        },
+        {
+          "name": "Lina : historique de son solde",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('dernier mouvement : DEDUCTION', () => pm.expect(pm.response.json()[0].typeMouvement).to.eql('DEDUCTION'));"
+          ] } }],
+          "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenEmploye}}" }] },
+            "url": "{{baseUrl}}/api/conges/soldes/moi/mouvements?annee={{annee}}" }
+        },
+        {
+          "name": "Lina : ses notifications (décision reçue)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('dernière notification : congé approuvé', () => pm.expect(pm.response.json().contenu[0].type).to.eql('CONGE_APPROUVE'));"
+          ] } }],
+          "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenEmploye}}" }] },
+            "url": "{{baseUrl}}/api/notifications" }
+        },
+        {
+          "name": "Lina annule (avant le début : jours rendus)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('annulée', () => pm.expect(pm.response.json().statut).to.eql('ANNULEE'));"
+          ] } }],
+          "request": { "method": "POST", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenEmploye}}" }] },
+            "url": "{{baseUrl}}/api/conges/demandes/{{demandeId}}/annulation" }
+        },
+        {
+          "name": "Lina : historique (remboursement)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('dernier mouvement : REMBOURSEMENT', () => pm.expect(pm.response.json()[0].typeMouvement).to.eql('REMBOURSEMENT'));"
+          ] } }],
+          "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenEmploye}}" }] },
+            "url": "{{baseUrl}}/api/conges/soldes/moi/mouvements?annee={{annee}}" }
+        },
+        {
+          "name": "Admin : la validation dans le journal d'audit",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('modifications de la demande journalisées', () => pm.expect(pm.response.json().totalElements).to.be.above(0));"
+          ] } }],
+          "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenAdmin}}" }] },
+            "url": "{{baseUrl}}/api/admin/audit?entite=DemandeConge&entiteId={{demandeId}}" }
+        }
+      ]
+    },
+    {
+      "name": "3. Assistant RH",
+      "description": "Nécessite Ollama et le modèle qwen3:4b-instruct (sinon le chat répond 503, ce qui est le comportement attendu). Une réponse peut prendre jusqu'à 30 s sans carte graphique.",
+      "item": [
+        {
+          "name": "Statut de l'assistant",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('7 outils déclarés', () => pm.expect(pm.response.json().outils.length).to.eql(7));"
+          ] } }],
+          "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenManager}}" }] },
+            "url": "{{baseUrl}}/api/assistant/statut" }
+        },
+        {
+          "name": "Lina : « Combien de jours de congé annuel me reste-t-il ? »",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('réponse, ou 503 si Ollama n\\'est pas démarré', () => pm.expect([200, 503]).to.include(pm.response.code));"
+          ] } }],
+          "request": { "method": "POST", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenEmploye}}" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/assistant/chat",
+            "body": { "mode": "raw", "raw": "{\"messages\": [{\"role\": \"utilisateur\", \"contenu\": \"Combien de jours de congé annuel me reste-t-il ?\"}]}" } }
+        },
+        {
+          "name": "Karim : « Quelle est la masse salariale de mon département ? » (refus attendu)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('réponse, ou 503 si Ollama n\\'est pas démarré', () => pm.expect([200, 503]).to.include(pm.response.code));"
+          ] } }],
+          "request": { "method": "POST", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenManager}}" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/assistant/chat",
+            "body": { "mode": "raw", "raw": "{\"messages\": [{\"role\": \"utilisateur\", \"contenu\": \"Quelle est la masse salariale de mon département ?\"}]}" } }
+        },
+        {
+          "name": "MCP : liste des outils",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('7 outils', () => pm.expect(pm.response.json().result.tools.length).to.eql(7));"
+          ] } }],
+          "request": { "method": "POST", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenRh}}" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json, text/event-stream" }],
+            "url": "{{baseUrl}}/mcp",
+            "body": { "mode": "raw", "raw": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/list\"}" } }
+        },
+        {
+          "name": "MCP : fiche de Lina vue par le manager (salaire masqué)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const fiche = JSON.parse(pm.response.json().result.content[0].text);",
+            "pm.test('salaire masqué', () => pm.expect(fiche.salaire).to.be.null);"
+          ] } }],
+          "request": { "method": "POST", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenManager}}" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json, text/event-stream" }],
+            "url": "{{baseUrl}}/mcp",
+            "body": { "mode": "raw", "raw": "{\"jsonrpc\": \"2.0\", \"id\": 2, \"method\": \"tools/call\", \"params\": {\"name\": \"consulter_employe\", \"arguments\": {\"employeId\": 4}}}" } }
+        }
+      ]
+    },
+    {
+      "name": "4. Santé",
+      "item": [
+        {
+          "name": "État de santé (public)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"
+          ] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/actuator/health" }
+        }
+      ]
+    }
+  ]
+}
