@@ -64,7 +64,8 @@ public final class Api {
         return requete.exchange((req, rep) -> new Reponse(rep.getStatusCode().value(), parse(rep.bodyTo(String.class))));
     }
 
-    private Reponse call(HttpMethod methode, String chemin, String jeton, Object corps, MediaType type) {
+    /** Requête quelconque : méthode et type de contenu au choix (pour tester les erreurs de protocole). */
+    public Reponse call(HttpMethod methode, String chemin, String jeton, Object corps, MediaType type) {
         RestClient.RequestBodySpec requete = http.method(methode).uri(chemin).accept(MediaType.APPLICATION_JSON);
         if (jeton != null) {
             requete.header("Authorization", "Bearer " + jeton);

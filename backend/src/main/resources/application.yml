@@ -34,6 +34,10 @@ spring:
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
+  servlet:
+    encoding:
+      charset: UTF-8
+      force-response: true          # « Content-Type: ...;charset=UTF-8 » : accents corrects aussi dans les clients anciens (PowerShell 5.1)
   lifecycle:
     timeout-per-shutdown-phase: 20s
   task:
