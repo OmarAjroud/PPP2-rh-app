@@ -124,3 +124,18 @@ l'API la relance sur un modèle de repli (`fallbacks: default`).
 ```
 
 Le jeton d'accès expire au bout de 15 minutes : à renouveler dans la configuration du client.
+
+## Tests
+
+```bash
+./mvnw test      # tests unitaires seuls (rapides, sans Docker)
+./mvnw verify    # tests unitaires + tests d'intégration (Docker doit être démarré)
+```
+
+- **Tests unitaires** (`*Test`) : services et règles métier, avec des dépendances simulées (Mockito).
+- **Tests d'intégration** (`*IT`, plugin Failsafe) : l'application complète sur un port aléatoire, une vraie base **MySQL 8.4
+  démarrée par Testcontainers**, de vraies requêtes HTTP (filtre JWT, `@PreAuthorize`, JSON, servlet MCP, flux SSE).
+  Avant chaque test, la base est reconstruite par les migrations Flyway et les comptes de test sont recréés :
+  chaque test part des données de départ connues. Les emails sont simulés ; aucun modèle Ollama n'est requis.
+  Couverts : sécurité et rôles, cycle complet d'une demande de congé (solde, historique, notifications, emails),
+  tableau de bord sur données réelles, journal d'audit, serveur MCP avec les droits du jeton, flux SSE.
