@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.springframework.context.ApplicationEventPublisher;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
@@ -39,6 +40,7 @@ class DemandeCongeDecisionServiceTest {
     @Mock private TypeCongeRepository typeCongeRepository;
     @Mock private SoldeCongeService soldeService;
     @Mock private JoursOuvrablesService joursOuvrablesService;
+    @Mock private ApplicationEventPublisher eventPublisher;
     @Spy  private DemandeCongeMapper mapper = new DemandeCongeMapperImpl();
 
     // « Aujourd'hui » = mardi 3 novembre 2026
@@ -56,7 +58,7 @@ class DemandeCongeDecisionServiceTest {
     @BeforeEach
     void setUp() {
         service = new DemandeCongeService(repository, employeRepository, typeCongeRepository,
-                soldeService, joursOuvrablesService, mapper, clock);
+                soldeService, joursOuvrablesService, mapper, clock, eventPublisher);
     }
 
     // ---------- validation ----------
@@ -304,6 +306,58 @@ class DemandeCongeDecisionServiceTest {
                 .hasMessageContaining("date de début");
 
         verifyNoInteractions(repository);
+    }
+
+    // ---------- événements (notifications) ----------
+
+    @Test
+    @DisplayName("Événement : une approbation publie APPROUVEE avec la demande déjà approuvée")
+    void approve_shouldPublishApprovedEvent() {
+        DemandeConge demande = demande(10L, lina, annuel, StatutDemandeConge.EN_ATTENTE);
+        given(repository.findById(10L)).willReturn(Optional.of(demande));
+        given(employeRepository.findById(3L)).willReturn(Optional.of(karim));
+
+        service.approve(user(3L, Roles.MANAGER), 10L, null);
+
+        verify(eventPublisher).publishEvent(new DemandeCongeEvenement(DemandeCongeEvenement.Type.APPROUVEE, demande));
+        assertThat(demande.getStatut()).isEqualTo(StatutDemandeConge.APPROUVEE);
+    }
+
+    @Test
+    @DisplayName("Événement : un refus publie REFUSEE")
+    void reject_shouldPublishRejectedEvent() {
+        DemandeConge demande = demande(10L, lina, annuel, StatutDemandeConge.EN_ATTENTE);
+        given(repository.findById(10L)).willReturn(Optional.of(demande));
+        given(employeRepository.findById(3L)).willReturn(Optional.of(karim));
+
+        service.reject(user(3L, Roles.MANAGER), 10L, "Période chargée");
+
+        verify(eventPublisher).publishEvent(new DemandeCongeEvenement(DemandeCongeEvenement.Type.REFUSEE, demande));
+    }
+
+    @Test
+    @DisplayName("Événement : aucune publication si la décision échoue (solde insuffisant)")
+    void approve_shouldNotPublish_whenDecisionFails() {
+        DemandeConge demande = demande(10L, lina, annuel, StatutDemandeConge.EN_ATTENTE);
+        given(repository.findById(10L)).willReturn(Optional.of(demande));
+        given(employeRepository.findById(3L)).willReturn(Optional.of(karim));
+        doThrow(new ConflitException("Solde insuffisant")).when(soldeService).deductDays(demande, karim);
+
+        assertThatThrownBy(() -> service.approve(user(3L, Roles.MANAGER), 10L, null))
+                .isInstanceOf(ConflitException.class);
+
+        verifyNoInteractions(eventPublisher);
+    }
+
+    @Test
+    @DisplayName("Événement : une annulation publie ANNULEE")
+    void cancel_shouldPublishCancelledEvent() {
+        DemandeConge demande = demande(10L, lina, annuel, StatutDemandeConge.EN_ATTENTE);
+        given(repository.findById(10L)).willReturn(Optional.of(demande));
+
+        service.cancel(user(4L, Roles.EMPLOYE), 10L);
+
+        verify(eventPublisher).publishEvent(new DemandeCongeEvenement(DemandeCongeEvenement.Type.ANNULEE, demande));
     }
 
     // ---------- méthodes utilitaires ----------

@@ -58,6 +58,27 @@ class MailTemplatesTest {
         assertThat(html).contains("Lina").contains("modifié").doesNotContain("href=\"http").doesNotContain("${");
     }
 
+    @Test
+    @DisplayName("Modèle notification : titre, message et bouton vers l'application")
+    void notificationTemplate_shouldContainTitleMessageAndLink() {
+        String lien = "http://localhost:4200/conges/demandes/10";
+
+        String html = render("notification", Map.of("prenom", "Karim", "titre", "Nouvelle demande de congé",
+                "message", "Lina Gharbi a demandé : Congé annuel", "lien", lien));
+
+        assertThat(html).contains("Karim").contains("Nouvelle demande de congé")
+                .contains("Lina Gharbi a demandé").contains(lien).contains("Voir dans l'application")
+                .doesNotContain("${");
+    }
+
+    @Test
+    @DisplayName("Modèle notification : pas de bouton quand il n'y a pas de lien")
+    void notificationTemplate_shouldHideButton_whenThereIsNoLink() {
+        String html = render("notification", Map.of("prenom", "Karim", "titre", "Titre", "message", "Message"));
+
+        assertThat(html).doesNotContain("Voir dans l'application").doesNotContain("href=\"http");
+    }
+
     private String render(String template, Map<String, Object> variables) {
         return engine.process("mail/" + template, new Context(Locale.FRENCH, variables));
     }

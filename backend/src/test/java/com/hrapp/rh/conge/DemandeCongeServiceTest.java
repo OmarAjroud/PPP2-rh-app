@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.springframework.context.ApplicationEventPublisher;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -42,6 +43,7 @@ class DemandeCongeServiceTest {
     @Mock private TypeCongeRepository typeCongeRepository;
     @Mock private SoldeCongeService soldeService;
     @Mock private JoursOuvrablesService joursOuvrablesService;
+    @Mock private ApplicationEventPublisher eventPublisher;
     @Spy  private DemandeCongeMapper mapper = new DemandeCongeMapperImpl();
 
     // « Aujourd'hui » = mardi 3 novembre 2026
@@ -56,7 +58,7 @@ class DemandeCongeServiceTest {
     @BeforeEach
     void setUp() {
         service = new DemandeCongeService(repository, employeRepository, typeCongeRepository,
-                soldeService, joursOuvrablesService, mapper, clock);
+                soldeService, joursOuvrablesService, mapper, clock, eventPublisher);
     }
 
     // ---------- création ----------
@@ -91,6 +93,10 @@ class DemandeCongeServiceTest {
         verify(repository).save(captor.capture());
         assertThat(captor.getValue().getDateCreation()).isEqualTo(LocalDateTime.of(2026, 11, 3, 10, 0));
         assertThat(captor.getValue().getEmploye()).isSameAs(lina);
+
+        // la demande enregistrée est annoncée aux écouteurs (notification du manager)
+        verify(eventPublisher).publishEvent(
+                new DemandeCongeEvenement(DemandeCongeEvenement.Type.CREEE, captor.getValue()));
     }
 
     @Test

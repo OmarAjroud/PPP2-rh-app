@@ -55,6 +55,21 @@ app:
     from-name: Application RH
   leave:
     weekend-days: SATURDAY,SUNDAY    # jours non ouvrables (mettre SUNDAY seul si le samedi est travaillé)
+  notifications:
+    email-enabled: ${NOTIFICATIONS_EMAIL_ENABLED:true}   # un email accompagne chaque notification
+  assistant:
+    provider: ${ASSISTANT_PROVIDER:ollama}   # ollama (modèle local, gratuit) | claude (API, clé requise)
+    max-iterations: 6                        # allers-retours modèle / outils par question
+    ollama:
+      url: ${OLLAMA_URL:http://localhost:11434}
+      model: ${OLLAMA_MODEL:qwen3:4b-instruct}   # sans « réflexion » : rapide, même sur processeur
+      keep-alive: 30m                        # le modèle reste en mémoire entre deux questions
+      num-ctx: 8192                          # contexte : outils + conversation + résultats
+      timeout-seconds: 180                   # sur un portable sans carte graphique, une réponse peut être lente
+    claude:
+      api-key: ${ANTHROPIC_API_KEY:}
+      model: ${CLAUDE_MODEL:claude-opus-5-5}
+      effort: ${CLAUDE_EFFORT:medium}        # low | medium | high | xhigh | max
   security:
     tokens:
       activation-hours: 48

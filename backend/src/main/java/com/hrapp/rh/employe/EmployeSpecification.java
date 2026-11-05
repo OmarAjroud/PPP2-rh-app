@@ -1,23 +1,33 @@
 package com.hrapp.rh.employe;
 
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
+
+import java.util.Arrays;
 
 /** Filtres dynamiques pour la recherche d'employés. */
 public final class EmployeSpecification {
 
     private EmployeSpecification() {}
 
-    /** Recherche texte (insensible à la casse) sur le nom, le prénom et l'email. */
+    /**
+     * Recherche texte (insensible à la casse) sur le nom, le prénom et l'email.
+     * Plusieurs mots : chacun doit apparaître dans l'un des champs, donc « Lina Gharbi » et
+     * « gharbi lina » trouvent Lina Gharbi (le texte entier n'est dans aucun champ à lui seul).
+     */
     public static Specification<Employe> search(String texte) {
         return (root, query, cb) -> {
             if (texte == null || texte.isBlank()) {
                 return cb.conjunction();   // « toujours vrai » : pas de filtre
             }
-            String motif = "%" + texte.trim().toLowerCase() + "%";
-            return cb.or(
-                    cb.like(cb.lower(root.get("nom")), motif),
-                    cb.like(cb.lower(root.get("prenom")), motif),
-                    cb.like(cb.lower(root.get("email")), motif));
+            Predicate[] mots = Arrays.stream(texte.trim().toLowerCase().split("\\s+"))
+                    .map(mot -> "%" + mot + "%")
+                    .map(motif -> cb.or(
+                            cb.like(cb.lower(root.get("nom")), motif),
+                            cb.like(cb.lower(root.get("prenom")), motif),
+                            cb.like(cb.lower(root.get("email")), motif)))
+                    .toArray(Predicate[]::new);
+            return cb.and(mots);
         };
     }
 

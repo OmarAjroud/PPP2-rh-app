@@ -8,6 +8,7 @@ import com.hrapp.rh.employe.Employe;
 import com.hrapp.rh.employe.EmployeRepository;
 import com.hrapp.rh.securite.UtilisateurConnecte;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -36,6 +37,7 @@ public class DemandeCongeService {
     private final JoursOuvrablesService joursOuvrablesService;
     private final DemandeCongeMapper mapper;
     private final Clock clock;
+    private final ApplicationEventPublisher eventPublisher;
 
     // ---------- demande ----------
 
@@ -82,7 +84,9 @@ public class DemandeCongeService {
         demande.setCommentaire(cleanComment(requete.commentaire()));
         demande.setStatut(StatutDemandeConge.EN_ATTENTE);
         demande.setDateCreation(LocalDateTime.now(clock));
-        return mapper.toResponse(repository.save(demande));
+        DemandeConge enregistree = repository.save(demande);
+        publish(DemandeCongeEvenement.Type.CREEE, enregistree);
+        return mapper.toResponse(enregistree);
     }
 
     // ---------- consultation ----------
@@ -142,6 +146,7 @@ public class DemandeCongeService {
         }
         demande.setStatut(StatutDemandeConge.APPROUVEE);
         decide(demande, decideur, motif);
+        publish(DemandeCongeEvenement.Type.APPROUVEE, demande);
         return mapper.toResponse(demande);
     }
 
@@ -158,6 +163,7 @@ public class DemandeCongeService {
 
         demande.setStatut(StatutDemandeConge.REFUSEE);
         decide(demande, decideur, motif);
+        publish(DemandeCongeEvenement.Type.REFUSEE, demande);
         return mapper.toResponse(demande);
     }
 
@@ -174,10 +180,16 @@ public class DemandeCongeService {
                     + demande.getStatut().getLibelle() + ")");
         }
         demande.setStatut(StatutDemandeConge.ANNULEE);
+        publish(DemandeCongeEvenement.Type.ANNULEE, demande);
         return mapper.toResponse(demande);
     }
 
     // ---------- méthodes privées ----------
+
+    /** Prévient les écouteurs (notifications) ; ils s'exécutent dans cette même transaction. */
+    private void publish(DemandeCongeEvenement.Type type, DemandeConge demande) {
+        eventPublisher.publishEvent(new DemandeCongeEvenement(type, demande));
+    }
 
     private void cancelApproved(DemandeConge demande) {
         if (!demande.getDateDebut().isAfter(LocalDate.now(clock))) {
