@@ -1,5 +1,6 @@
 package com.hrapp.rh.notification;
 
+import com.hrapp.rh.securite.LimitesRequetes;
 import com.hrapp.rh.securite.Roles;
 import com.hrapp.rh.securite.UtilisateurConnecte;
 import org.junit.jupiter.api.DisplayName;
@@ -26,6 +27,7 @@ class NotificationControllerFluxTest {
     @Mock private NotificationService service;
     @Mock private FluxTicketService ticketService;
     @Mock private FluxNotificationRegistry registry;
+    @Mock private LimitesRequetes limites;
     @InjectMocks private NotificationController controller;
 
     private final UtilisateurConnecte karim =

@@ -19,6 +19,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.math.BigDecimal;
@@ -27,6 +28,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -274,6 +276,94 @@ class EmployeServiceTest {
         EmployeDetailResponse result = service.findById(user(2L, 2L, Roles.RH), 4L);
 
         assertThat(result.salaire()).isEqualByComparingTo("2500");
+    }
+
+    // ---------- règles ajoutées lors de la revue ----------
+
+    @Test
+    @DisplayName("Un RH ne modifie pas sa propre fiche (salaire, rôle...) ; rien n'est changé")
+    void update_shouldDenyHr_editingOwnRecord() {
+        Employe sara = employe(2L, "rh@rh.com", 2L);
+        sara.setRole(role(2L, Roles.RH));
+        given(repository.findById(2L)).willReturn(Optional.of(sara));
+
+        assertThatThrownBy(() -> service.update(user(2L, 2L, Roles.RH), 2L, request("rh@rh.com", 2L, 2L, null)))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("propre fiche");
+        assertThat(sara.getSalaire()).isEqualByComparingTo("2500");
+    }
+
+    @Test
+    @DisplayName("Personne ne supprime sa propre fiche")
+    void delete_shouldDenyDeletingOwnRecord() {
+        Employe amine = employe(1L, "admin@rh.com", 1L);
+        amine.setRole(role(1L, Roles.ADMIN));
+        given(repository.findById(1L)).willReturn(Optional.of(amine));
+
+        assertThatThrownBy(() -> service.delete(user(1L, 1L, Roles.ADMIN), 1L))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    @DisplayName("Le dernier ADMIN ne peut être ni rétrogradé ni supprimé")
+    void lastAdmin_shouldBeProtected() {
+        // un objet par appel : la modification refusée a déjà changé l'objet en mémoire (annulée en base par la transaction)
+        given(repository.findById(5L)).willAnswer(invocation -> {
+            Employe autreAdmin = employe(5L, "admin2@rh.com", 1L);
+            autreAdmin.setRole(role(1L, Roles.ADMIN));
+            return Optional.of(autreAdmin);
+        });
+        given(repository.countByRoleNom(Roles.ADMIN)).willReturn(1L);
+        given(departementRepository.findById(1L)).willReturn(Optional.of(departement(1L, "Informatique")));
+        given(roleRepository.findById(4L)).willReturn(Optional.of(role(4L, Roles.EMPLOYE)));
+
+        assertThatThrownBy(() -> service.update(user(1L, 1L, Roles.ADMIN), 5L, request("admin2@rh.com", 1L, 4L, null)))
+                .isInstanceOf(ConflitException.class).hasMessageContaining("dernier administrateur");
+        assertThatThrownBy(() -> service.delete(user(1L, 1L, Roles.ADMIN), 5L))
+                .isInstanceOf(ConflitException.class).hasMessageContaining("dernier administrateur");
+    }
+
+    @Test
+    @DisplayName("Hiérarchie : A manager de B puis B manager de A (même indirectement) est refusé")
+    void update_shouldRejectManagementLoop() {
+        Employe karim = employe(3L, "manager@rh.com", 1L);
+        Employe lina = employe(4L, "employe@rh.com", 1L);
+        lina.setManager(karim);                                       // Lina dépend de Karim
+        given(repository.findById(3L)).willReturn(Optional.of(karim));
+        given(repository.findById(4L)).willReturn(Optional.of(lina));
+        given(departementRepository.findById(1L)).willReturn(Optional.of(departement(1L, "Informatique")));
+        given(roleRepository.findById(3L)).willReturn(Optional.of(role(3L, Roles.MANAGER)));
+
+        // on veut maintenant que Karim dépende de Lina : boucle
+        assertThatThrownBy(() -> service.update(user(1L, 1L, Roles.ADMIN), 3L, request("manager@rh.com", 1L, 3L, 4L)))
+                .isInstanceOf(ConflitException.class).hasMessageContaining("Hiérarchie impossible");
+    }
+
+    @Test
+    @DisplayName("Manager : voit la fiche d'un membre de son équipe directe même dans un autre département")
+    void findById_shouldAllowManager_toViewDirectReportInAnotherDepartment() {
+        Employe karim = employe(3L, "manager@rh.com", 1L);
+        Employe financier = employe(6L, "finance@rh.com", 3L);       // département Finance
+        financier.setManager(karim);
+        given(repository.findById(6L)).willReturn(Optional.of(financier));
+
+        EmployeDetailResponse result = service.findById(user(3L, 1L, Roles.MANAGER), 6L);
+
+        assertThat(result.id()).isEqualTo(6L);
+        assertThat(result.salaire()).isNull();                         // le salaire reste masqué
+    }
+
+    @Test
+    @DisplayName("Suppression d'un employé qui a un historique : 409 explicite (désactiver son compte)")
+    void delete_shouldExplainDeactivation_whenEmployeeHasHistory() {
+        Employe lina = employe(4L, "employe@rh.com", 1L);
+        given(repository.findById(4L)).willReturn(Optional.of(lina));
+        willThrow(new DataIntegrityViolationException("fk_demande_employe")).given(repository).flush();
+
+        assertThatThrownBy(() -> service.delete(user(2L, 2L, Roles.RH), 4L))
+                .isInstanceOf(ConflitException.class)
+                .hasMessageContaining("historique")
+                .hasMessageContaining("/compte/desactivation");
     }
 
     // ---------- méthodes utilitaires pour fabriquer les données de test ----------

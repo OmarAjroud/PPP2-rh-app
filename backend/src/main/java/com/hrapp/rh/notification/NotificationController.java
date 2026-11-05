@@ -1,6 +1,7 @@
 package com.hrapp.rh.notification;
 
 import com.hrapp.rh.common.dto.PageReponse;
+import com.hrapp.rh.securite.LimitesRequetes;
 import com.hrapp.rh.securite.UtilisateurConnecte;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,7 @@ public class NotificationController {
     private final NotificationService service;
     private final FluxTicketService ticketService;
     private final FluxNotificationRegistry registry;
+    private final LimitesRequetes limites;
 
     /** Exemple : GET /api/notifications?nonLues=true&page=0&size=10 */
     @GetMapping
@@ -59,6 +61,7 @@ public class NotificationController {
      */
     @PostMapping("/flux/ticket")
     public Map<String, Object> issueStreamTicket(@AuthenticationPrincipal UtilisateurConnecte utilisateur) {
+        limites.streamTicket(utilisateur.getUtilisateurId());
         return Map.of("ticket", ticketService.issue(utilisateur.getEmployeId()),
                 "expireDans", FluxTicketService.VALIDITE.toSeconds());
     }

@@ -34,17 +34,35 @@ Les liens reçus par email pointent vers `FRONTEND_URL` (voir la section Configu
 
 ## Congés (partie 2 : validation)
 
-- Manager : `GET /api/conges/demandes/equipe?statut=EN_ATTENTE` (son équipe = les employés dont il est le manager direct)
+**Qui décide : le manager d'abord, les RH en recours.**
+
+- Le **manager direct** valide ou refuse les demandes de son équipe.
+- Les **RH et l'ADMIN** voient toutes les demandes mais ne décident qu'**en recours** : l'employé n'a pas de manager,
+  son manager ne peut pas agir (compte désactivé, plus de rôle MANAGER), ou la demande attend depuis plus de
+  `app.leave.escalation-days` jours (3 par défaut). Dans ce dernier cas, la demande leur est transmise automatiquement
+  (une seule fois), avec une notification aux RH et un rappel au manager.
+- Avant ce délai, un RH qui tente de décider reçoit `403` avec le nom du manager et la date à partir de laquelle il pourra le faire.
+- Personne ne décide de sa propre demande.
+
+Endpoints :
+
+- Mes demandes à décider (manager : son équipe ; RH/ADMIN : celles en recours) : `GET /api/conges/demandes/a-decider`
+- Manager : toutes les demandes de son équipe `GET /api/conges/demandes/equipe?statut=EN_ATTENTE`
 - Valider : `POST /api/conges/demandes/{id}/validation` ; refuser (motif obligatoire) : `POST /api/conges/demandes/{id}/refus`
 - RH : vue globale `GET /api/conges/demandes` (filtres : statut, employeId, departementId, du, au)
 - Annuler un congé approuvé qui n'a pas commencé : `POST /api/conges/demandes/{id}/annulation` (les jours sont rendus)
+- **Interruption par les RH** d'un congé approuvé (retour anticipé, raison exceptionnelle), motif obligatoire :
+  `POST /api/conges/demandes/{id}/interruption` — pas encore commencé : annulé et jours rendus ; en cours : il se termine
+  la veille et seuls les jours non pris sont rendus.
 - Soldes : `GET /api/conges/soldes/{employeId}` ; historique : `GET /api/conges/soldes/{employeId}/mouvements`
 - Ajustement RH : `POST /api/conges/soldes/{employeId}/ajustements` (commentaire obligatoire)
 - Règles : nul ne valide sa propre demande ; une demande n'est visible que de son auteur, de son manager d'équipe, des RH et des administrateurs.
 
 ## Notifications (partie 1 : stockage, consultation, emails)
 
-- Nouvelle demande de congé : notifie le manager direct ; s'il n'y en a pas, tous les RH ; à défaut, les administrateurs.
+- Nouvelle demande de congé : notifie le manager direct s'il peut décider ; sinon tous les RH ; à défaut, les administrateurs.
+- Demande transmise aux RH faute de décision dans le délai : notifie les RH (`CONGE_A_TRAITER`) et rappelle le manager.
+- Congé interrompu par les RH : notifie l'employé et son manager (`CONGE_INTERROMPU`).
 - Demande approuvée ou refusée : notifie le demandeur (avec le commentaire ou le motif).
 - Demande annulée : notifie les mêmes valideurs, ainsi que la personne qui l'avait approuvée.
 - Personne n'est jamais notifié de sa propre action. La notification est enregistrée dans la même transaction que l'action.
@@ -173,10 +191,30 @@ avec `OLLAMA_URL=http://ollama:11434` dans `.env` (le modèle est téléchargé 
 
 ## Sécurité en production
 
-- **Connexion** : après 5 échecs pour un même compte depuis une même adresse IP en 15 minutes, refus temporaire (429,
-  en-tête `Retry-After`), même avec le bon mot de passe. Réglable : `app.security.login.*`.
+- **Connexion** : après 5 échecs pour un même compte depuis une même adresse IP en 15 minutes, ou 20 échecs depuis une
+  même adresse tous comptes confondus (« password spraying »), refus temporaire (429, en-tête `Retry-After`), même avec
+  le bon mot de passe. Réglable : `app.security.login.*`.
+- **Limites de débit** (429) : mot de passe oublié 5 / 15 min par adresse, liens d'activation et de réinitialisation
+  10 / 15 min par adresse, chat 10 questions / min par utilisateur, tickets SSE 30 / min par utilisateur
+  (`app.security.rate.*`).
+- **Jetons de rafraîchissement à usage unique** : chaque `POST /api/auth/refresh` révoque le jeton utilisé. Un jeton
+  présenté une seconde fois révèle une copie (vol) : toutes les sessions du compte sont fermées.
+  `POST /api/auth/logout` (corps `{"refreshToken": "..."}`) le révoque ; `POST /api/auth/deconnexion-partout` ferme
+  toutes mes sessions.
+- **Départ d'un employé** : `POST /api/employes/{id}/compte/desactivation` (RH/ADMIN) bloque la connexion et invalide
+  immédiatement ses jetons ; son historique est conservé (`/compte/reactivation` pour revenir en arrière).
+  Un employé qui a un historique ne peut pas être supprimé : on désactive son compte.
+- **Fiches** : un RH ne modifie ni ne supprime sa propre fiche ; le dernier ADMIN ne peut être ni rétrogradé ni supprimé ;
+  la hiérarchie ne peut pas contenir de boucle (A manager de B, B manager de A).
+- **Fuseau horaire** : `TZ` (par défaut `Africa/Tunis` dans l'image Docker) fixe « aujourd'hui » pour les règles de
+  congés et l'heure des notifications et du journal d'audit.
+
+**Limites connues** : les compteurs de limites de débit, les tickets SSE et les flux ouverts sont gardés en mémoire
+(une seule instance de l'application) ; les soldes ne sont ni proratisés selon la date d'embauche ni reportés d'une année
+sur l'autre ; ajouter ou supprimer un jour férié ne recalcule pas les demandes déjà posées.
 - **Derrière un proxy** (nginx…) : `FORWARD_HEADERS_STRATEGY=framework` pour enregistrer la vraie adresse IP des clients
   dans le journal d'audit, uniquement si l'application n'est joignable que par ce proxy.
 - **Supervision** : seul `/actuator/health` est exposé, sans détail interne.
 - **Intégration continue** (`.github/workflows/ci.yml`) : à chaque pull request et sur `main`, `./mvnw verify`
   (tous les tests, dont l'intégration avec MySQL) et construction de l'image Docker.
+  

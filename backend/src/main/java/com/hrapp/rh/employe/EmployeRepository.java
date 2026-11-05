@@ -46,4 +46,6 @@ public interface EmployeRepository
 
     /** Employés ayant un rôle donné (ex. tous les RH, destinataires des demandes sans manager). */
     List<Employe> findByRoleNom(String nomRole);
+
+    long countByRoleNom(String nomRole);
 }

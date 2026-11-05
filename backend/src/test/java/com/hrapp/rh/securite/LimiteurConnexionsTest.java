@@ -22,7 +22,7 @@ class LimiteurConnexionsTest {
     }
 
     private final Horloge horloge = new Horloge();
-    private final LimiteurConnexions limiteur = new LimiteurConnexions(3, 15, horloge);
+    private final LimiteurConnexions limiteur = new LimiteurConnexions(3, 5, 15, horloge);
 
     @Test
     @DisplayName("Sous le seuil : jamais bloqué")
@@ -67,6 +67,19 @@ class LimiteurConnexionsTest {
         limiteur.recordFailure("rh");
 
         assertThat(limiteur.blockedFor("rh")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Password spraying : 5 échecs sur 5 comptes différents depuis la même adresse bloquent l'adresse")
+    void shouldBlockAddress_afterFailuresAcrossManyAccounts() {
+        for (String compte : new String[]{"a", "b", "c", "d"}) {
+            limiteur.recordFailure(compte);
+        }
+        assertThat(limiteur.blockedFor("e")).isEmpty();             // 4 échecs : pas encore
+
+        limiteur.recordFailure("e");                                  // 5e échec, sur un 5e compte
+
+        assertThat(limiteur.blockedFor("un-compte-jamais-essaye")).isPresent();
     }
 
     @Test

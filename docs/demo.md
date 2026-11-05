@@ -14,7 +14,7 @@ les réponses de l'assistant citées plus bas sont des réponses réelles du mod
    Pour `JWT_SECRET`, dans PowerShell : `[Convert]::ToBase64String((1..48 | % { Get-Random -Max 256 }))`.
 5. `docker compose up -d --build`, attendre que `docker compose ps` affiche `healthy` pour `backend`.
 6. Dans Postman : **Import** des deux fichiers de `docs/postman/`, choisir l'environnement « RH App – local »,
-   puis **Run collection** : les 34 requêtes doivent être vertes.
+   puis **Run collection** : les 35 requêtes doivent être vertes.
 7. Dérouler le scénario ci-dessous une fois en entier, chronomètre en main.
 
 ### La veille
@@ -85,6 +85,8 @@ Puis, dans Postman, dossier **2. Cycle d'une demande de congé**, une requête �
 3. **Même période une seconde fois** → `409` : pas de chevauchement.
 4. **Karim : sa cloche** et **les demandes de son équipe** : la demande de Lina l'attend.
 5. **Lina tente de valider** → `403`.
+   **Sara (RH) tente de valider à la place de Karim** → `403` : « Cette demande est à traiter par Karim Mansour. Les RH
+   pourront la traiter à partir du … ». Le manager décide d'abord ; les RH n'interviennent qu'en recours.
 6. **Karim valide** → `APPROUVEE`. **Regarder la fenêtre PowerShell** : l'événement `notification` de Lina arrive
    en direct. Dans Mailpit : l'email « Demande de congé approuvée ».
 7. **Solde** et **historique** de Lina : les jours sont déduits, mouvement `DEDUCTION`.
@@ -121,7 +123,7 @@ Montrer ensuite, dans le journal d'audit (`admin`, filtre `action=APPEL_ASSISTAN
 
 ### 6. La qualité (GitHub)
 
-- Onglet **Actions** : à chaque pull request, 269 tests unitaires et 26 tests d'intégration sur une vraie base MySQL, et
+- Onglet **Actions** : à chaque pull request, 299 tests unitaires et 39 tests d'intégration sur une vraie base MySQL, et
   la construction de l'image Docker.
 - Une pull request : les vérifications vertes avant la fusion.
 
@@ -131,9 +133,12 @@ Montrer ensuite, dans le journal d'audit (`admin`, filtre `action=APPEL_ASSISTAN
 
 | Question | Réponse |
 |---|---|
+| Les RH peuvent-elles décider à la place du manager ? | Non : le manager décide d'abord. Les RH décident en recours (pas de manager, manager indisponible, ou pas de décision après 3 jours : la demande leur est alors transmise automatiquement). |
+| Et si un salarié rentre plus tôt de congé ? | Les RH interrompent le congé : il se termine la veille et les jours non pris sont rendus. |
+| Comment couper l'accès d'un employé qui part ? | Désactivation de son compte : connexion refusée et jetons invalidés immédiatement, historique conservé. |
 | Que se passe-t-il si deux managers valident en même temps ? | Le solde est verrouillé pendant la validation et la demande porte une version : la seconde décision reçoit `409`. |
-| Peut-on deviner un mot de passe en essayant ? | Après 5 échecs pour un même compte depuis une même adresse en 15 minutes : refus temporaire (`429`). |
-| Un jeton volé reste-t-il valable ? | 15 minutes au plus ; et changer de mot de passe invalide immédiatement tous les jetons existants. |
+| Peut-on deviner un mot de passe en essayant ? | Après 5 échecs pour un même compte depuis une même adresse en 15 minutes, ou 20 échecs depuis une adresse tous comptes confondus : refus temporaire (`429`). |
+| Un jeton volé reste-t-il valable ? | Le jeton d'accès 15 minutes au plus. Le jeton de rafraîchissement ne sert qu'une fois : s'il est réutilisé (copie volée), toutes les sessions du compte sont fermées. Changer de mot de passe ou se déconnecter partout invalide tout immédiatement. |
 | Pourquoi un modèle local plutôt qu'une API ? | Gratuit, sans clé, et les données RH ne quittent pas la machine. Claude reste disponible par configuration. |
 | L'assistant peut-il se tromper ? | Oui, surtout un petit modèle, sur des questions inhabituelles. Mais il ne peut ni modifier de données ni voir ce que l'utilisateur n'a pas le droit de voir. |
 | Pourquoi pas de front-end ? | Le back-end est terminé et testé ; le front-end Angular est la suite du projet, l'API est prête pour lui (CORS, SSE, erreurs uniformes). |

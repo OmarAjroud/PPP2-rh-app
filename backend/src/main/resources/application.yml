@@ -77,6 +77,7 @@ app:
     from-name: Application RH
   leave:
     weekend-days: SATURDAY,SUNDAY    # jours non ouvrables (mettre SUNDAY seul si le samedi est travaillé)
+    escalation-days: 3               # sans décision du manager au bout de 3 jours : la demande est transmise aux RH
   notifications:
     email-enabled: ${NOTIFICATIONS_EMAIL_ENABLED:true}   # un email accompagne chaque notification
   assistant:
@@ -95,7 +96,13 @@ app:
   security:
     login:
       max-failures: 5                   # échecs de connexion tolérés (même compte, même adresse IP)...
+      max-failures-per-ip: 20           # échecs tous comptes confondus depuis une même adresse (password spraying)
       window-minutes: 15                # ... sur cette durée, avant un refus temporaire (429)
+    rate:                               # limites de débit (429 + Retry-After), par adresse IP ou par utilisateur
+      forgot-password-per-ip: 5         # demandes « mot de passe oublié » par 15 minutes
+      email-links-per-ip: 10            # activations / réinitialisations par 15 minutes
+      chat-per-user-per-minute: 10      # questions à l'assistant
+      stream-tickets-per-user-per-minute: 30
     tokens:
       activation-hours: 48
       reset-minutes: 60

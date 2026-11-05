@@ -44,6 +44,7 @@ services:
         condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      TZ: ${TZ:-Africa/Tunis}            # fuseau de l'entreprise : « aujourd'hui » et heures des notifications, de l'audit
       DB_URL: jdbc:mysql://mysql:3306/rh_db?serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
       DB_USERNAME: ${DB_USERNAME:-rh_user}
       DB_PASSWORD: ${DB_PASSWORD}
