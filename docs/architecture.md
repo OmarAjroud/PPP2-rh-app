@@ -96,10 +96,15 @@ Matrice des droits (cahier des charges) :
 | Départements : consulter / gérer | Oui / Oui | Oui / Oui | Oui / — | Oui / — |
 | Rôles : gérer | Oui | — | — | — |
 | Congés : demander | Oui | Oui | Oui | Oui |
-| Congés : valider / refuser | Oui | Oui | Son équipe | — |
+| Congés : valider / refuser | En recours¹ | En recours¹ | Son équipe | — |
 | Tableau de bord | Complet | Complet | Son département | — |
 | Journal d'audit | Oui | — | — | — |
 | Assistant RH | Selon ses droits | Selon ses droits | Selon ses droits | Selon ses droits |
+
+¹ **Le manager d'abord, les RH en recours** : les RH et l'ADMIN voient toutes les demandes, mais ne décident que si
+l'employé n'a pas de manager, si son manager ne peut pas agir (compte désactivé, plus de rôle MANAGER), ou si la demande
+attend depuis plus de 3 jours (`app.leave.escalation-days`) : elle leur est alors transmise automatiquement, avec un rappel
+au manager. Les RH peuvent aussi interrompre un congé approuvé (retour anticipé), motif obligatoire.
 
 ## Exemple : la validation d'un congé
 

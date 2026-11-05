@@ -46,4 +46,9 @@ public final class EmployeSpecification {
     public static Specification<Employe> hasId(Long id) {
         return (root, query, cb) -> cb.equal(root.get("id"), id);
     }
+
+    /** L'équipe directe d'un manager (les employés dont il est le manager). */
+    public static Specification<Employe> managedBy(Long managerId) {
+        return (root, query, cb) -> cb.equal(root.get("manager").get("id"), managerId);
+    }
 }

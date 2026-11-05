@@ -1,5 +1,6 @@
 package com.hrapp.rh.assistant;
 
+import com.hrapp.rh.securite.LimitesRequetes;
 import com.hrapp.rh.securite.UtilisateurConnecte;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class AssistantController {
 
     private final AssistantService service;
     private final OutilsRhService outils;
+    private final LimitesRequetes limites;
 
     /**
      * Exemple : {"messages": [{"role": "utilisateur", "contenu": "Qui est en congé la semaine prochaine en informatique ?"}]}
@@ -30,6 +32,7 @@ public class AssistantController {
     @PostMapping("/chat")
     public ChatResponse chat(@AuthenticationPrincipal UtilisateurConnecte utilisateur,
                              @Valid @RequestBody ChatRequest requete) {
+        limites.chatQuestion(utilisateur.getUtilisateurId());   // chaque réponse occupe le modèle plusieurs secondes
         return service.chat(utilisateur, requete);
     }
 

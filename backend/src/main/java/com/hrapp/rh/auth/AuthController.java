@@ -1,5 +1,6 @@
 package com.hrapp.rh.auth;
 
+import com.hrapp.rh.securite.LimitesRequetes;
 import com.hrapp.rh.securite.UtilisateurConnecte;
 import com.hrapp.rh.utilisateur.ActivationRequest;
 import com.hrapp.rh.utilisateur.ChangementMotDePasseRequest;
@@ -21,6 +22,7 @@ public class AuthController {
 
     private final AuthService service;
     private final CompteService compteService;
+    private final LimitesRequetes limites;
 
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
@@ -33,12 +35,21 @@ public class AuthController {
     }
 
     /**
-     * Déconnexion : l'API est stateless, il n'y a rien à supprimer côté serveur.
-     * Le client (Angular) doit simplement oublier ses deux jetons.
+     * Déconnexion : corps {"refreshToken": "..."}. Le jeton de rafraîchissement est révoqué côté serveur ;
+     * le client oublie ses deux jetons (le jeton d'accès expire seul, au plus 15 minutes après).
+     * Public : on doit pouvoir se déconnecter même avec un jeton d'accès déjà expiré.
      */
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void logout() {
+    public void logout(@RequestBody(required = false) RefreshRequest request) {
+        service.logout(request == null ? null : request.refreshToken());
+    }
+
+    /** Ferme toutes mes sessions, sur tous mes appareils (ex. téléphone perdu). */
+    @PostMapping("/deconnexion-partout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logoutEverywhere(@AuthenticationPrincipal UtilisateurConnecte utilisateur) {
+        service.logoutEverywhere(utilisateur);
     }
 
     @GetMapping("/me")
@@ -52,6 +63,7 @@ public class AuthController {
     @PostMapping("/activation")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void activate(@Valid @RequestBody ActivationRequest request) {
+        limites.emailLink();
         compteService.activate(request);
     }
 
@@ -59,6 +71,7 @@ public class AuthController {
     @PostMapping("/mot-de-passe-oublie")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public Map<String, String> forgotPassword(@Valid @RequestBody MotDePasseOublieRequest request) {
+        limites.forgotPassword();
         compteService.requestPasswordReset(request.email());
         return Map.of("message", "Si un compte correspond à cette adresse, un email vient d'être envoyé.");
     }
@@ -66,6 +79,7 @@ public class AuthController {
     @PostMapping("/reinitialisation")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void resetPassword(@Valid @RequestBody ReinitialisationRequest request) {
+        limites.emailLink();
         compteService.resetPassword(request);
     }
 

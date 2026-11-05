@@ -31,7 +31,9 @@ COPY --from=build --chown=rh:rh /build/extracted/application/ ./
 USER rh
 EXPOSE 8080
 
+# TZ : fuseau de l'entreprise (« aujourd'hui » pour les règles de congés, heures des notifications et de l'audit)
 ENV SPRING_PROFILES_ACTIVE=prod \
+    TZ=Africa/Tunis \
     JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError"
 
 # Docker sait si l'application est prête (et la redémarre si elle ne répond plus)

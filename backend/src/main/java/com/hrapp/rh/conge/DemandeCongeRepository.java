@@ -11,7 +11,9 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 
 public interface DemandeCongeRepository
         extends JpaRepository<DemandeConge, Long>, JpaSpecificationExecutor<DemandeConge> {
@@ -27,6 +29,11 @@ public interface DemandeCongeRepository
      */
     boolean existsByEmployeIdAndStatutInAndDateDebutLessThanEqualAndDateFinGreaterThanEqual(
             Long employeId, Collection<StatutDemandeConge> statuts, LocalDate fin, LocalDate debut);
+
+    /** Demandes en attente créées avant cette date et pas encore transmises aux RH (relance). */
+    @EntityGraph(attributePaths = {"employe", "employe.manager", "typeConge"})
+    List<DemandeConge> findByStatutAndDateEscaladeIsNullAndDateCreationLessThanEqual(
+            StatutDemandeConge statut, LocalDateTime limite);
 
     /** Total de jours des demandes d'un employé, pour un type, un statut et une période (null s'il n'y en a pas). */
     @Query("select sum(d.nombreJours) from DemandeConge d "

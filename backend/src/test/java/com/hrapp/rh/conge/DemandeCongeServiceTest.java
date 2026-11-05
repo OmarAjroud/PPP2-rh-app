@@ -44,6 +44,7 @@ class DemandeCongeServiceTest {
     @Mock private SoldeCongeService soldeService;
     @Mock private JoursOuvrablesService joursOuvrablesService;
     @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock private RegleDecisionConge regle;
     @Spy  private DemandeCongeMapper mapper = new DemandeCongeMapperImpl();
 
     // « Aujourd'hui » = mardi 3 novembre 2026
@@ -58,7 +59,7 @@ class DemandeCongeServiceTest {
     @BeforeEach
     void setUp() {
         service = new DemandeCongeService(repository, employeRepository, typeCongeRepository,
-                soldeService, joursOuvrablesService, mapper, clock, eventPublisher);
+                soldeService, joursOuvrablesService, mapper, clock, eventPublisher, regle);
     }
 
     // ---------- création ----------

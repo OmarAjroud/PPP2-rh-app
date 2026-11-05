@@ -13,6 +13,8 @@ public record DemandeCongeEvenement(Type type, DemandeConge demande) {
         CREEE,
         APPROUVEE,
         REFUSEE,
-        ANNULEE
+        ANNULEE,
+        ESCALADEE,     // restée sans décision du manager : transmise aux RH
+        INTERROMPUE    // congé approuvé interrompu par les RH
     }
 }

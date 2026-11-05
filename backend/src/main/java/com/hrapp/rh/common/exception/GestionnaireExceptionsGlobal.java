@@ -23,15 +23,23 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.AuthenticationException;
 
 @Slf4j
 @RestControllerAdvice
 public class GestionnaireExceptionsGlobal {
+    /**
+     * 403. Refus d'un contrôle de rôle (@PreAuthorize) : message générique, il n'y a rien de plus à dire.
+     * Refus d'une règle métier (levé par un service) : son message est gardé, il explique quoi faire
+     * (ex. « Cette demande est à traiter par Karim Mansour… »).
+     */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErreurApi> accessDenied(AccessDeniedException ex, HttpServletRequest req) {
+        boolean refusDeRole = ex instanceof AuthorizationDeniedException
+                || ex.getMessage() == null || ex.getMessage().isBlank();
         return buildResponse(HttpStatus.FORBIDDEN,
-                "Accès refusé : vous n'avez pas les droits nécessaires", req, null);
+                refusDeRole ? "Accès refusé : vous n'avez pas les droits nécessaires" : ex.getMessage(), req, null);
     }
 
     @ExceptionHandler(AuthenticationException.class)

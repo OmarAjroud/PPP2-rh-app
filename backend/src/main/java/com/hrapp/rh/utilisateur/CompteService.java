@@ -81,6 +81,54 @@ public class CompteService {
         return toResponse(utilisateur);
     }
 
+    /**
+     * Désactive le compte d'un employé (départ, suspension) : la connexion est refusée et ses jetons déjà émis
+     * cessent de fonctionner immédiatement (y compris les liens d'activation ou de réinitialisation en attente).
+     * Son historique (congés, audit) est conservé.
+     */
+    @Transactional
+    public CompteResponse deactivate(UtilisateurConnecte acteur, Long employeId) {
+        Utilisateur utilisateur = loadManagedAccount(acteur, employeId);
+        if (employeId.equals(acteur.getEmployeId())) {
+            throw new AccessDeniedException("Vous ne pouvez pas désactiver votre propre compte");
+        }
+        if (utilisateur.isEnAttenteActivation()) {
+            throw new ConflitException("Ce compte n'a pas encore été activé : il ne donne accès à rien. "
+                    + "Ne renvoyez simplement pas l'invitation");
+        }
+        if (!utilisateur.isActif()) {
+            throw new ConflitException("Ce compte est déjà désactivé");
+        }
+        utilisateur.setActif(false);
+        utilisateur.setVersionJeton(utilisateur.getVersionJeton() + 1);    // jetons JWT déjà émis : refusés
+        jetonService.invalidateAll(utilisateur);                           // liens email en attente : invalidés
+        auditService.record(AuditAction.DESACTIVATION_COMPTE, ENTITE, utilisateur.getId(),
+                "Compte de l'employé n°" + employeId + " désactivé");
+        return toResponse(utilisateur);
+    }
+
+    /** Réactive un compte désactivé (l'employé se reconnecte avec son mot de passe habituel). */
+    @Transactional
+    public CompteResponse reactivate(UtilisateurConnecte acteur, Long employeId) {
+        Utilisateur utilisateur = loadManagedAccount(acteur, employeId);
+        if (utilisateur.isEnAttenteActivation() || utilisateur.isActif()) {
+            throw new ConflitException("Ce compte n'est pas désactivé");
+        }
+        utilisateur.setActif(true);
+        auditService.record(AuditAction.REACTIVATION_COMPTE, ENTITE, utilisateur.getId(),
+                "Compte de l'employé n°" + employeId + " réactivé");
+        return toResponse(utilisateur);
+    }
+
+    private Utilisateur loadManagedAccount(UtilisateurConnecte acteur, Long employeId) {
+        Employe employe = employeRepository.findById(employeId)
+                .orElseThrow(() -> new RessourceIntrouvableException("Employé introuvable (id=" + employeId + ")"));
+        verifyCanManage(acteur, employe);
+        return repository.findByEmployeId(employeId)
+                .orElseThrow(() -> new RessourceIntrouvableException(
+                        "Aucun compte pour cet employé (id=" + employeId + ")"));
+    }
+
     // ---------- côté employé (endpoints publics) ----------
 
     /** L'employé choisit son mot de passe grâce au lien reçu : le compte devient actif. */

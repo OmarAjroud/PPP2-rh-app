@@ -12,6 +12,7 @@ import com.hrapp.rh.securite.Roles;
 import com.hrapp.rh.securite.UtilisateurConnecte;
 import com.hrapp.rh.utilisateur.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
@@ -50,7 +51,9 @@ public class EmployeService {
 
         // Refus par défaut : seuls ADMIN et RH voient tout le monde
         if (utilisateur.hasRole(Roles.MANAGER)) {
-            filtre = filtre.and(EmployeSpecification.inDepartement(utilisateur.getDepartementId()));
+            // son département, plus son équipe directe (qui peut être dans un autre département)
+            filtre = filtre.and(EmployeSpecification.inDepartement(utilisateur.getDepartementId())
+                    .or(EmployeSpecification.managedBy(utilisateur.getEmployeId())));
         } else if (!utilisateur.isAdminOrRh()) {
             filtre = filtre.and(EmployeSpecification.hasId(utilisateur.getEmployeId()));
         }
@@ -82,12 +85,21 @@ public class EmployeService {
     public EmployeDetailResponse update(UtilisateurConnecte acteur, Long id, EmployeRequest requete) {
         Employe employe = findOrThrow(id);
         verifyCanManage(acteur, employe.getRole());          // la cible actuelle (est-ce un ADMIN ?)
+        // Un RH ne modifie pas sa propre fiche (salaire, rôle, manager...) : un autre RH ou un ADMIN le fait
+        if (id.equals(acteur.getEmployeId()) && !acteur.hasRole(Roles.ADMIN)) {
+            throw new AccessDeniedException("Vous ne pouvez pas modifier votre propre fiche : "
+                    + "demandez à un autre RH ou à un administrateur");
+        }
         if (repository.existsByEmailIgnoreCaseAndIdNot(requete.email(), id)) {
             throw new ConflitException("Un employé avec l'email « " + requete.email() + " » existe déjà");
         }
+        boolean etaitAdmin = Roles.ADMIN.equals(employe.getRole().getNom());
         mapper.updateEntity(requete, employe);
         applyRelations(employe, requete);
         verifyCanManage(acteur, employe.getRole());          // le nouveau rôle demandé
+        if (etaitAdmin && !Roles.ADMIN.equals(employe.getRole().getNom())) {
+            verifyNotLastAdmin();
+        }
         return mapper.toDetail(employe);
     }
 
@@ -95,11 +107,24 @@ public class EmployeService {
     public void delete(UtilisateurConnecte acteur, Long id) {
         Employe employe = findOrThrow(id);
         verifyCanManage(acteur, employe.getRole());
+        if (id.equals(acteur.getEmployeId())) {
+            throw new AccessDeniedException("Vous ne pouvez pas supprimer votre propre fiche");
+        }
         if (repository.existsByManagerId(id)) {
             throw new ConflitException("Suppression impossible : cet employé est le manager d'autres employés");
         }
-        utilisateurRepository.deleteByEmployeId(id);         // supprime d'abord son compte de connexion
-        repository.delete(employe);
+        if (Roles.ADMIN.equals(employe.getRole().getNom())) {
+            verifyNotLastAdmin();
+        }
+        try {
+            utilisateurRepository.deleteByEmployeId(id);     // supprime d'abord son compte de connexion
+            repository.delete(employe);
+            repository.flush();                              // les contraintes sont vérifiées ici, pas au commit
+        } catch (DataIntegrityViolationException e) {
+            // demandes de congé, soldes, décisions... l'historique doit être conservé
+            throw new ConflitException("Suppression impossible : cet employé a un historique (congés, soldes, décisions). "
+                    + "Pour un départ, désactivez plutôt son compte : POST /api/employes/" + id + "/compte/desactivation");
+        }
     }
 
     // ---------- règles d'accès ----------
@@ -110,8 +135,9 @@ public class EmployeService {
             return;
         }
         if (utilisateur.hasRole(Roles.MANAGER)
-                && employe.getDepartement().getId().equals(utilisateur.getDepartementId())) {
-            return;
+                && (employe.getDepartement().getId().equals(utilisateur.getDepartementId())
+                    || isDirectReport(utilisateur, employe))) {
+            return;      // son département, et son équipe directe (dont il valide les congés)
         }
         if (employe.getId().equals(utilisateur.getEmployeId())) {
             return;
@@ -128,6 +154,33 @@ public class EmployeService {
     private void verifyCanManage(UtilisateurConnecte acteur, Role role) {
         if (Roles.ADMIN.equals(role.getNom()) && !acteur.hasRole(Roles.ADMIN)) {
             throw new AccessDeniedException("Seul un administrateur peut gérer un compte ADMIN");
+        }
+    }
+
+    /** Le manager est-il directement responsable de cet employé ? */
+    private static boolean isDirectReport(UtilisateurConnecte manager, Employe employe) {
+        return employe.getManager() != null && employe.getManager().getId().equals(manager.getEmployeId());
+    }
+
+    /** Il doit toujours rester au moins un ADMIN (gestion des rôles, journal d'audit). */
+    private void verifyNotLastAdmin() {
+        if (repository.countByRoleNom(Roles.ADMIN) <= 1) {
+            throw new ConflitException("Impossible : c'est le dernier administrateur. Nommez d'abord un autre ADMIN");
+        }
+    }
+
+    /** A manager de B et B manager de A (même indirectement) : refusé, la hiérarchie doit rester un arbre. */
+    private static void verifyNoManagementLoop(Employe employe, Employe nouveauManager) {
+        if (employe.getId() == null) {
+            return;                                           // création : personne ne dépend encore de lui
+        }
+        Employe courant = nouveauManager;
+        for (int profondeur = 0; courant != null && profondeur < 100; profondeur++) {
+            if (employe.getId().equals(courant.getId())) {
+                throw new ConflitException("Hiérarchie impossible : " + nouveauManager.getPrenom() + " "
+                        + nouveauManager.getNom() + " dépend déjà (directement ou non) de cet employé");
+            }
+            courant = courant.getManager();
         }
     }
 
@@ -150,6 +203,7 @@ public class EmployeService {
             manager = repository.findById(requete.managerId())
                     .orElseThrow(() -> new RessourceIntrouvableException(
                             "Manager introuvable (id=" + requete.managerId() + ")"));
+            verifyNoManagementLoop(employe, manager);
         }
 
         employe.setDepartement(departement);

@@ -5,6 +5,7 @@ import com.hrapp.rh.audit.AuditService;
 import com.hrapp.rh.common.exception.TropDeTentativesException;
 import com.hrapp.rh.securite.JwtService;
 import com.hrapp.rh.securite.LimiteurConnexions;
+import com.hrapp.rh.securite.RevocationJetons;
 import com.hrapp.rh.securite.UtilisateurConnecte;
 import com.hrapp.rh.securite.UtilisateurDetailsService;
 import io.jsonwebtoken.Claims;
@@ -15,7 +16,9 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +31,7 @@ public class AuthService {
     private final UtilisateurDetailsService userDetailsService;
     private final AuditService auditService;
     private final LimiteurConnexions limiteur;
+    private final RevocationJetons revocation;
 
     public AuthResponse login(LoginRequest request) {
         // Trop d'échecs récents pour ce compte depuis cette adresse : on ne vérifie même pas le mot de passe
@@ -56,6 +60,12 @@ public class AuthService {
         return buildResponse(utilisateur);
     }
 
+    /**
+     * Échange un jeton de rafraîchissement contre une nouvelle paire de jetons. Chaque jeton de rafraîchissement
+     * ne sert qu'une fois (rotation) : s'il est présenté une seconde fois, il a forcément été copié (vol) et
+     * toutes les sessions du compte sont fermées par précaution.
+     */
+    @Transactional(noRollbackFor = AuthenticationException.class)    // la fermeture des sessions doit être conservée
     public AuthResponse refresh(RefreshRequest request) {
         Claims claims = jwtService.readClaims(request.refreshToken())
                 .filter(jwtService::isRefreshToken)
@@ -65,7 +75,41 @@ public class AuthService {
         if (!utilisateur.isEnabled() || !jwtService.matchesVersion(claims, utilisateur)) {
             throw new BadCredentialsException("Jeton de rafraîchissement invalide ou expiré");
         }
+        if (revocation.isRevoked(claims)) {
+            revocation.revokeAllSessions(utilisateur.getUtilisateurId());
+            auditService.recordAs(utilisateur.getUtilisateurId(), utilisateur.getUsername(), AuditAction.DECONNEXION,
+                    ENTITE, utilisateur.getUtilisateurId(),
+                    "Jeton de rafraîchissement réutilisé (vol possible) : toutes les sessions ont été fermées");
+            throw new BadCredentialsException("Jeton de rafraîchissement invalide ou expiré");
+        }
+        revocation.revoke(claims, utilisateur.getUtilisateurId());          // usage unique
         return buildResponse(utilisateur);
+    }
+
+    /** Déconnexion : le jeton de rafraîchissement présenté est révoqué (le jeton d'accès expire seul, 15 min max). */
+    @Transactional
+    public void logout(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return;
+        }
+        jwtService.readClaims(refreshToken).filter(jwtService::isRefreshToken).ifPresent(claims -> {
+            try {
+                UtilisateurConnecte utilisateur = userDetailsService.loadUserByUsername(claims.getSubject());
+                revocation.revoke(claims, utilisateur.getUtilisateurId());
+                auditService.recordAs(utilisateur.getUtilisateurId(), utilisateur.getUsername(),
+                        AuditAction.DECONNEXION, ENTITE, utilisateur.getUtilisateurId(), null);
+            } catch (UsernameNotFoundException ignored) {
+                // compte supprimé entre-temps : rien à révoquer
+            }
+        });
+    }
+
+    /** Ferme toutes mes sessions, sur tous mes appareils (ex. téléphone perdu). */
+    @Transactional
+    public void logoutEverywhere(UtilisateurConnecte utilisateur) {
+        revocation.revokeAllSessions(utilisateur.getUtilisateurId());
+        auditService.recordAs(utilisateur.getUtilisateurId(), utilisateur.getUsername(), AuditAction.DECONNEXION,
+                ENTITE, utilisateur.getUtilisateurId(), "Toutes les sessions ont été fermées");
     }
 
     /** Émet de nouveaux jetons pour un utilisateur existant (après un changement de mot de passe). */

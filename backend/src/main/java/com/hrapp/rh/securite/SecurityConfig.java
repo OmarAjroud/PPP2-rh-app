@@ -54,7 +54,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Flux SSE : EventSource ne peut pas envoyer de JWT ; le contrôleur exige un ticket
                         .requestMatchers(HttpMethod.GET, "/api/notifications/flux").permitAll()
-                        .requestMatchers("/api/auth/login", "/api/auth/refresh", "/api/auth/activation",
+                        .requestMatchers("/api/auth/login", "/api/auth/refresh", "/api/auth/logout", "/api/auth/activation",
                                 "/api/auth/mot-de-passe-oublie", "/api/auth/reinitialisation").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         // état de santé (Docker, supervision) : « UP » ou « DOWN », sans aucun détail

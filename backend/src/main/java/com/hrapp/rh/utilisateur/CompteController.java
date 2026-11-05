@@ -26,4 +26,17 @@ public class CompteController {
                                  @PathVariable Long employeId) {
         return service.invite(acteur, employeId);
     }
+
+    /** Départ, suspension : connexion refusée, jetons existants invalidés immédiatement, historique conservé. */
+    @PostMapping("/compte/desactivation")
+    public CompteResponse deactivate(@AuthenticationPrincipal UtilisateurConnecte acteur,
+                                     @PathVariable Long employeId) {
+        return service.deactivate(acteur, employeId);
+    }
+
+    @PostMapping("/compte/reactivation")
+    public CompteResponse reactivate(@AuthenticationPrincipal UtilisateurConnecte acteur,
+                                     @PathVariable Long employeId) {
+        return service.reactivate(acteur, employeId);
+    }
 }

@@ -255,6 +255,19 @@
             "url": "{{baseUrl}}/api/conges/demandes/{{demandeId}}/validation" }
         },
         {
+          "name": "Sara (RH) tente de valider à la place de Karim → 403 (le manager d'abord)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403, avec le nom du manager', () => {",
+            "  pm.expect(pm.response.code).to.eql(403);",
+            "  pm.expect(pm.response.json().message).to.include('Karim Mansour');",
+            "});"
+          ] } }],
+          "request": { "method": "POST", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenRh}}" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/conges/demandes/{{demandeId}}/validation",
+            "body": { "mode": "raw", "raw": "{}" } }
+        },
+        {
           "name": "Karim valide la demande",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "pm.test('approuvée par Karim', () => {",

@@ -68,6 +68,19 @@ public class DemandeCongeController {
         return service.listTeam(utilisateur, statut, annee, page, size);
     }
 
+    /**
+     * Les demandes que JE peux valider ou refuser maintenant, la plus ancienne d'abord.
+     * Manager : son équipe. RH et ADMIN : les demandes en recours (sans manager disponible, ou en attente
+     * depuis plus de app.leave.escalation-days jours).
+     */
+    @GetMapping("/a-decider")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN','RH')")
+    public PageReponse<DemandeCongeResponse> listToDecide(@AuthenticationPrincipal UtilisateurConnecte utilisateur,
+                                                          @RequestParam(defaultValue = "0") int page,
+                                                          @RequestParam(defaultValue = "10") int size) {
+        return service.listToDecide(utilisateur, page, size);
+    }
+
     /** Vue globale RH. Exemple : GET /api/conges/demandes?statut=EN_ATTENTE&departementId=1&du=2026-12-01&au=2026-12-31 */
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','RH')")
@@ -96,6 +109,18 @@ public class DemandeCongeController {
                                         @PathVariable Long id,
                                         @RequestBody(required = false) @Valid DecisionRequest requete) {
         return service.approve(utilisateur, id, requete == null ? null : requete.motif());
+    }
+
+    /**
+     * Interruption d'un congé approuvé par les RH (retour anticipé, raison exceptionnelle), motif obligatoire.
+     * Pas encore commencé : annulé, jours rendus. En cours : se termine la veille, jours non pris rendus.
+     */
+    @PostMapping("/{id}/interruption")
+    @PreAuthorize("hasAnyRole('ADMIN','RH')")
+    public DemandeCongeResponse interrupt(@AuthenticationPrincipal UtilisateurConnecte utilisateur,
+                                          @PathVariable Long id,
+                                          @Valid @RequestBody InterruptionRequest requete) {
+        return service.interrupt(utilisateur, id, requete.motif());
     }
 
     /** Refuse. Le motif est obligatoire. */
