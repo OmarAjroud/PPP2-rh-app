@@ -63,6 +63,14 @@ public class DemandeConge {
     @Column(name = "motif_decision", length = 500)
     private String motifDecision;
 
+    /** Quand la demande, restée sans décision du manager, a été transmise aux RH (une seule fois). */
+    @Column(name = "date_escalade")
+    private LocalDateTime dateEscalade;
+
+    /** Motif de l'interruption d'un congé approuvé par les RH (retour anticipé, annulation exceptionnelle). */
+    @Column(name = "motif_interruption", length = 500)
+    private String motifInterruption;
+
     @Version
     private Long version;
 }

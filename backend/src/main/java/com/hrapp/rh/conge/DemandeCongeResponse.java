@@ -20,5 +20,7 @@ public record DemandeCongeResponse(
         LocalDateTime dateCreation,
         String decideParNomComplet,
         LocalDateTime dateDecision,
-        String motifDecision
+        String motifDecision,
+        LocalDateTime dateEscalade,          // transmise aux RH faute de décision du manager (sinon vide)
+        String motifInterruption             // congé interrompu par les RH (sinon vide)
 ) {}

@@ -9,6 +9,7 @@ import com.hrapp.rh.employe.EmployeRepository;
 import com.hrapp.rh.securite.UtilisateurConnecte;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -29,6 +31,9 @@ public class DemandeCongeService {
     /** Statuts qui « occupent » des jours : une nouvelle demande ne peut pas les chevaucher. */
     private static final List<StatutDemandeConge> STATUTS_ACTIFS =
             List.of(StatutDemandeConge.EN_ATTENTE, StatutDemandeConge.APPROUVEE);
+    /** Nombre maximal de demandes en attente examinées pour « mes demandes à décider ». */
+    private static final int MAX_A_DECIDER = 500;
+    private static final DateTimeFormatter FORMAT_DATE_HEURE = DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm");
 
     private final DemandeCongeRepository repository;
     private final EmployeRepository employeRepository;
@@ -38,6 +43,7 @@ public class DemandeCongeService {
     private final DemandeCongeMapper mapper;
     private final Clock clock;
     private final ApplicationEventPublisher eventPublisher;
+    private final RegleDecisionConge regle;
 
     // ---------- demande ----------
 
@@ -85,6 +91,10 @@ public class DemandeCongeService {
         demande.setStatut(StatutDemandeConge.EN_ATTENTE);
         demande.setDateCreation(LocalDateTime.now(clock));
         DemandeConge enregistree = repository.save(demande);
+        if (regle.recours(enregistree).isPresent()) {
+            // pas de manager en mesure de décider : la demande va directement aux RH (pas de relance plus tard)
+            enregistree.setDateEscalade(enregistree.getDateCreation());
+        }
         publish(DemandeCongeEvenement.Type.CREEE, enregistree);
         return mapper.toResponse(enregistree);
     }
@@ -139,6 +149,7 @@ public class DemandeCongeService {
         DemandeConge demande = findVisibleOrThrow(acteur, id);
         verifyNotOwnRequest(acteur, demande);
         verifyPending(demande);
+        verifyCanDecide(acteur, demande);
         Employe decideur = loadActor(acteur);
 
         if (demande.getTypeConge().isDeduitDuSolde()) {
@@ -159,6 +170,7 @@ public class DemandeCongeService {
         DemandeConge demande = findVisibleOrThrow(acteur, id);
         verifyNotOwnRequest(acteur, demande);
         verifyPending(demande);
+        verifyCanDecide(acteur, demande);
         Employe decideur = loadActor(acteur);
 
         demande.setStatut(StatutDemandeConge.REFUSEE);
@@ -184,7 +196,93 @@ public class DemandeCongeService {
         return mapper.toResponse(demande);
     }
 
+    /**
+     * Interruption d'un congé approuvé par les RH (retour anticipé, raison exceptionnelle), motif obligatoire.
+     * Pas encore commencé, ou commencé aujourd'hui : annulé, tous les jours sont rendus.
+     * En cours : il se termine la veille, seuls les jours non pris sont rendus. Terminé : impossible.
+     */
+    @Transactional
+    public DemandeCongeResponse interrupt(UtilisateurConnecte acteur, Long id, String motif) {
+        if (motif == null || motif.isBlank()) {
+            throw new RequeteInvalideException("Le motif de l'interruption est obligatoire");
+        }
+        DemandeConge demande = findVisibleOrThrow(acteur, id);
+        if (!acteur.isAdminOrRh()) {
+            throw new AccessDeniedException("Seuls les RH et les administrateurs peuvent interrompre un congé");
+        }
+        if (demande.getEmploye().getId().equals(acteur.getEmployeId())) {
+            throw new AccessDeniedException("Vous ne pouvez pas interrompre votre propre congé");
+        }
+        if (demande.getStatut() != StatutDemandeConge.APPROUVEE) {
+            throw new ConflitException("Seul un congé approuvé peut être interrompu (statut actuel : "
+                    + demande.getStatut().getLibelle() + ")");
+        }
+        LocalDate aujourdhui = LocalDate.now(clock);
+        if (demande.getDateFin().isBefore(aujourdhui)) {
+            throw new ConflitException("Ce congé est terminé : il ne peut plus être interrompu");
+        }
+        Employe auteur = loadActor(acteur);
+        String commentaire = "Interruption par les RH : " + motif.trim();
+        // jours ouvrables déjà pris : du début jusqu'à la veille (0 si le congé n'a pas commencé)
+        BigDecimal joursPris = demande.getDateDebut().isBefore(aujourdhui)
+                ? BigDecimal.valueOf(joursOuvrablesService.compter(demande.getDateDebut(), aujourdhui.minusDays(1))).setScale(1)
+                : BigDecimal.ZERO.setScale(1);
+        BigDecimal joursRendus = demande.getNombreJours().subtract(joursPris);
+        if (joursPris.signum() == 0) {
+            // rien n'a encore été pris (pas commencé, commence aujourd'hui, ou seulement un week-end) : annulé
+            demande.setStatut(StatutDemandeConge.ANNULEE);
+        } else {
+            // en cours : le congé s'arrête la veille, les jours déjà pris restent décomptés
+            demande.setDateFin(aujourdhui.minusDays(1));
+            demande.setNombreJours(joursPris);
+        }
+        if (demande.getTypeConge().isDeduitDuSolde() && joursRendus.signum() > 0) {
+            soldeService.refundDays(demande, joursRendus, auteur, commentaire);
+        }
+        demande.setMotifInterruption(motif.trim());
+        publish(DemandeCongeEvenement.Type.INTERROMPUE, demande);
+        return mapper.toResponse(demande);
+    }
+
+    // ---------- demandes à décider ----------
+
+    /**
+     * Les demandes en attente que JE peux valider ou refuser maintenant, la plus ancienne d'abord :
+     * pour un manager, son équipe ; pour les RH et l'ADMIN, les demandes en recours.
+     */
+    @Transactional(readOnly = true)
+    public PageReponse<DemandeCongeResponse> listToDecide(UtilisateurConnecte acteur, int page, int taille) {
+        Specification<DemandeConge> perimetre = acteur.isAdminOrRh()
+                ? DemandeCongeSpecification.statut(StatutDemandeConge.EN_ATTENTE)
+                : DemandeCongeSpecification.equipeDe(acteur.getEmployeId())
+                        .and(DemandeCongeSpecification.statut(StatutDemandeConge.EN_ATTENTE));
+        // le filtre « puis-je décider ? » dépend de l'état des comptes : il est appliqué ici, sur un volume borné
+        List<DemandeConge> aDecider = repository.findAll(perimetre,
+                        PageRequest.of(0, MAX_A_DECIDER, Sort.by(Sort.Direction.ASC, "dateCreation", "id")))
+                .stream()
+                .filter(d -> regle.canDecide(acteur, d))
+                .toList();
+        PageRequest pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(taille, 1), 100));
+        int debut = (int) Math.min(pageable.getOffset(), aDecider.size());
+        int fin = Math.min(debut + pageable.getPageSize(), aDecider.size());
+        return PageReponse.from(new PageImpl<>(
+                aDecider.subList(debut, fin).stream().map(mapper::toResponse).toList(), pageable, aDecider.size()));
+    }
+
     // ---------- méthodes privées ----------
+
+    /** Le manager direct décide ; les RH et l'ADMIN seulement en recours (voir RegleDecisionConge). */
+    private void verifyCanDecide(UtilisateurConnecte acteur, DemandeConge demande) {
+        if (regle.canDecide(acteur, demande)) {
+            return;
+        }
+        String manager = regle.activeManager(demande)
+                .map(m -> m.getPrenom() + " " + m.getNom())
+                .orElse("son manager");
+        throw new AccessDeniedException("Cette demande est à traiter par " + manager + ". Les RH pourront la traiter "
+                + "à partir du " + regle.escalationDate(demande).format(FORMAT_DATE_HEURE)
+                + " si elle est toujours en attente");
+    }
 
     /** Prévient les écouteurs (notifications) ; ils s'exécutent dans cette même transaction. */
     private void publish(DemandeCongeEvenement.Type type, DemandeConge demande) {
@@ -194,7 +292,7 @@ public class DemandeCongeService {
     private void cancelApproved(DemandeConge demande) {
         if (!demande.getDateDebut().isAfter(LocalDate.now(clock))) {
             throw new ConflitException(
-                    "Un congé déjà commencé ne peut plus être annulé : contactez les ressources humaines");
+                    "Un congé déjà commencé ne peut plus être annulé : les ressources humaines peuvent l'interrompre");
         }
         if (demande.getTypeConge().isDeduitDuSolde()) {
             soldeService.refundDays(demande, demande.getEmploye());

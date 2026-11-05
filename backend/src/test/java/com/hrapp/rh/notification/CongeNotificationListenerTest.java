@@ -2,11 +2,10 @@ package com.hrapp.rh.notification;
 
 import com.hrapp.rh.conge.DemandeConge;
 import com.hrapp.rh.conge.DemandeCongeEvenement;
+import com.hrapp.rh.conge.RegleDecisionConge;
 import com.hrapp.rh.conge.StatutDemandeConge;
 import com.hrapp.rh.conge.TypeConge;
 import com.hrapp.rh.employe.Employe;
-import com.hrapp.rh.employe.EmployeRepository;
-import com.hrapp.rh.securite.Roles;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -26,25 +26,25 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 
+/** Contenu et destinataires des notifications ; QUI doit décider est testé dans RegleDecisionCongeTest. */
 @ExtendWith(MockitoExtension.class)
 class CongeNotificationListenerTest {
 
     @Mock private NotificationService notificationService;
-    @Mock private EmployeRepository employeRepository;
+    @Mock private RegleDecisionConge regle;
     @InjectMocks private CongeNotificationListener listener;
 
-    private final Employe amine = employe(1L, "Amine", "Ben Salah", null);   // ADMIN
     private final Employe sara = employe(2L, "Sara", "Trabelsi", null);      // RH
     private final Employe karim = employe(3L, "Karim", "Mansour", null);     // MANAGER
     private final Employe lina = employe(4L, "Lina", "Gharbi", karim);       // équipe de Karim
     private final TypeConge annuel = annuel();
 
     @Test
-    @DisplayName("Nouvelle demande : seul le manager direct est notifié, avec un résumé et un lien")
-    void created_shouldNotifyDirectManagerOnly() {
+    @DisplayName("Nouvelle demande : ceux qui doivent décider sont notifiés, avec un résumé et un lien")
+    void created_shouldNotifyTheDeciders() {
         DemandeConge demande = demande(lina, StatutDemandeConge.EN_ATTENTE);
+        given(regle.deciders(demande)).willReturn(List.of(karim));
 
         listener.onDemandeConge(new DemandeCongeEvenement(DemandeCongeEvenement.Type.CREEE, demande));
 
@@ -52,34 +52,22 @@ class CongeNotificationListenerTest {
                 eq("Nouvelle demande de congé"),
                 eq("Lina Gharbi a demandé : Congé annuel du 14/12/2026 au 18/12/2026, 5 jours ouvrables."),
                 eq("/conges/demandes/10"));
-        verifyNoInteractions(employeRepository);                // pas besoin de chercher les RH
+        verify(notificationService, times(1)).notify(any(), any(), anyString(), anyString(), anyString());
     }
 
     @Test
-    @DisplayName("Nouvelle demande sans manager : tous les RH sont notifiés")
-    void created_shouldNotifyAllHr_whenEmployeeHasNoManager() {
-        Employe rh2 = employe(5L, "Nour", "Haddad", null);
-        given(employeRepository.findByRoleNom(Roles.RH)).willReturn(List.of(sara, rh2));
+    @DisplayName("Transmise aux RH : les RH sont prévenues qu'elles peuvent traiter, le manager reçoit un rappel")
+    void escalated_shouldNotifyHr_andRemindTheManager() {
+        DemandeConge demande = demande(lina, StatutDemandeConge.EN_ATTENTE);
+        given(regle.fallbackDeciders(demande)).willReturn(List.of(sara));
+        given(regle.activeManager(demande)).willReturn(Optional.of(karim));
 
-        listener.onDemandeConge(new DemandeCongeEvenement(DemandeCongeEvenement.Type.CREEE,
-                demande(karim, StatutDemandeConge.EN_ATTENTE)));
+        listener.onDemandeConge(new DemandeCongeEvenement(DemandeCongeEvenement.Type.ESCALADEE, demande));
 
-        verify(notificationService).notify(eq(sara), eq(TypeNotification.CONGE_DEMANDE), anyString(), anyString(), anyString());
-        verify(notificationService).notify(eq(rh2), eq(TypeNotification.CONGE_DEMANDE), anyString(), anyString(), anyString());
-        verify(employeRepository, never()).findByRoleNom(Roles.ADMIN);
-    }
-
-    @Test
-    @DisplayName("Nouvelle demande du seul RH (sans manager) : il n'est pas notifié, les administrateurs le sont")
-    void created_shouldFallBackToAdmins_whenRequesterIsTheOnlyHr() {
-        given(employeRepository.findByRoleNom(Roles.RH)).willReturn(List.of(sara));
-        given(employeRepository.findByRoleNom(Roles.ADMIN)).willReturn(List.of(amine));
-
-        listener.onDemandeConge(new DemandeCongeEvenement(DemandeCongeEvenement.Type.CREEE,
-                demande(sara, StatutDemandeConge.EN_ATTENTE)));
-
-        verify(notificationService).notify(eq(amine), any(), anyString(), anyString(), anyString());
-        verify(notificationService, never()).notify(eq(sara), any(), anyString(), anyString(), anyString());
+        verify(notificationService).notify(eq(sara), eq(TypeNotification.CONGE_A_TRAITER),
+                eq("Demande de congé à traiter"), contains("vous pouvez la traiter"), eq("/conges/demandes/10"));
+        verify(notificationService).notify(eq(karim), eq(TypeNotification.CONGE_A_TRAITER),
+                eq("Rappel : demande de congé en attente"), contains("attend toujours votre décision"), anyString());
     }
 
     @Test
@@ -112,10 +100,11 @@ class CongeNotificationListenerTest {
     }
 
     @Test
-    @DisplayName("Annulation d'un congé approuvé par les RH : le manager et la RH qui a décidé sont notifiés")
-    void cancelled_shouldNotifyManagerAndDecider() {
+    @DisplayName("Annulation d'un congé approuvé en recours par les RH : le manager et la RH qui a décidé sont notifiés")
+    void cancelled_shouldNotifyDecidersAndDecider() {
         DemandeConge demande = demande(lina, StatutDemandeConge.ANNULEE);
         demande.setDecidePar(sara);
+        given(regle.deciders(demande)).willReturn(List.of(karim));
 
         listener.onDemandeConge(new DemandeCongeEvenement(DemandeCongeEvenement.Type.ANNULEE, demande));
 
@@ -130,6 +119,7 @@ class CongeNotificationListenerTest {
     void cancelled_shouldNotNotifyTwice_whenManagerIsAlsoTheDecider() {
         DemandeConge demande = demande(lina, StatutDemandeConge.ANNULEE);
         demande.setDecidePar(karim);
+        given(regle.deciders(demande)).willReturn(List.of(karim));
 
         listener.onDemandeConge(new DemandeCongeEvenement(DemandeCongeEvenement.Type.ANNULEE, demande));
 
@@ -137,10 +127,39 @@ class CongeNotificationListenerTest {
     }
 
     @Test
+    @DisplayName("Interruption : le demandeur (motif compris) et son manager sont prévenus ; « écourté » si le congé continue")
+    void interrupted_shouldNotifyRequesterAndManager() {
+        DemandeConge demande = demande(lina, StatutDemandeConge.APPROUVEE);
+        demande.setMotifInterruption("Retour anticipé");
+        given(regle.activeManager(demande)).willReturn(Optional.of(karim));
+
+        listener.onDemandeConge(new DemandeCongeEvenement(DemandeCongeEvenement.Type.INTERROMPUE, demande));
+
+        verify(notificationService).notify(eq(lina), eq(TypeNotification.CONGE_INTERROMPU), eq("Congé interrompu"),
+                contains("écourté par les ressources humaines. Motif : Retour anticipé"), anyString());
+        verify(notificationService).notify(eq(karim), eq(TypeNotification.CONGE_INTERROMPU), anyString(), anyString(),
+                anyString());
+    }
+
+    @Test
+    @DisplayName("Interruption d'un congé pas commencé : « annulé » ; sans manager, seul le demandeur est prévenu")
+    void interrupted_beforeStart_shouldSayCancelled() {
+        DemandeConge demande = demande(lina, StatutDemandeConge.ANNULEE);
+        demande.setMotifInterruption("Besoin urgent");
+        given(regle.activeManager(demande)).willReturn(Optional.empty());
+
+        listener.onDemandeConge(new DemandeCongeEvenement(DemandeCongeEvenement.Type.INTERROMPUE, demande));
+
+        verify(notificationService).notify(eq(lina), any(), anyString(), contains("a été annulé par"), anyString());
+        verify(notificationService, never()).notify(eq(karim), any(), anyString(), anyString(), anyString());
+    }
+
+    @Test
     @DisplayName("Résumé : « 1 jour ouvrable » au singulier")
     void summary_shouldUseSingular_forOneDayOrLess() {
         DemandeConge demande = demande(lina, StatutDemandeConge.EN_ATTENTE);
         demande.setNombreJours(new BigDecimal("1.0"));
+        given(regle.deciders(demande)).willReturn(List.of(karim));
 
         listener.onDemandeConge(new DemandeCongeEvenement(DemandeCongeEvenement.Type.CREEE, demande));
 

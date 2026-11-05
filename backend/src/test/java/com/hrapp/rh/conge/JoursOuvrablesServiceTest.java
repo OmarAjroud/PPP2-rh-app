@@ -25,7 +25,7 @@ class JoursOuvrablesServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new JoursOuvrablesService(repository, new CongeProperties(null));   // week-end par défaut
+        service = new JoursOuvrablesService(repository, new CongeProperties(null, null));   // week-end par défaut
     }
 
     @Test

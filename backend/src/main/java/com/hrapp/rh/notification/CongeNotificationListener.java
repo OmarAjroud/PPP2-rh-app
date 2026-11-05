@@ -3,8 +3,8 @@ package com.hrapp.rh.notification;
 import com.hrapp.rh.conge.DemandeConge;
 import com.hrapp.rh.conge.DemandeCongeEvenement;
 import com.hrapp.rh.employe.Employe;
-import com.hrapp.rh.employe.EmployeRepository;
-import com.hrapp.rh.securite.Roles;
+import com.hrapp.rh.conge.RegleDecisionConge;
+import com.hrapp.rh.conge.StatutDemandeConge;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -21,9 +21,12 @@ import java.util.Map;
  * Écouteur synchrone : il s'exécute dans la transaction de la demande (tout est enregistré, ou rien).
  *
  * <ul>
- *   <li>nouvelle demande : son manager direct ; à défaut les RH ; à défaut les administrateurs ;</li>
+ *   <li>nouvelle demande : ceux qui doivent décider (RegleDecisionConge) : le manager direct s'il peut agir,
+ *       sinon les RH, sinon les administrateurs ;</li>
+ *   <li>demande transmise aux RH faute de décision : les RH (ou ADMIN), et un rappel au manager ;</li>
  *   <li>approbation / refus : le demandeur ;</li>
- *   <li>annulation : les mêmes valideurs, plus celui qui avait pris la décision.</li>
+ *   <li>annulation : les mêmes décideurs, plus celui qui avait pris la décision ;</li>
+ *   <li>interruption par les RH : le demandeur et son manager.</li>
  * </ul>
  * Personne n'est jamais notifié de sa propre action.
  */
@@ -34,7 +37,7 @@ public class CongeNotificationListener {
     private static final DateTimeFormatter FORMAT_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final NotificationService notificationService;
-    private final EmployeRepository employeRepository;
+    private final RegleDecisionConge regle;
 
     @EventListener
     public void onDemandeConge(DemandeCongeEvenement evenement) {
@@ -44,6 +47,30 @@ public class CongeNotificationListener {
                     "Nouvelle demande de congé",
                     fullName(demande.getEmploye()) + " a demandé : " + summary(demande) + ".",
                     demande);
+            case ESCALADEE -> {
+                // les RH peuvent désormais décider ; le manager, s'il peut agir, reçoit un rappel
+                notifyAll(asMap(regle.fallbackDeciders(demande)), TypeNotification.CONGE_A_TRAITER,
+                        "Demande de congé à traiter",
+                        "La demande de " + fullName(demande.getEmploye()) + " (" + summary(demande)
+                                + ") attend une décision du manager depuis plusieurs jours : vous pouvez la traiter.",
+                        demande);
+                regle.activeManager(demande).ifPresent(manager -> notificationService.notify(manager,
+                        TypeNotification.CONGE_A_TRAITER, "Rappel : demande de congé en attente",
+                        "La demande de " + fullName(demande.getEmploye()) + " (" + summary(demande)
+                                + ") attend toujours votre décision ; les RH peuvent maintenant la traiter.",
+                        link(demande)));
+            }
+            case INTERROMPUE -> {
+                String message = "Votre congé (" + summary(demande) + ") a été "
+                        + (demande.getStatut() == StatutDemandeConge.ANNULEE ? "annulé" : "écourté")
+                        + " par les ressources humaines. Motif : " + demande.getMotifInterruption();
+                notificationService.notify(demande.getEmploye(), TypeNotification.CONGE_INTERROMPU,
+                        "Congé interrompu", message, link(demande));
+                regle.activeManager(demande).ifPresent(manager -> notificationService.notify(manager,
+                        TypeNotification.CONGE_INTERROMPU, "Congé interrompu",
+                        "Le congé de " + fullName(demande.getEmploye()) + " (" + summary(demande)
+                                + ") a été interrompu par les ressources humaines.", link(demande)));
+            }
             case APPROUVEE -> notificationService.notify(demande.getEmploye(), TypeNotification.CONGE_APPROUVE,
                     "Demande de congé approuvée",
                     "Votre demande (" + summary(demande) + ") a été approuvée par "
@@ -68,25 +95,15 @@ public class CongeNotificationListener {
 
     // ---------- méthodes privées ----------
 
-    /** Qui doit valider cette demande : le manager direct, sinon les RH, sinon les administrateurs. */
+    /** Qui doit décider : le manager direct s'il peut agir, sinon les RH, sinon les administrateurs (RegleDecisionConge). */
     private Map<Long, Employe> validators(DemandeConge demande) {
-        Map<Long, Employe> destinataires = new LinkedHashMap<>();
-        Employe manager = demande.getEmploye().getManager();
-        if (manager != null && !isRequester(demande, manager)) {
-            destinataires.put(manager.getId(), manager);
-            return destinataires;
-        }
-        addAllExceptRequester(destinataires, employeRepository.findByRoleNom(Roles.RH), demande);
-        if (destinataires.isEmpty()) {
-            addAllExceptRequester(destinataires, employeRepository.findByRoleNom(Roles.ADMIN), demande);
-        }
-        return destinataires;
+        return asMap(regle.deciders(demande));
     }
 
-    private void addAllExceptRequester(Map<Long, Employe> cible, List<Employe> candidats, DemandeConge demande) {
-        candidats.stream()
-                .filter(e -> !isRequester(demande, e))
-                .forEach(e -> cible.putIfAbsent(e.getId(), e));
+    private static Map<Long, Employe> asMap(List<Employe> employes) {
+        Map<Long, Employe> parId = new LinkedHashMap<>();
+        employes.forEach(e -> parId.putIfAbsent(e.getId(), e));
+        return parId;
     }
 
     private void notifyAll(Map<Long, Employe> destinataires, TypeNotification type, String titre, String message,

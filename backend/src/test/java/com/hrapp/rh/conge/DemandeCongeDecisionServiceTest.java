@@ -27,7 +27,12 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -41,6 +46,7 @@ class DemandeCongeDecisionServiceTest {
     @Mock private SoldeCongeService soldeService;
     @Mock private JoursOuvrablesService joursOuvrablesService;
     @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock private RegleDecisionConge regle;
     @Spy  private DemandeCongeMapper mapper = new DemandeCongeMapperImpl();
 
     // « Aujourd'hui » = mardi 3 novembre 2026
@@ -58,7 +64,9 @@ class DemandeCongeDecisionServiceTest {
     @BeforeEach
     void setUp() {
         service = new DemandeCongeService(repository, employeRepository, typeCongeRepository,
-                soldeService, joursOuvrablesService, mapper, clock, eventPublisher);
+                soldeService, joursOuvrablesService, mapper, clock, eventPublisher, regle);
+        // par défaut l'acteur est le bon décideur ; la règle elle-même est testée dans RegleDecisionCongeTest
+        lenient().when(regle.canDecide(any(), any())).thenReturn(true);
     }
 
     // ---------- validation ----------
@@ -134,8 +142,8 @@ class DemandeCongeDecisionServiceTest {
     }
 
     @Test
-    @DisplayName("Validation : le RH peut approuver la demande de n'importe quel employé")
-    void approve_shouldAllowRh_toApproveAnyonesRequest() {
+    @DisplayName("Validation : le RH approuve une demande en recours (ex. sans décision du manager dans le délai)")
+    void approve_shouldAllowRh_whenRequestIsInFallback() {
         DemandeConge demande = demande(10L, lina, annuel, StatutDemandeConge.EN_ATTENTE);
         given(repository.findById(10L)).willReturn(Optional.of(demande));
         given(employeRepository.findById(2L)).willReturn(Optional.of(sara));
@@ -145,6 +153,110 @@ class DemandeCongeDecisionServiceTest {
         assertThat(result.statut()).isEqualTo(StatutDemandeConge.APPROUVEE);
         assertThat(result.decideParNomComplet()).isEqualTo("Sara Trabelsi");
         verify(soldeService).deductDays(demande, sara);
+    }
+
+    @Test
+    @DisplayName("Validation : tant que c'est au manager, le RH est refusé (403) avec le nom du manager et la date de recours")
+    void approve_shouldDenyRh_whileItIsTheManagersTurn() {
+        DemandeConge demande = demande(10L, lina, annuel, StatutDemandeConge.EN_ATTENTE);
+        given(repository.findById(10L)).willReturn(Optional.of(demande));
+        given(regle.canDecide(any(), eq(demande))).willReturn(false);
+        given(regle.activeManager(demande)).willReturn(Optional.of(karim));
+        given(regle.escalationDate(demande)).willReturn(LocalDateTime.of(2026, 11, 6, 9, 0));
+
+        assertThatThrownBy(() -> service.approve(user(2L, Roles.RH), 10L, null))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("Karim Mansour")
+                .hasMessageContaining("06/11/2026 à 09:00");
+        verifyNoInteractions(soldeService);
+        assertThat(demande.getStatut()).isEqualTo(StatutDemandeConge.EN_ATTENTE);
+    }
+
+    @Test
+    @DisplayName("Refus : même règle, le RH ne refuse pas à la place du manager")
+    void reject_shouldDenyRh_whileItIsTheManagersTurn() {
+        DemandeConge demande = demande(10L, lina, annuel, StatutDemandeConge.EN_ATTENTE);
+        given(repository.findById(10L)).willReturn(Optional.of(demande));
+        given(regle.canDecide(any(), eq(demande))).willReturn(false);
+        given(regle.escalationDate(demande)).willReturn(LocalDateTime.of(2026, 11, 6, 9, 0));
+
+        assertThatThrownBy(() -> service.reject(user(2L, Roles.RH), 10L, "Non"))
+                .isInstanceOf(AccessDeniedException.class);
+        assertThat(demande.getStatut()).isEqualTo(StatutDemandeConge.EN_ATTENTE);
+    }
+
+    // ---------- interruption par les RH ----------
+
+    @Test
+    @DisplayName("Interruption : congé pas encore commencé → annulé, tous les jours rendus")
+    void interrupt_shouldCancelAndRefundAll_whenLeaveHasNotStarted() {
+        DemandeConge demande = demande(10L, lina, annuel, StatutDemandeConge.APPROUVEE);     // 14-18/12, 4 jours
+        given(repository.findById(10L)).willReturn(Optional.of(demande));
+        given(employeRepository.findById(2L)).willReturn(Optional.of(sara));
+
+        DemandeCongeResponse result = service.interrupt(user(2L, Roles.RH), 10L, "  Besoin urgent  ");
+
+        assertThat(result.statut()).isEqualTo(StatutDemandeConge.ANNULEE);
+        assertThat(result.motifInterruption()).isEqualTo("Besoin urgent");
+        verify(soldeService).refundDays(eq(demande), eq(new BigDecimal("4.0")), eq(sara), contains("Besoin urgent"));
+        verify(eventPublisher).publishEvent(new DemandeCongeEvenement(DemandeCongeEvenement.Type.INTERROMPUE, demande));
+    }
+
+    @Test
+    @DisplayName("Interruption : congé en cours → se termine la veille, seuls les jours non pris sont rendus")
+    void interrupt_shouldShortenLeave_whenLeaveIsInProgress() {
+        // aujourd'hui mardi 3/11 ; congé du lundi 2/11 au vendredi 6/11 (5 jours) : seul le lundi a été pris
+        DemandeConge demande = demande(10L, lina, annuel, StatutDemandeConge.APPROUVEE);
+        demande.setDateDebut(LocalDate.of(2026, 11, 2));
+        demande.setDateFin(LocalDate.of(2026, 11, 6));
+        demande.setNombreJours(new BigDecimal("5.0"));
+        given(repository.findById(10L)).willReturn(Optional.of(demande));
+        given(employeRepository.findById(2L)).willReturn(Optional.of(sara));
+        given(joursOuvrablesService.compter(LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 2))).willReturn(1);
+
+        DemandeCongeResponse result = service.interrupt(user(2L, Roles.RH), 10L, "Retour anticipé");
+
+        assertThat(result.statut()).isEqualTo(StatutDemandeConge.APPROUVEE);
+        assertThat(result.dateFin()).isEqualTo(LocalDate.of(2026, 11, 2));
+        assertThat(result.nombreJours()).isEqualByComparingTo("1");
+        verify(soldeService).refundDays(eq(demande), eq(new BigDecimal("4.0")), eq(sara), anyString());
+    }
+
+    @Test
+    @DisplayName("Interruption : commencé le week-end, aucun jour ouvrable pris → annulé (jamais 0 jour)")
+    void interrupt_shouldCancel_whenOnlyWeekendDaysWereTaken() {
+        // aujourd'hui mardi 3/11 ; congé commencé le dimanche 1/11 ; le lundi 2/11 était férié : 0 jour ouvrable pris
+        DemandeConge demande = demande(10L, lina, annuel, StatutDemandeConge.APPROUVEE);
+        demande.setDateDebut(LocalDate.of(2026, 11, 1));
+        demande.setDateFin(LocalDate.of(2026, 11, 6));
+        given(repository.findById(10L)).willReturn(Optional.of(demande));
+        given(employeRepository.findById(2L)).willReturn(Optional.of(sara));
+        given(joursOuvrablesService.compter(LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 2))).willReturn(0);
+
+        assertThat(service.interrupt(user(2L, Roles.RH), 10L, "Retour").statut()).isEqualTo(StatutDemandeConge.ANNULEE);
+    }
+
+    @Test
+    @DisplayName("Interruption : réservée aux RH/ADMIN, motif obligatoire, jamais son propre congé, ni un congé terminé")
+    void interrupt_shouldEnforceItsRules() {
+        DemandeConge approuvee = demande(10L, lina, annuel, StatutDemandeConge.APPROUVEE);
+        DemandeConge terminee = demande(11L, lina, annuel, StatutDemandeConge.APPROUVEE);
+        terminee.setDateDebut(LocalDate.of(2026, 10, 1));
+        terminee.setDateFin(LocalDate.of(2026, 10, 2));
+        DemandeConge propre = demande(12L, sara, annuel, StatutDemandeConge.APPROUVEE);
+        given(repository.findById(10L)).willReturn(Optional.of(approuvee));
+        given(repository.findById(11L)).willReturn(Optional.of(terminee));
+        given(repository.findById(12L)).willReturn(Optional.of(propre));
+
+        assertThatThrownBy(() -> service.interrupt(user(2L, Roles.RH), 10L, " "))
+                .isInstanceOf(RequeteInvalideException.class);
+        assertThatThrownBy(() -> service.interrupt(user(3L, Roles.MANAGER), 10L, "Motif"))
+                .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> service.interrupt(user(2L, Roles.RH), 11L, "Motif"))
+                .isInstanceOf(ConflitException.class).hasMessageContaining("terminé");
+        assertThatThrownBy(() -> service.interrupt(user(2L, Roles.RH), 12L, "Motif"))
+                .isInstanceOf(AccessDeniedException.class);
+        verifyNoInteractions(soldeService);
     }
 
     @Test

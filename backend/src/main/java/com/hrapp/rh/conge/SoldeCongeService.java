@@ -97,11 +97,16 @@ public class SoldeCongeService {
     /** Rend les jours d'un congé approuvé qui est annulé avant son début. */
     @Transactional
     public void refundDays(DemandeConge demande, Employe acteur) {
+        refundDays(demande, demande.getNombreJours(), acteur, "Annulation de la demande n°" + demande.getId());
+    }
+
+    /** Rend une partie (ou la totalité) des jours d'un congé approuvé : annulation, interruption par les RH. */
+    @Transactional
+    public void refundDays(DemandeConge demande, BigDecimal jours, Employe acteur, String commentaire) {
         SoldeConge solde = lockBalance(demande);
-        BigDecimal restant = solde.getJoursPris().subtract(demande.getNombreJours());
+        BigDecimal restant = solde.getJoursPris().subtract(jours);
         solde.setJoursPris(restant.max(BigDecimal.ZERO));      // garde-fou : jamais de jours pris négatifs
-        recordMovement(solde, demande, TypeMouvement.REMBOURSEMENT, demande.getNombreJours(),
-                "Annulation de la demande n°" + demande.getId(), acteur);
+        recordMovement(solde, demande, TypeMouvement.REMBOURSEMENT, jours, commentaire, acteur);
     }
 
     // ---------- ajustement par les RH ----------
@@ -207,7 +212,8 @@ public class SoldeCongeService {
         mouvement.setTypeMouvement(type);
         mouvement.setJours(jours);
         mouvement.setDateMouvement(LocalDateTime.now(clock));
-        mouvement.setCommentaire(commentaire);
+        // colonne de 255 caractères : un motif plus long (500 max) est tronqué plutôt que de faire échouer l'opération
+        mouvement.setCommentaire(commentaire == null || commentaire.length() <= 255 ? commentaire : commentaire.substring(0, 254) + "…");
         mouvement.setCreePar(auteur);
         mouvementRepository.save(mouvement);
         return mouvement;
