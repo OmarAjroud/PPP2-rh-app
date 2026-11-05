@@ -2,7 +2,9 @@ package com.hrapp.rh.auth;
 
 import com.hrapp.rh.audit.AuditAction;
 import com.hrapp.rh.audit.AuditService;
+import com.hrapp.rh.common.exception.TropDeTentativesException;
 import com.hrapp.rh.securite.JwtService;
+import com.hrapp.rh.securite.LimiteurConnexions;
 import com.hrapp.rh.securite.UtilisateurConnecte;
 import com.hrapp.rh.securite.UtilisateurDetailsService;
 import io.jsonwebtoken.Claims;
@@ -25,13 +27,20 @@ public class AuthService {
     private final JwtService jwtService;
     private final UtilisateurDetailsService userDetailsService;
     private final AuditService auditService;
+    private final LimiteurConnexions limiteur;
 
     public AuthResponse login(LoginRequest request) {
+        // Trop d'échecs récents pour ce compte depuis cette adresse : on ne vérifie même pas le mot de passe
+        limiteur.blockedFor(request.nomUtilisateur()).ifPresent(attente -> {
+            throw new TropDeTentativesException("Trop de tentatives de connexion : réessayez dans "
+                    + Math.max(1, attente.toMinutes() + (attente.toSecondsPart() > 0 ? 1 : 0)) + " minute(s)", attente);
+        });
         Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.nomUtilisateur(), request.motDePasse()));
         } catch (AuthenticationException e) {
+            limiteur.recordFailure(request.nomUtilisateur());
             auditService.recordAs(null, request.nomUtilisateur(), AuditAction.ECHEC_CONNEXION, ENTITE, null, null);
             if (e instanceof DisabledException) {
                 // Compte non activé ou désactivé : même réponse qu'un mauvais mot de passe,
@@ -41,6 +50,7 @@ public class AuthService {
             throw e;
         }
         UtilisateurConnecte utilisateur = (UtilisateurConnecte) authentication.getPrincipal();
+        limiteur.recordSuccess(request.nomUtilisateur());
         auditService.recordAs(utilisateur.getUtilisateurId(), utilisateur.getUsername(),
                 AuditAction.CONNEXION, ENTITE, utilisateur.getUtilisateurId(), null);
         return buildResponse(utilisateur);

@@ -2,14 +2,14 @@ spring:
   application:
     name: rh
   datasource:
-    url: jdbc:mysql://localhost:3306/rh_db?serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-    username: rh_user
-    password: rh_pass
+    url: ${DB_URL:jdbc:mysql://localhost:3306/rh_db?serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false}
+    username: ${DB_USERNAME:rh_user}
+    password: ${DB_PASSWORD:rh_pass}
   jpa:
     hibernate:
       ddl-auto: validate      # Flyway gère le schéma, Hibernate vérifie seulement
     open-in-view: false
-    show-sql: true
+    show-sql: ${SHOW_SQL:true}
     properties:
       hibernate:
         format_sql: true
@@ -34,6 +34,8 @@ spring:
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
   task:
     execution:
       thread-name-prefix: async-
@@ -46,7 +48,23 @@ spring:
         await-termination-period: 15s
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful                 # à l'arrêt : finir les requêtes en cours avant de couper
+
+# Supervision : seul l'état de santé est exposé (utilisé par Docker), sans aucun détail interne
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  health:
+    mail:
+      enabled: false               # emails envoyés en arrière-plan, au mieux : un SMTP absent ne rend pas l'application « malade »
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
 
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:4200}
@@ -71,6 +89,9 @@ app:
       model: ${CLAUDE_MODEL:claude-opus-5-5}
       effort: ${CLAUDE_EFFORT:medium}        # low | medium | high | xhigh | max
   security:
+    login:
+      max-failures: 5                   # échecs de connexion tolérés (même compte, même adresse IP)...
+      window-minutes: 15                # ... sur cette durée, avant un refus temporaire (429)
     tokens:
       activation-hours: 48
       reset-minutes: 60
@@ -80,7 +101,7 @@ app:
       access-token-minutes: 15
       refresh-token-days: 7
     cors:
-      allowed-origins: http://localhost:4200
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
   seed:
-    test-accounts: true            # crée les 4 comptes de test au démarrage (désactiver en production)
-    test-password: "Test1234!"
+    test-accounts: ${SEED_TEST_ACCOUNTS:true}   # crée les 4 comptes de test au démarrage (false en production)
+    test-password: ${SEED_TEST_PASSWORD:Test1234!}

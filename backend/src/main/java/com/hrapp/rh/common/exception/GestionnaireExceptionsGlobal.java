@@ -42,6 +42,14 @@ public class GestionnaireExceptionsGlobal {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), req, null);
     }
 
+    @ExceptionHandler(TropDeTentativesException.class)
+    public ResponseEntity<ErreurApi> tooManyAttempts(TropDeTentativesException ex, HttpServletRequest req) {
+        ResponseEntity<ErreurApi> reponse = buildResponse(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), req, null);
+        return ResponseEntity.status(reponse.getStatusCode())
+                .header("Retry-After", String.valueOf(Math.max(1, ex.getAttente().toSeconds())))
+                .body(reponse.getBody());
+    }
+
     @ExceptionHandler(ServiceIndisponibleException.class)
     public ResponseEntity<ErreurApi> unavailable(ServiceIndisponibleException ex, HttpServletRequest req) {
         return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), req, null);

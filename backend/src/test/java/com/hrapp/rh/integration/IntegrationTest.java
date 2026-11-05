@@ -1,5 +1,6 @@
 package com.hrapp.rh.integration;
 
+import com.hrapp.rh.securite.LimiteurConnexions;
 import com.hrapp.rh.utilisateur.ComptesTestInitializer;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
@@ -56,6 +57,9 @@ public abstract class IntegrationTest {
     @Autowired
     private ComptesTestInitializer comptesTest;
 
+    @Autowired
+    private LimiteurConnexions limiteurConnexions;
+
     protected Api api;
 
     @BeforeEach
@@ -63,6 +67,7 @@ public abstract class IntegrationTest {
         flyway.clean();
         flyway.migrate();
         comptesTest.run(null);
+        limiteurConnexions.reset();                     // les échecs de connexion d'un test ne bloquent pas le suivant
         given(mailSender.createMimeMessage()).willAnswer(invocation -> new MimeMessage((Session) null));
         api = new Api(baseUrl());
     }
