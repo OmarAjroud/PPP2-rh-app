@@ -3,6 +3,7 @@ package com.hrapp.rh.role;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,6 +15,7 @@ public class RoleController {
 
     private final RoleService service;
 
+    // Tout utilisateur connecté (le formulaire employé des RH a besoin de la liste des rôles)
     @GetMapping
     public List<RoleResponse> list() {
         return service.findAll();
@@ -24,19 +26,23 @@ public class RoleController {
         return service.findById(id);
     }
 
+    // Gestion des rôles : réservée à l'administrateur (cahier des charges, « Rôles : gérer »)
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('ADMIN')")
     public RoleResponse create(@Valid @RequestBody RoleRequest request) {
         return service.create(request);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public RoleResponse update(@PathVariable Long id, @Valid @RequestBody RoleRequest request) {
         return service.update(id, request);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('ADMIN')")
     public void delete(@PathVariable Long id) {
         service.delete(id);
     }
