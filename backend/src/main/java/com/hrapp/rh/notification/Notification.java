@@ -35,7 +35,7 @@ public class Notification {
     @Column(nullable = false, length = 500)
     private String message;
 
-    /** Chemin dans le front-end vers l'élément concerné (ex. /conges/demandes/12). */
+    /** Chemin dans le front-end vers l'élément concerné (ex. /leave-requests/12). */
     @Column(length = 255)
     private String lien;
 

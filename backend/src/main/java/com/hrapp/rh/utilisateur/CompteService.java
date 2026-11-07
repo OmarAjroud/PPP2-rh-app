@@ -227,7 +227,7 @@ public class CompteService {
                 "Activez votre compte – Application RH",
                 "activation",
                 Map.of("prenom", employe.getPrenom(),
-                        "lien", frontendUrl + "/activer-compte?jeton=" + jeton,
+                        "lien", frontendUrl + "/activate-account?token=" + jeton,
                         "validiteHeures", jetonService.getActivationHours())));
     }
 
@@ -238,7 +238,7 @@ public class CompteService {
                 "Réinitialisation de votre mot de passe – Application RH",
                 "reinitialisation",
                 Map.of("prenom", employe.getPrenom(),
-                        "lien", frontendUrl + "/reinitialiser-mot-de-passe?jeton=" + jeton,
+                        "lien", frontendUrl + "/reset-password?token=" + jeton,
                         "validiteMinutes", jetonService.getResetMinutes())));
     }
 

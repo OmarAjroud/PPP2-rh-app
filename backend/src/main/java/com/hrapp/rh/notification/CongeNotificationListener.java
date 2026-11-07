@@ -137,6 +137,6 @@ public class CongeNotificationListener {
     }
 
     private String link(DemandeConge demande) {
-        return "/conges/demandes/" + demande.getId();
+        return "/leave-requests/" + demande.getId();
     }
 }

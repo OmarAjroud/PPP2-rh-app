@@ -49,7 +49,7 @@ class NotificationServiceTest {
     @DisplayName("Création : enregistre la notification non lue et envoie l'email avec un lien absolu")
     void notify_shouldSaveUnreadNotificationAndSendEmail() {
         Notification n = service(true).notify(karim(), TypeNotification.CONGE_DEMANDE,
-                "Nouvelle demande de congé", "Lina Gharbi a demandé…", "/conges/demandes/10");
+                "Nouvelle demande de congé", "Lina Gharbi a demandé…", "/leave-requests/10");
 
         verify(repository).save(n);
         assertThat(n.isLue()).isFalse();
@@ -62,13 +62,13 @@ class NotificationServiceTest {
         assertThat(mail.subject()).startsWith("Nouvelle demande de congé");
         assertThat(mail.variables())
                 .containsEntry("prenom", "Karim")
-                .containsEntry("lien", "http://localhost:4200/conges/demandes/10");   // pas de « // »
+                .containsEntry("lien", "http://localhost:4200/leave-requests/10");   // pas de « // »
     }
 
     @Test
     @DisplayName("Création : annonce la notification pour la poussée en direct (SSE)")
     void notify_shouldPublishCreatedEvent_forLivePush() {
-        service(false).notify(karim(), TypeNotification.CONGE_DEMANDE, "Titre", "Message", "/conges/demandes/10");
+        service(false).notify(karim(), TypeNotification.CONGE_DEMANDE, "Titre", "Message", "/leave-requests/10");
 
         NotificationEvenements.Creee evenement = published(NotificationEvenements.Creee.class).getFirst();
         assertThat(evenement.destinataireId()).isEqualTo(3L);

@@ -31,7 +31,7 @@ class MailTemplatesTest {
     @Test
     @DisplayName("Modèle activation : contient le prénom, le lien et la durée de validité")
     void activationTemplate_shouldContainNameLinkAndValidity() {
-        String lien = "http://localhost:4200/activer-compte?jeton=ABC123";
+        String lien = "http://localhost:4200/activate-account?token=ABC123";
 
         String html = render("activation", Map.of("prenom", "Lina", "lien", lien, "validiteHeures", 48L));
 
@@ -42,7 +42,7 @@ class MailTemplatesTest {
     @Test
     @DisplayName("Modèle réinitialisation : contient le prénom, le lien et la durée de validité")
     void resetTemplate_shouldContainNameLinkAndValidity() {
-        String lien = "http://localhost:4200/reinitialiser-mot-de-passe?jeton=XYZ789";
+        String lien = "http://localhost:4200/reset-password?token=XYZ789";
 
         String html = render("reinitialisation", Map.of("prenom", "Lina", "lien", lien, "validiteMinutes", 60L));
 
@@ -61,7 +61,7 @@ class MailTemplatesTest {
     @Test
     @DisplayName("Modèle notification : titre, message et bouton vers l'application")
     void notificationTemplate_shouldContainTitleMessageAndLink() {
-        String lien = "http://localhost:4200/conges/demandes/10";
+        String lien = "http://localhost:4200/leave-requests/10";
 
         String html = render("notification", Map.of("prenom", "Karim", "titre", "Nouvelle demande de congé",
                 "message", "Lina Gharbi a demandé : Congé annuel", "lien", lien));
