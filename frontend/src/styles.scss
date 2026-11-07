@@ -4,3 +4,38 @@
 
 * { box-sizing: border-box; }
 html, body { height: 100%; }
+
+// ---- Shared building blocks from the design system (DESIGN.md, Components) ----
+.page-titre { margin: 2px 0 0; font-size: var(--rh-text-2xl); font-weight: var(--rh-weight-strong); letter-spacing: var(--rh-tracking-title); text-wrap: balance; }
+.crumb { margin: 0; color: var(--rh-muted); font-size: var(--rh-text-sm); }
+
+.panel { background: var(--rh-surface); border: 1px solid var(--rh-line); border-radius: var(--rh-radius-lg); min-width: 0; }
+.panel-h { margin: 0; padding: var(--rh-space-4) var(--rh-space-5); border-bottom: 1px solid var(--rh-line); font-size: var(--rh-text-md); font-weight: var(--rh-weight-strong); }
+.panel-b { padding: var(--rh-space-5); display: grid; gap: var(--rh-space-4); }
+.panel-b > p { margin: 0; }
+.panel-f { padding: var(--rh-space-3) var(--rh-space-5); border-top: 1px solid var(--rh-line); display: flex; flex-wrap: wrap; gap: var(--rh-space-3); justify-content: flex-end; align-items: center; }
+
+.hint { color: var(--rh-muted); font-size: var(--rh-text-sm); }
+
+// Form-level message (field-level messages use mat-error)
+.alerte { margin: 0; padding: var(--rh-space-3) var(--rh-space-4); border-radius: var(--rh-radius); font-size: var(--rh-text-sm); }
+.alerte.erreur { color: var(--rh-danger); background: var(--rh-danger-soft); }
+.alerte.info { color: var(--rh-ink-2); background: var(--rh-surface-2); }
+.alerte.succes { color: var(--rh-ok); background: var(--rh-ok-soft); }
+
+// Status: dot + word, never colour alone
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: var(--rh-text-sm); font-weight: var(--rh-weight-medium); padding: 2px 8px 2px 7px; border-radius: var(--rh-radius-sm); white-space: nowrap; }
+.status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.s-ok { color: var(--rh-ok); background: var(--rh-ok-soft); }
+.s-wait { color: var(--rh-wait); background: var(--rh-wait-soft); }
+.s-no { color: var(--rh-danger); background: var(--rh-danger-soft); }
+.s-off { color: var(--rh-neutral); background: var(--rh-neutral-soft); }
+.s-esc { color: var(--rh-escalated); background: var(--rh-escalated-soft); }
+
+// Narrow auth forms (login, account links)
+// Routed page hosts are inline by default; in the centred auth layout they must be the 400px column
+app-auth-layout main > :not(router-outlet):not(.brand) { display: block; width: min(400px, 100%); }
+.carte-auth { width: 100%; }
+.carte-auth form { display: grid; gap: var(--rh-space-2); }
+.carte-auth mat-form-field { width: 100%; }
+.carte-auth .liens { display: flex; justify-content: space-between; gap: var(--rh-space-3); font-size: var(--rh-text-sm); }

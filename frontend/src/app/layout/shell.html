@@ -2,6 +2,14 @@
   <nav class="side" aria-label="Navigation principale">
     <span class="brand">RH App</span>
     <a routerLink="/" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }">Accueil</a>
+    <a routerLink="/security" routerLinkActive="active" ariaCurrentWhenActive="page">Sécurité du compte</a>
+    @if (auth.profil(); as p) {
+      <div class="me">
+        <span class="me-nom">{{ p.nomUtilisateur }}</span>
+        <span class="me-role">{{ role() }}</span>
+        <button type="button" class="me-sortie" (click)="auth.logout()">Se déconnecter</button>
+      </div>
+    }
   </nav>
   <main class="work">
     <router-outlet />

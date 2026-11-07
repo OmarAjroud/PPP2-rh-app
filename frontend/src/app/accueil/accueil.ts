@@ -1,4 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { AuthService } from '../core/auth/auth.service';
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
@@ -22,6 +23,8 @@ type EtatApi = 'verification' | 'UP' | 'DOWN' | 'injoignable';
 })
 export class Accueil {
   private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  protected readonly nom = computed(() => this.auth.profil()?.nomUtilisateur ?? '');
   protected readonly apiUrl = environment.apiUrl;
   protected readonly etat = signal<EtatApi>('verification');
   protected readonly aujourdhui = new Date();

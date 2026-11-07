@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideNativeDateAdapter } from '@angular/material/core';
+import { provideRouter } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { Accueil } from './accueil';
 
@@ -11,7 +12,7 @@ describe('Accueil', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [Accueil],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideNativeDateAdapter()],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), provideNativeDateAdapter()],
     });
     http = TestBed.inject(HttpTestingController);
   });
