@@ -1,0 +1,171 @@
+/*
+ * RH App · design tokens
+ * Single source of truth for colour, type, spacing, radius and motion.
+ * The Angular app imports this file once (styles.scss) and the Angular Material
+ * theme (material-theme.scss) maps its system tokens onto these variables.
+ *
+ * Light is the default. Dark applies when the OS asks for it and the user has not
+ * forced light, or when <html data-theme="dark"> is set by the theme toggle.
+ */
+
+:root {
+  /* ---- Neutral scale (light) ---- */
+  --rh-bg: #fafaf9;          /* page ground */
+  --rh-surface: #ffffff;     /* panels, tables, fields */
+  --rh-surface-2: #f4f4f2;   /* hover rows, subtle fills, sidebar active */
+  --rh-surface-3: #ececea;   /* pressed, skeletons */
+  --rh-line: #e7e7e5;        /* one-pixel hairlines */
+  --rh-line-strong: #d6d6d3; /* field borders */
+  --rh-ink: #111214;         /* primary text */
+  --rh-ink-2: #3a3d42;       /* secondary text, labels */
+  --rh-muted: #64686f;       /* hints, meta (4.8:1 on bg) */
+
+  /* ---- Accent: only what can be pressed, selected or focused ---- */
+  --rh-accent: #4c4fd8;
+  --rh-accent-hover: #3f42c4;
+  --rh-accent-ink: #ffffff;  /* text on accent */
+  --rh-accent-soft: #eeeffc; /* selected day, selected row */
+  --rh-accent-line: #c9caf4;
+
+  /* ---- Status: dot + word, never colour alone ---- */
+  --rh-ok: #1f7a4d;        --rh-ok-soft: #e8f4ee;      /* Approuvée */
+  --rh-wait: #875a00;      --rh-wait-soft: #fbf3e0;    /* En attente */
+  --rh-danger: #c2362b;    --rh-danger-soft: #fbecea;  /* Refusée, erreurs */
+  --rh-on-danger: #ffffff;  /* text on a filled danger surface */
+  --rh-out: #6b6f76;        /* labels of days outside the requested range (5:1 on surface) */
+  --rh-neutral: #64686f;   --rh-neutral-soft: #f1f1ef; /* Annulée */
+  --rh-escalated: #3a3d42; --rh-escalated-soft: #ececea; /* Transmise aux RH: ink on neutral, the word carries it */
+
+  /* ---- Non-working days in date strips ---- */
+  --rh-offday: #f4f4f2;
+  --rh-offday-stripe: #ececea;
+
+  /* ---- Overlays ---- */
+  --rh-scrim: rgb(17 18 20 / 0.4);
+  --rh-shadow-overlay: 0 12px 32px rgb(17 18 20 / 0.14), 0 2px 6px rgb(17 18 20 / 0.08);
+  --rh-focus: 0 0 0 3px rgb(76 79 216 / 0.35);
+
+  /* ---- Type ---- */
+  --rh-font: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --rh-weight-regular: 400;
+  --rh-weight-medium: 500;
+  --rh-weight-strong: 600;
+  /* scale (rem, base 16px) */
+  --rh-text-xs: 0.75rem;   /* 12px · table meta, never body */
+  --rh-text-sm: 0.8125rem; /* 13px · labels, captions */
+  --rh-text-md: 0.875rem;  /* 14px · body, table cells, controls */
+  --rh-text-lg: 1rem;      /* 16px · panel titles, long text */
+  --rh-text-xl: 1.25rem;   /* 20px · section titles */
+  --rh-text-2xl: 1.5rem;   /* 24px · page titles */
+  --rh-text-3xl: 1.75rem;  /* 28px · key figures (jours, soldes) */
+  --rh-leading: 1.5;
+  --rh-leading-tight: 1.25;
+  --rh-tracking-title: -0.01em;
+
+  /* ---- Space (4px grid) ---- */
+  --rh-space-1: 4px;
+  --rh-space-2: 8px;
+  --rh-space-3: 12px;
+  --rh-space-4: 16px;
+  --rh-space-5: 20px;
+  --rh-space-6: 24px;
+  --rh-space-8: 32px;
+  --rh-space-10: 40px;
+  --rh-space-12: 48px;
+
+  /* ---- Shape ---- */
+  --rh-radius-sm: 5px;  /* badges, day cells */
+  --rh-radius: 7px;     /* fields, buttons */
+  --rh-radius-lg: 10px; /* panels, dialogs */
+
+  /* ---- Layout ---- */
+  --rh-sidebar: 232px;
+  --rh-content-max: 1240px;
+  --rh-control-h: 36px;  /* buttons, fields (44px touch target on coarse pointers) */
+
+  /* ---- Motion ---- */
+  --rh-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --rh-fast: 150ms;
+  --rh-base: 200ms;
+
+  color-scheme: light;
+}
+
+@media (pointer: coarse) {
+  :root { --rh-control-h: 44px; }
+}
+
+/* ---- Dark: same scale inverted to graphite, accent lifted ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --rh-bg: #0f1012;
+    --rh-surface: #17181b;
+    --rh-surface-2: #1f2024;
+    --rh-surface-3: #27292d;
+    --rh-line: #2a2c30;
+    --rh-line-strong: #3a3d42;
+    --rh-ink: #ececea;
+    --rh-ink-2: #c4c6ca;
+    --rh-muted: #9a9ea6;
+    --rh-accent: #8b8ef5;
+    --rh-accent-hover: #a2a4f8;
+    --rh-accent-ink: #0f1012;
+    --rh-accent-soft: #23244a;
+    --rh-accent-line: #3d3f86;
+    --rh-ok: #4cc38a;        --rh-ok-soft: #13291f;
+    --rh-wait: #e0a93b;      --rh-wait-soft: #2b2311;
+    --rh-danger: #f07167;    --rh-danger-soft: #2f1716;
+    --rh-on-danger: #0f1012;
+    --rh-out: #8a8e95;
+    --rh-neutral: #9a9ea6;   --rh-neutral-soft: #222327;
+    --rh-escalated: #c4c6ca; --rh-escalated-soft: #27292d;
+    --rh-offday: #1b1c1f;
+    --rh-offday-stripe: #232428;
+    --rh-scrim: rgb(0 0 0 / 0.6);
+    --rh-shadow-overlay: 0 12px 32px rgb(0 0 0 / 0.5), 0 2px 6px rgb(0 0 0 / 0.4);
+    --rh-focus: 0 0 0 3px rgb(139 142 245 / 0.45);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --rh-bg: #0f1012;
+  --rh-surface: #17181b;
+  --rh-surface-2: #1f2024;
+  --rh-surface-3: #27292d;
+  --rh-line: #2a2c30;
+  --rh-line-strong: #3a3d42;
+  --rh-ink: #ececea;
+  --rh-ink-2: #c4c6ca;
+  --rh-muted: #9a9ea6;
+  --rh-accent: #8b8ef5;
+  --rh-accent-hover: #a2a4f8;
+  --rh-accent-ink: #0f1012;
+  --rh-accent-soft: #23244a;
+  --rh-accent-line: #3d3f86;
+  --rh-ok: #4cc38a;        --rh-ok-soft: #13291f;
+  --rh-wait: #e0a93b;      --rh-wait-soft: #2b2311;
+  --rh-danger: #f07167;    --rh-danger-soft: #2f1716;
+  --rh-on-danger: #0f1012;
+  --rh-out: #8a8e95;
+  --rh-neutral: #9a9ea6;   --rh-neutral-soft: #222327;
+  --rh-escalated: #c4c6ca; --rh-escalated-soft: #27292d;
+  --rh-offday: #1b1c1f;
+  --rh-offday-stripe: #232428;
+  --rh-scrim: rgb(0 0 0 / 0.6);
+  --rh-shadow-overlay: 0 12px 32px rgb(0 0 0 / 0.5), 0 2px 6px rgb(0 0 0 / 0.4);
+  --rh-focus: 0 0 0 3px rgb(139 142 245 / 0.45);
+  color-scheme: dark;
+}
+
+/* ---- Browser surfaces carry the design too ---- */
+::selection { background: var(--rh-accent-soft); color: var(--rh-ink); }
+html { accent-color: var(--rh-accent); caret-color: var(--rh-accent); scrollbar-color: var(--rh-line-strong) transparent; }
+:focus-visible { outline: none; box-shadow: var(--rh-focus); }
+a { color: var(--rh-accent); text-underline-offset: 3px; }
+.rh-num, td.num, .num { font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --rh-fast: 0ms; --rh-base: 0ms; }
+  *, *::before, *::after { animation: none !important; }
+}

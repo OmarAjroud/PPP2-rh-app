@@ -1,0 +1,118 @@
+// RH App · Angular Material theme
+//
+// Usage (step 13a, in src/styles.scss):
+//   @use 'design-system/material-theme';
+//   and add "design-system/tokens.css" before it in angular.json "styles".
+//
+// Angular Material (M3, v19.1+) builds its components on --mat-sys-* system tokens.
+// We generate a base theme, then point every system colour at our --rh-* tokens,
+// so light/dark switching is driven by tokens.css alone (prefers-color-scheme + data-theme).
+// NOTE: written before the Angular project exists; compile-check it when scaffolding (13a).
+
+@use '@angular/material' as mat;
+
+html {
+  @include mat.theme((
+    color: (
+      primary: mat.$violet-palette,   // closest built-in hue; overridden below
+      theme-type: color-scheme,       // follows the color-scheme set by tokens.css
+    ),
+    typography: (
+      plain-family: var(--rh-font),
+      brand-family: var(--rh-font),
+      bold-weight: 600,
+      medium-weight: 500,
+      regular-weight: 400,
+    ),
+    density: -1,                      // 36px controls on desktop
+  ));
+
+  @include mat.theme-overrides((
+    // Accent: actions, selection, focus
+    primary: var(--rh-accent),
+    on-primary: var(--rh-accent-ink),
+    primary-container: var(--rh-accent-soft),
+    on-primary-container: var(--rh-ink),
+    // Neutral scale
+    background: var(--rh-bg),
+    on-background: var(--rh-ink),
+    surface: var(--rh-surface),
+    on-surface: var(--rh-ink),
+    surface-variant: var(--rh-surface-2),
+    on-surface-variant: var(--rh-ink-2),
+    surface-container-lowest: var(--rh-surface),
+    surface-container-low: var(--rh-surface),
+    surface-container: var(--rh-surface),
+    surface-container-high: var(--rh-surface),
+    surface-container-highest: var(--rh-surface-2),
+    outline: var(--rh-line-strong),
+    outline-variant: var(--rh-line),
+    // Secondary / tertiary roles: Material uses them for chips, selected list items,
+    // the datepicker range and FAB variants. They stay neutral; only primary is indigo.
+    secondary: var(--rh-ink-2),
+    on-secondary: var(--rh-surface),
+    secondary-container: var(--rh-surface-2),
+    on-secondary-container: var(--rh-ink),
+    tertiary: var(--rh-ink-2),
+    on-tertiary: var(--rh-surface),
+    tertiary-container: var(--rh-surface-2),
+    on-tertiary-container: var(--rh-ink),
+    // Inverse roles: the snackbar (dark toast on light, light toast on dark)
+    inverse-surface: var(--rh-ink),
+    inverse-on-surface: var(--rh-bg),
+    inverse-primary: var(--rh-accent-soft),
+    surface-tint: transparent,
+    surface-dim: var(--rh-surface-2),
+    surface-bright: var(--rh-surface),
+    scrim: var(--rh-scrim),
+    shadow: rgb(17 18 20),
+    // Errors
+    error: var(--rh-danger),
+    on-error: var(--rh-on-danger),
+    error-container: var(--rh-danger-soft),
+    on-error-container: var(--rh-danger),
+    // Shape: small, identical radii
+    corner-extra-small: var(--rh-radius-sm),
+    corner-small: var(--rh-radius),
+    corner-medium: var(--rh-radius-lg),
+    corner-large: var(--rh-radius-lg),
+    corner-extra-large: var(--rh-radius-lg),
+    // No elevation except overlays (dialog, menu, snackbar)
+    level1: none,
+    level2: var(--rh-shadow-overlay),
+    level3: var(--rh-shadow-overlay),
+  ));
+
+  background: var(--rh-bg);
+  color: var(--rh-ink);
+  font-family: var(--rh-font);
+  font-size: 100%;
+}
+
+body {
+  margin: 0;
+  font-size: var(--rh-text-md);
+  line-height: var(--rh-leading);
+}
+
+// Buttons: square-ish, not pills; flat (Material 3 defaults to full-radius pills)
+.mat-mdc-button-base {
+  --mat-button-filled-container-shape: var(--rh-radius);
+  --mat-button-outlined-container-shape: var(--rh-radius);
+  --mat-button-text-container-shape: var(--rh-radius);
+  --mat-button-protected-container-shape: var(--rh-radius);
+  font-weight: var(--rh-weight-strong);
+  letter-spacing: 0;
+}
+
+// Form fields: the system uses OUTLINED fields. SCSS cannot switch the appearance;
+// provide it once in app.config.ts:
+//   { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'outline', subscriptSizing: 'dynamic' } }
+// Dates: provideNativeDateAdapter() + { provide: MAT_DATE_LOCALE, useValue: 'fr-FR' } (jj/mm/aaaa, lundi en premier).
+
+// Tables: tabular figures, hairline rows
+.mat-mdc-table {
+  font-variant-numeric: tabular-nums;
+  --mat-table-row-item-outline-color: var(--rh-line);
+  --mat-table-header-headline-color: var(--rh-ink-2);
+}
