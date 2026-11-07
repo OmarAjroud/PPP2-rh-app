@@ -1,0 +1,6 @@
+// Global styles. Tokens come from design-system/tokens.css (loaded first in angular.json);
+// the Angular Material theme maps its system tokens onto them. See DESIGN.md.
+@use 'design-system/material-theme';
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }

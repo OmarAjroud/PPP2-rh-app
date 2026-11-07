@@ -1,0 +1,45 @@
+.shell {
+  display: grid;
+  grid-template-columns: var(--rh-sidebar) minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--rh-bg);
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--rh-space-4) var(--rh-space-3);
+  border-right: 1px solid var(--rh-line);
+}
+
+.brand {
+  font-size: var(--rh-text-lg);
+  font-weight: var(--rh-weight-strong);
+  padding: var(--rh-space-1) var(--rh-space-3) var(--rh-space-4);
+  white-space: nowrap;
+}
+
+.side a {
+  padding: 7px var(--rh-space-3);
+  border-radius: var(--rh-radius);
+  color: var(--rh-ink-2);
+  font-weight: var(--rh-weight-medium);
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover, &.active { background: var(--rh-surface-2); color: var(--rh-ink); }
+}
+
+.work {
+  min-width: 0;
+  padding: var(--rh-space-6) var(--rh-space-8) var(--rh-space-8);
+}
+
+// Under 860px the sidebar becomes a horizontal strip (DESIGN.md, Responsive)
+@media (max-width: 860px) {
+  .shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
+  .side { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--rh-line); padding: var(--rh-space-2); }
+  .brand { padding: 7px var(--rh-space-3); }
+  .work { padding: var(--rh-space-5) var(--rh-space-4); }
+}
