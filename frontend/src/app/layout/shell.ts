@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { filter } from 'rxjs';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
@@ -77,16 +77,38 @@ export class Shell {
 
   /** Drawer state on small screens (the rail is always visible from 900px). */
   readonly menuOuvert = signal(false);
+  private readonly boutonMenu = viewChild<ElementRef<HTMLButtonElement>>('boutonMenu');
+  private readonly rail = viewChild<ElementRef<HTMLElement>>('rail');
+  private readonly injector = inject(Injector);
 
   constructor() {
-    this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe(() => this.menuOuvert.set(false));
+    this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe(() => this.fermerMenu());
+  }
+
+  /** Opens the drawer and moves focus into it; the page behind is inert meanwhile (see template). */
+  protected basculerMenu(): void {
+    if (this.menuOuvert()) {
+      this.fermerMenu();
+      return;
+    }
+    this.menuOuvert.set(true);
+    afterNextRender(() => {
+      if (this.menuOuvert()) this.rail()?.nativeElement.querySelector<HTMLElement>('a, button, input')?.focus();
+    }, { injector: this.injector });
+  }
+
+  /** Closes the drawer and gives focus back to the menu button (the rail is about to be hidden). */
+  protected fermerMenu(): void {
+    if (!this.menuOuvert()) return;
+    this.menuOuvert.set(false);
+    this.boutonMenu()?.nativeElement.focus();
   }
 
   /** Ctrl K (or ⌘K) focuses the search field; Escape closes the drawer. */
   @HostListener('document:keydown', ['$event'])
   protected raccourci(e: KeyboardEvent): void {
     if (e.key === 'Escape' && this.menuOuvert()) {
-      this.menuOuvert.set(false);
+      this.fermerMenu();
       return;
     }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && this.rechercheVisible()) {

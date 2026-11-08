@@ -49,14 +49,18 @@ export const RhPreset = definePreset(Aura, {
     borderRadius: { none: '0', xs: '4px', sm: '6px', md: '6px', lg: '8px', xl: '12px' },
   },
   semantic: {
-    transitionDuration: '120ms',
+    transitionDuration: 'var(--rh-fast)',
     primary: {
       50: '#eff0fb', 100: '#dfe1f7', 200: '#c3c7f2', 300: '#a4abf2', 400: '#8f98ef', 500: '#5e6ad2',
       600: '#535fc4', 700: '#4752b3', 800: '#3a4391', 900: '#2f3673', 950: '#1d2147',
     },
     focusRing: { width: '2px', style: 'solid', color: 'var(--rh-accent)', offset: '2px' },
     // 13px text + 2 x 7px padding + 2 x 1px border = 32px (--rh-control-height)
-    formField: { paddingX: '0.625rem', paddingY: '0.4375rem', borderRadius: '6px' },
+    formField: {
+      paddingX: '0.625rem', paddingY: '0.4375rem', borderRadius: '6px',
+      // A real ring on focus: a border hue change alone is not visible enough (dark: ~1.1:1)
+      focusRing: { width: '0', style: 'none', color: 'transparent', offset: '0', shadow: 'var(--rh-focus)' },
+    },
     colorScheme: {
       light: {
         // mirror of --rh-gray-* (light)

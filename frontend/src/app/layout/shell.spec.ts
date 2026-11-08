@@ -48,4 +48,17 @@ describe('Shell: navigation drawer on small screens', () => {
     expect(rail().classList).not.toContain('ouvert');
     expect(bouton().getAttribute('aria-expanded')).toBe('false');
   });
+
+  it('makes the page behind the open drawer inert and gives focus back to the menu button on close', () => {
+    const main = doc().querySelector<HTMLElement>('main.travail')!;
+    bouton().click();
+    harness.detectChanges();
+    expect(main.hasAttribute('inert')).toBe(true);
+    // The test runs at desktop width, where the menu button is hidden: check the call, not document.activeElement
+    const focus = vi.spyOn(bouton(), 'focus');
+    doc().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    harness.detectChanges();
+    expect(main.hasAttribute('inert')).toBe(false);
+    expect(focus).toHaveBeenCalled();
+  });
 });

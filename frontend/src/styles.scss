@@ -172,3 +172,10 @@ body :is(.p-inputtext:not(textarea), .p-select, .p-datepicker-input, .p-inputnum
 @media (max-width: 600px) {
   .p-button, .p-inputtext:not(textarea), .p-select, .p-datepicker-input, .p-inputnumber-input, .p-password-input { min-height: 44px; }
 }
+
+// ---- Reduced motion: PrimeNG's own overlay animations (scale + fade) are switched off too ----
+@media (prefers-reduced-motion: reduce) {
+  .p-anchored-overlay-enter-active, .p-anchored-overlay-leave-active,
+  .p-overlay-mask-enter-active, .p-overlay-mask-leave-active,
+  .p-connected-overlay-enter-active, .p-connected-overlay-leave-active { animation: none !important; transition: none !important; }
+}

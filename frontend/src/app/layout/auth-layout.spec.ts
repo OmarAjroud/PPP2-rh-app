@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../app.routes';
@@ -8,7 +9,7 @@ describe('AuthLayout: login screens', () => {
   beforeEach(() => {
     localStorage.clear();
     document.documentElement.classList.remove('rh-dark');
-    TestBed.configureTestingModule({ providers: [provideRouter(routes), provideHttpClient()] });
+    TestBed.configureTestingModule({ providers: [provideRouter(routes), provideHttpClient(), provideHttpClientTesting()] });
   });
 
   it('forces the dark theme even when the app is in light, and gives the choice back on leaving', async () => {

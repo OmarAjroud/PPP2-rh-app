@@ -54,6 +54,6 @@ describe('Employee list', () => {
     expect(ligne.textContent).toContain('Lina Benali');
     expect(ligne.textContent).toContain('Produit');
     expect(ligne.textContent).toContain('Manager');
-    expect(ligne.querySelector('td:first-child .meta')?.textContent?.replace(/s+/g, ' ').trim()).toBe('Produit · Manager');
+    expect(ligne.querySelector('td:first-child .meta')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Produit · Manager');
   });
 });
