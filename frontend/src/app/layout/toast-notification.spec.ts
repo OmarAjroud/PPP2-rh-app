@@ -39,8 +39,10 @@ describe('Toast de notification', () => {
     const el = afficher();
     service.nonLues.set(3);
     el.querySelector<HTMLButtonElement>('button.voir')!.click();
-    TestBed.inject(HttpTestingController).expectOne(r => r.method === 'POST' && r.url === `${environment.apiUrl}/api/notifications/9/lecture`).flush({ ...notif, lue: true });
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne(r => r.method === 'POST' && r.url === `${environment.apiUrl}/api/notifications/9/lecture`).flush({ ...notif, lue: true });
     await vi.runAllTimersAsync();
+    http.expectOne(`${environment.apiUrl}/api/notifications/non-lues/nombre`).flush({ nombre: 2 });
     expect(TestBed.inject(Router).url).toBe('/leave-requests/7');
     expect(service.nonLues()).toBe(2);
     expect(service.derniere()).toBeNull();

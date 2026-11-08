@@ -111,4 +111,13 @@ describe('Notifications (flux temps réel)', () => {
     http.expectOne(`${api}/non-lues/nombre`).flush({ nombre: 4 });
     expect(service.nonLues()).toBe(4);
   });
+  it('cancels a ticket request still pending at logout, so no stream opens for the old session', () => {
+    connecter();
+    demarrer();
+    const req = http.expectOne(r => r.method === 'POST' && r.url === `${api}/flux/ticket`);
+    void TestBed.inject(AuthService).logout();
+    TestBed.tick();
+    expect(req.cancelled).toBe(true);
+    expect(FauxFlux.instances).toHaveLength(0);
+  });
 });

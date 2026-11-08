@@ -1,4 +1,5 @@
 import { Injectable, effect, inject, signal, untracked } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { RhApi } from '../api/rh-api';
 import { Notification } from '../api/models';
 import { AuthService } from '../auth/auth.service';
@@ -23,6 +24,7 @@ export class Notifications {
   readonly derniere = signal<Notification | null>(null);
 
   private flux: EventSource | null = null;
+  private demandeTicket: Subscription | undefined;
   private minuteur: ReturnType<typeof setTimeout> | undefined;
   private delai = DELAI_INITIAL;
   private actif = false;
@@ -34,9 +36,12 @@ export class Notifications {
     });
   }
 
-  /** After a read made here, before the stream confirms it. */
-  ajuster(nombre: number): void {
-    this.nonLues.set(Math.max(0, nombre));
+  /**
+   * After a read made here: the count is asked from the server, never computed locally
+   * (the stream may already have updated it, or another tab may have read the same one).
+   */
+  resynchroniser(): void {
+    this.api.nombreNonLues().subscribe({ next: r => this.nonLues.set(r.nombre), error: () => {} });
   }
 
   fermerToast(): void {
@@ -47,14 +52,15 @@ export class Notifications {
     this.arreter();
     this.actif = true;
     if (typeof EventSource === 'undefined') {
-      this.api.nombreNonLues().subscribe({ next: r => this.nonLues.set(r.nombre), error: () => {} });
+      this.resynchroniser();
       return;
     }
     this.ouvrir();
   }
 
   private ouvrir(): void {
-    this.api.ticketFlux().subscribe({
+    this.demandeTicket?.unsubscribe();
+    this.demandeTicket = this.api.ticketFlux().subscribe({
       next: ({ ticket }) => {
         if (!this.actif) return;
         const flux = new EventSource(this.api.urlFlux(ticket));
@@ -91,6 +97,9 @@ export class Notifications {
   private arreter(): void {
     this.actif = false;
     clearTimeout(this.minuteur);
+    // A ticket still on its way belongs to this session: it must not open a stream for the next one
+    this.demandeTicket?.unsubscribe();
+    this.demandeTicket = undefined;
     this.flux?.close();
     this.flux = null;
     this.delai = DELAI_INITIAL;

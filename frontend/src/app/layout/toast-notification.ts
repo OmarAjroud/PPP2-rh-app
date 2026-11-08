@@ -1,6 +1,5 @@
 import { Component, effect, inject, untracked } from '@angular/core';
 import { Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
 import { RhApi } from '../core/api/rh-api';
 import { Notifications } from '../core/notifications/notifications';
 
@@ -73,8 +72,7 @@ export class ToastNotification {
     if (!n?.lien) return;
     this.notifs.fermerToast();
     if (!n.lue) {
-      this.notifs.ajuster(this.notifs.nonLues() - 1);
-      this.api.marquerLue(n.id).subscribe({ error: () => {} });
+      this.api.marquerLue(n.id).subscribe({ next: () => this.notifs.resynchroniser(), error: () => this.notifs.resynchroniser() });
     }
     await this.router.navigateByUrl(n.lien);
   }

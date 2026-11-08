@@ -155,7 +155,7 @@ export class NotificationsPage {
       try {
         await firstValueFrom(this.api.marquerLue(n.id));
         this.luesIci.update(s => new Set(s).add(n.id));
-        this.notifs.ajuster(this.notifs.nonLues() - 1);
+        this.notifs.resynchroniser();
       } catch (e) {
         this.erreur.set(messageErreur(e));
         return;
@@ -170,9 +170,9 @@ export class NotificationsPage {
     this.erreur.set('');
     try {
       await firstValueFrom(this.api.toutMarquerLu());
-      this.notifs.ajuster(0);
       this.luesIci.set(new Set());
       this.recharge$.next();
+      this.notifs.resynchroniser();
     } catch (e) {
       this.erreur.set(messageErreur(e));
     } finally {

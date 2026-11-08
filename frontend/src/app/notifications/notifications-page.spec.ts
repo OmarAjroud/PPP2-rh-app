@@ -57,8 +57,10 @@ describe('Page des notifications', () => {
     el().querySelector<HTMLButtonElement>('.notif button')!.click();
     http.expectOne(r => r.method === 'POST' && r.url === `${api}/9/lecture`).flush(n({ lue: true }));
     await harness.fixture.whenStable();
+    // the count comes from the server, never from local arithmetic (another tab may have read it already)
+    http.expectOne(`${api}/non-lues/nombre`).flush({ nombre: 0 });
     expect(TestBed.inject(Router).url).toBe('/leave-requests/7');
-    expect(TestBed.inject(Notifications).nonLues()).toBe(1);
+    expect(TestBed.inject(Notifications).nonLues()).toBe(0);
   });
 
   it('marks a notification without link read and stays on the page', async () => {
@@ -83,6 +85,7 @@ describe('Page des notifications', () => {
     http.expectOne(r => r.method === 'POST' && r.url === `${api}/lecture`).flush({ nombre: 1 });
     await harness.fixture.whenStable();
     liste(false).flush(page([n({ lue: true })]));
-    expect(TestBed.inject(Notifications).nonLues()).toBe(0);
+    http.expectOne(`${api}/non-lues/nombre`).flush({ nombre: 1 }); // a new one arrived meanwhile: it stays counted
+    expect(TestBed.inject(Notifications).nonLues()).toBe(1);
   });
 });
