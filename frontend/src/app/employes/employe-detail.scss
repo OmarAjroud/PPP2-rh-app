@@ -1,11 +1,11 @@
-.page { display: grid; gap: var(--rh-space-5); max-width: var(--rh-content-max); }
+.page { display: grid; gap: var(--rh-space-5); --page-max: var(--rh-content-max); }
 
-// Identity header: same slim bar as other pages, with the person's initials
-.identite { display: flex; align-items: center; gap: var(--rh-space-4); flex-wrap: wrap; padding-bottom: var(--rh-space-4); border-bottom: 1px solid var(--rh-line); }
+// Under the header: the person's initials and what defines them (role, department, seniority)
+.identite { display: flex; align-items: center; gap: var(--rh-space-3); flex-wrap: wrap; }
 .avatar {
   flex: none;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -14,10 +14,7 @@
   font-weight: 600;
   font-size: var(--rh-text-lg);
 }
-.qui { flex: 1; min-width: 0; }
-.qui .crumb::after { content: none; }
-.tags { display: flex; flex-wrap: wrap; gap: var(--rh-space-2); margin-top: var(--rh-space-2); }
-.modifier { align-self: flex-start; }
+.tags { display: flex; flex-wrap: wrap; gap: var(--rh-space-2); }
 
 .grille { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--rh-space-4); align-items: start; }
 .colonne { display: grid; gap: var(--rh-space-4); min-width: 0; }

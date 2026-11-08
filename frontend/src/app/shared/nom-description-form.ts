@@ -76,7 +76,8 @@ const CONFIGS: Record<'departement' | 'role', Config> = {
     }
   `,
   styles: `
-    :host { display: grid; gap: var(--rh-space-4); max-width: 640px; }
+    :host { display: grid; gap: var(--rh-space-4); --page-max: 640px; }
+    :host > :not(.entete) { max-width: var(--page-max); }
   `,
 })
 export class NomDescriptionForm {

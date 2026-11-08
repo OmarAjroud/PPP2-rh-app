@@ -61,7 +61,7 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; r: Role } | { statut: 'er
       }
     }
   `,
-  styles: `.page { display: grid; gap: var(--rh-space-4); max-width: 760px; }`,
+  styles: `.page { display: grid; gap: var(--rh-space-4); --page-max: 760px; }`,
 })
 export class RoleDetailPage {
   private readonly api = inject(RhApi);

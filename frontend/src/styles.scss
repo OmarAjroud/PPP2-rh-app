@@ -25,6 +25,13 @@ p { margin: 0; }
   padding-bottom: var(--rh-space-3);
   border-bottom: 1px solid var(--rh-line);
 }
+// The header runs edge to edge across the work area (offsets match .travail padding in shell.scss);
+// page widths apply to what sits below it.
+.page > .entete, app-nom-description-form > .entete { margin: -20px -32px 0; padding: 12px 32px; }
+.page > :not(.entete) { max-width: var(--page-max, var(--rh-content-max)); }
+@media (max-width: 899px) {
+  .page > .entete, app-nom-description-form > .entete { margin: -16px -16px 0; padding: 10px 16px; }
+}
 .entete > div:first-child { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--rh-space-2); min-width: 0; }
 .entete .actions { display: flex; flex-wrap: wrap; gap: var(--rh-space-2); }
 .crumb { color: var(--rh-muted); font-size: var(--rh-text-md); }
@@ -88,7 +95,7 @@ code { font: 500 var(--rh-text-sm) var(--rh-font-mono); }
 .tag { display: inline-flex; align-items: center; height: 22px; font-size: var(--rh-text-xs); font-weight: 500; padding: 0 8px; border-radius: var(--rh-radius-sm); background: var(--rh-surface-2); border: 1px solid var(--rh-line); color: var(--rh-ink-2); }
 
 // ---- Forms ----
-.champ { display: grid; gap: 6px; min-width: 0; }
+.champ { display: grid; gap: 6px; min-width: 0; align-content: start; }
 .champ > label { font-size: var(--rh-text-md); font-weight: 500; color: var(--rh-ink-2); }
 .champ .aide { font-size: var(--rh-text-sm); color: var(--rh-muted); }
 .champ .err { font-size: var(--rh-text-sm); color: var(--rh-danger); }

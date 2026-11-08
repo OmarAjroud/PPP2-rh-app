@@ -78,7 +78,7 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; d: DepartementDetail } | 
     }
   `,
   styles: `
-    .page { display: grid; gap: var(--rh-space-4); max-width: 900px; }
+    .page { display: grid; gap: var(--rh-space-4); --page-max: 900px; }
     .intro { flex-basis: 100%; color: var(--rh-ink-2); max-width: 65ch; }
     .card-h h2 { font-size: inherit; font-weight: inherit; }
     .personne { display: flex; align-items: center; gap: var(--rh-space-3); color: var(--rh-ink); text-decoration: none; }

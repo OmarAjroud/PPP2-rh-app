@@ -51,8 +51,8 @@
                   <span class="qui"><b>{{ e.prenom }} {{ e.nom }}</b><small>{{ e.email }}</small><small class="meta">{{ e.departementNom }} · {{ libelleRole(e.roleNom) }}</small></span>
                 </a>
               </td>
-              <td>{{ e.departementNom }}</td>
-              <td><span class="tag">{{ libelleRole(e.roleNom) }}</span></td>
+              <td class="discret">{{ e.departementNom }}</td>
+              <td class="discret">{{ libelleRole(e.roleNom) }}</td>
               <td class="num mono">{{ e.id.toString().padStart(4, '0') }}</td>
             </tr>
           </ng-template>

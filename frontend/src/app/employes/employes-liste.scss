@@ -1,4 +1,4 @@
-.page { display: grid; gap: var(--rh-space-4); max-width: var(--rh-content-max); }
+.page { display: grid; gap: var(--rh-space-4); --page-max: var(--rh-content-max); }
 
 // The list sits directly on the work sheet (Linear): filters bar, then hairline rows.
 .liste { min-width: 0; }
@@ -32,7 +32,7 @@
   font-size: var(--rh-text-xs);
   font-weight: 600;
 }
-td.mono { color: var(--rh-muted); }
+td.mono, td.discret { color: var(--rh-muted); }
 
 .vide { display: grid; gap: var(--rh-space-1); padding: var(--rh-space-8) var(--rh-space-2); border-top: 1px solid var(--rh-line); }
 p-paginator { display: block; border-top: 1px solid var(--rh-line); }

@@ -68,7 +68,7 @@ import { Apparition } from '../core/motion/motion';
       </section>
     </div>
   `,
-  styles: `.page { display: grid; gap: var(--rh-space-4); max-width: 640px; }`,
+  styles: `.page { display: grid; gap: var(--rh-space-4); --page-max: 640px; }`,
 })
 export class Securite {
   private readonly auth = inject(AuthService);

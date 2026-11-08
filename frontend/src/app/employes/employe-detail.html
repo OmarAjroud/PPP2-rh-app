@@ -10,15 +10,17 @@
   @case ('ok') {
     @let e = employe()!;
     <div class="page" rhApparition>
-      <header class="identite">
-        <span class="avatar" aria-hidden="true">{{ initiales() }}</span>
-        <div class="qui">
+      <header class="entete">
+        <div>
           <p class="crumb">@if (moi) { Mon compte } @else { <a routerLink="/employees">{{ libelleListe() }}</a> }</p>
           <h1 class="page-titre">{{ e.prenom }} {{ e.nom }}</h1>
-          <p class="tags"><span class="tag">{{ libelleRole(e.roleNom) }}</span><span class="tag">{{ e.departementNom }}</span><span class="tag">Depuis {{ e.dateEmbauche | date: 'MMM y' }}</span></p>
         </div>
-        @if (gestion() && !moi) { <a pButton [routerLink]="['/employees', e.id, 'edit']" severity="secondary" class="modifier">Modifier</a> }
+        @if (gestion() && !moi) { <a pButton [routerLink]="['/employees', e.id, 'edit']" severity="secondary">Modifier</a> }
       </header>
+      <div class="identite">
+        <span class="avatar" aria-hidden="true">{{ initiales() }}</span>
+        <p class="tags"><span class="tag">{{ libelleRole(e.roleNom) }}</span><span class="tag">{{ e.departementNom }}</span><span class="tag">Depuis {{ e.dateEmbauche | date: 'MMM y' }}</span></p>
+      </div>
 
       <div class="grille">
         <div class="colonne">

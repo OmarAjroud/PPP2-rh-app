@@ -22,7 +22,7 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; liste: Role[] } | { statu
         <div><p class="crumb">Entreprise</p><h1 class="page-titre">Rôles</h1></div>
         @if (admin()) { <a pButton routerLink="/roles/new" icon="pi pi-plus">Ajouter un rôle</a> }
       </header>
-      <section class="card">
+      <section class="liste">
         @switch (etat().statut) {
           @case ('chargement') { <p class="vide hint" aria-busy="true">Chargement…</p> }
           @case ('erreur') { <div class="vide"><p class="alerte erreur" role="alert">{{ $any(etat()).message }}</p></div> }
@@ -39,8 +39,9 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; liste: Role[] } | { statu
     </div>
   `,
   styles: `
-    .page { display: grid; gap: var(--rh-space-4); max-width: 900px; }
-    .role { color: var(--rh-ink); text-decoration: none; transition: background var(--rh-fast) var(--rh-ease); }
+    .page { display: grid; gap: var(--rh-space-4); --page-max: 900px; }
+    .liste { border-top: 1px solid var(--rh-line); }
+    .role { padding-inline: var(--rh-space-2); color: var(--rh-ink); text-decoration: none; transition: background var(--rh-fast) var(--rh-ease); }
     .role:hover { background: var(--rh-surface-2); }
     .role:hover b { text-decoration: underline; text-underline-offset: 3px; }
     .role b { font-weight: 500; }
