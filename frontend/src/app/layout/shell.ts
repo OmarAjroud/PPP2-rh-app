@@ -29,6 +29,13 @@ function navigation(role: Role): Groupe[] {
         ...(role === 'EMPLOYE' ? [] : [{ chemin: '/approvals', libelle: 'À décider', icone: 'pi-check-square' }]),
       ],
     },
+    ...(role === 'EMPLOYE' ? [] : [{
+      titre: 'Pilotage',
+      liens: [
+        { chemin: '/dashboard', libelle: 'Tableau de bord', icone: 'pi-chart-bar' },
+        ...(role === 'ADMIN' ? [{ chemin: '/audit', libelle: 'Journal d\'audit', icone: 'pi-history' }] : []),
+      ],
+    }]),
     {
       titre: 'Entreprise',
       liens: [

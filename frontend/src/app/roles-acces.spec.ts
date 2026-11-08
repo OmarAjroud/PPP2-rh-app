@@ -97,4 +97,27 @@ describe('Access per role', { timeout: 15000 }, () => {
     expect(r.url).toBe('/notifications');
     expect(r.nav).toContain('Notifications');
   });
+  it('keeps employees out of the dashboard and the audit log', async () => {
+    connecter('EMPLOYE');
+    const r = await aller('/dashboard');
+    expect(r.url).toBe('/');
+    expect(r.nav).not.toContain('Tableau de bord');
+    expect((await aller('/audit')).url).toBe('/');
+  });
+
+  it('opens the dashboard to managers and HR, the audit log to the administrator only', async () => {
+    connecter('MANAGER');
+    let r = await aller('/dashboard');
+    expect(r.url).toBe('/dashboard');
+    expect(r.nav).toContain('Tableau de bord');
+    expect(r.nav).not.toContain('Journal d\'audit');
+    expect((await aller('/audit')).url).toBe('/');
+  });
+
+  it('gives the administrator the audit log', async () => {
+    connecter('ADMIN');
+    const r = await aller('/audit');
+    expect(r.url).toBe('/audit');
+    expect(r.nav).toContain('Journal d\'audit');
+  });
 });
