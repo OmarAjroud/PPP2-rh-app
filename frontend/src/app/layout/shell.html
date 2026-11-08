@@ -1,6 +1,15 @@
 <div class="shell">
-  <nav class="rail" #rail aria-label="Navigation principale">
-    <a class="marque" routerLink="/" aria-label="RH App, accueil">RH<span>·</span>App</a>
+  <header class="barre-mobile">
+    <button type="button" class="menu" aria-controls="rail" [attr.aria-expanded]="menuOuvert()" aria-label="Menu de navigation" (click)="menuOuvert.set(!menuOuvert())">
+      <i class="pi pi-bars" aria-hidden="true"></i>
+    </button>
+    <a class="marque" routerLink="/" aria-label="RH App, accueil"><span class="logo" aria-hidden="true"></span>RH App</a>
+  </header>
+
+  @if (menuOuvert()) { <div class="voile" aria-hidden="true" (click)="menuOuvert.set(false)"></div> }
+
+  <nav class="rail" id="rail" [class.ouvert]="menuOuvert()" aria-label="Navigation principale">
+    <a class="marque" routerLink="/" aria-label="RH App, accueil"><span class="logo" aria-hidden="true"></span>RH App</a>
 
     @if (rechercheVisible()) {
       <form class="recherche" role="search" (submit)="$event.preventDefault(); rechercher(champ)">
@@ -14,7 +23,7 @@
       @if (g.titre) { <span class="groupe">{{ g.titre }}</span> }
       @for (l of g.liens; track l.chemin) {
         <a class="lien" [routerLink]="l.chemin" routerLinkActive="actif" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: !!l.exact }">
-          <i class="pi {{ l.icone }}" aria-hidden="true"></i>{{ l.libelle }}
+          <i class="pi {{ l.icone }}" aria-hidden="true"></i><span>{{ l.libelle }}</span>
         </a>
       }
     }

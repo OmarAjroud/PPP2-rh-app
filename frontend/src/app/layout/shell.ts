@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, Injector, afterNextRender, computed, inject, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, computed, inject, signal, viewChild } from '@angular/core';
 import { filter } from 'rxjs';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
@@ -32,7 +32,7 @@ function navigation(role: Role): Groupe[] {
   ];
 }
 
-/** Application shell: navy rail lit from its top corner + routed work area (DESIGN.md, Layout). */
+/** Application shell: Linear-style rail + routed work area; under 900px the rail is a drawer (DESIGN.md, Layout). */
 @Component({
   selector: 'app-shell',
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
@@ -43,7 +43,6 @@ export class Shell {
   protected readonly auth = inject(AuthService);
   protected readonly theme = inject(ThemeService);
   private readonly router = inject(Router);
-  private readonly injector = inject(Injector);
   private readonly moi = inject(Moi);
   private readonly champRecherche = viewChild<ElementRef<HTMLInputElement>>('recherche');
 
@@ -76,23 +75,20 @@ export class Shell {
     { valeur: 'sombre', libelle: 'Thème sombre', icone: 'pi-moon' },
   ];
 
-  private readonly rail = viewChild<ElementRef<HTMLElement>>('rail');
+  /** Drawer state on small screens (the rail is always visible from 900px). */
+  readonly menuOuvert = signal(false);
 
   constructor() {
-    // On a phone the rail is a horizontal strip: keep the current page's link fully visible
-    this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe(() =>
-      afterNextRender(() => {
-        const rail = this.rail()?.nativeElement;
-        const actif = rail?.querySelector<HTMLElement>('.lien.actif');
-        if (!rail || !actif || rail.scrollWidth <= rail.clientWidth) return;
-        const droite = actif.offsetLeft - rail.offsetLeft + actif.offsetWidth + 12;
-        rail.scrollLeft = Math.max(0, droite - rail.clientWidth);
-      }, { injector: this.injector }));
+    this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe(() => this.menuOuvert.set(false));
   }
 
-  /** Ctrl K (or ⌘K) focuses the search field. */
+  /** Ctrl K (or ⌘K) focuses the search field; Escape closes the drawer. */
   @HostListener('document:keydown', ['$event'])
   protected raccourci(e: KeyboardEvent): void {
+    if (e.key === 'Escape' && this.menuOuvert()) {
+      this.menuOuvert.set(false);
+      return;
+    }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && this.rechercheVisible()) {
       e.preventDefault();
       this.champRecherche()?.nativeElement.focus();
