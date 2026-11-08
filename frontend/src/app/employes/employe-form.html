@@ -1,7 +1,9 @@
 <div class="page" rhApparition>
-  <header>
-    <p class="crumb"><a routerLink="/employees">Employés</a></p>
-    <h1 class="page-titre">{{ id === null ? 'Ajouter un employé' : 'Modifier l’employé' }}</h1>
+  <header class="entete">
+    <div>
+      <p class="crumb"><a routerLink="/employees">Employés</a></p>
+      <h1 class="page-titre">{{ id === null ? 'Ajouter un employé' : 'Modifier l’employé' }}</h1>
+    </div>
   </header>
 
   @if (chargement()) {

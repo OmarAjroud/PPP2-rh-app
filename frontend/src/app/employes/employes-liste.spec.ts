@@ -40,4 +40,20 @@ describe('Employee list', () => {
     expect(req.request.params.get('sort')).toBe('nom,asc');
     expect(req.request.params.has('recherche')).toBe(false);
   });
+
+  it('shows each person with department and role in French, repeated under the name for the stacked phone layout', async () => {
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/employees');
+    http.expectOne(r => r.url === `${environment.apiUrl}/api/employes`).flush({
+      contenu: [{ id: 3, nom: 'Benali', prenom: 'Lina', email: 'lina@rh.com', departementId: 1, departementNom: 'Produit', roleId: 3, roleNom: 'MANAGER' }],
+      numeroPage: 0, taillePage: 10, totalElements: 1, totalPages: 1, dernierePage: true,
+    });
+    http.match(() => true).forEach(r => r.flush([]));
+    harness.detectChanges();
+    const ligne = harness.routeNativeElement!.querySelector('tbody tr')!;
+    expect(ligne.textContent).toContain('Lina Benali');
+    expect(ligne.textContent).toContain('Produit');
+    expect(ligne.textContent).toContain('Manager');
+    expect(ligne.querySelector('td:first-child .meta')?.textContent?.replace(/s+/g, ' ').trim()).toBe('Produit · Manager');
+  });
 });

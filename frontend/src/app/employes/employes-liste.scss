@@ -1,39 +1,54 @@
-.page { display: grid; gap: var(--rh-space-6); max-width: var(--rh-content-max); }
+.page { display: grid; gap: var(--rh-space-4); max-width: var(--rh-content-max); }
 
-.filtres { display: flex; flex-wrap: wrap; align-items: center; gap: var(--rh-space-3); padding: var(--rh-space-4) var(--rh-space-6); border-bottom: 1px solid var(--rh-line); }
-.filtres .recherche { flex: 2 1 260px; max-width: 360px; }
+// The list sits directly on the work sheet (Linear): filters bar, then hairline rows.
+.liste { min-width: 0; }
+
+.filtres { display: flex; flex-wrap: wrap; align-items: center; gap: var(--rh-space-2); padding-bottom: var(--rh-space-3); }
+.filtres .recherche { flex: 2 1 240px; max-width: 320px; }
 .filtres .recherche input { width: 100%; }
-.filtres p-select { flex: 1 1 200px; max-width: 250px; }
+.filtres p-select { flex: 1 1 180px; max-width: 220px; }
 .total { margin-left: auto; white-space: nowrap; }
 
-.table { overflow-x: auto; transition: opacity var(--rh-base) var(--rh-ease); }
+.table { border-top: 1px solid var(--rh-line); transition: opacity var(--rh-base) var(--rh-ease); }
 .table.charge { opacity: 0.55; }
-.table :is(th, td):first-child { padding-left: var(--rh-space-6); }
-.table :is(th, td):last-child { padding-right: var(--rh-space-6); }
+.table :is(th, td):first-child { padding-left: var(--rh-space-2); }
+.table :is(th, td):last-child { padding-right: var(--rh-space-2); }
 
-.personne { display: flex; align-items: center; gap: var(--rh-space-3); color: var(--rh-ink); text-decoration: none; }
-.personne b { display: block; font-weight: 600; }
-.personne small { display: block; color: var(--rh-muted); font-size: var(--rh-text-xs); }
-.personne:hover b { color: var(--rh-accent); }
+.personne { display: flex; align-items: center; gap: var(--rh-space-3); min-width: 0; color: var(--rh-ink); text-decoration: none; }
+.personne .qui { min-width: 0; }
+.personne b { display: block; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.personne small { display: block; color: var(--rh-muted); font-size: var(--rh-text-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.personne .meta { display: none; }
+.personne:hover b { text-decoration: underline; text-underline-offset: 3px; }
 .avatar {
   flex: none;
-  width: 32px;
-  height: 32px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--rh-accent-soft);
-  color: var(--rh-accent);
-  font-size: 12px;
-  font-weight: 700;
+  background: var(--rh-surface-3);
+  color: var(--rh-ink-2);
+  font-size: var(--rh-text-xs);
+  font-weight: 600;
 }
 td.mono { color: var(--rh-muted); }
 
-.vide { display: grid; gap: var(--rh-space-1); padding: var(--rh-space-8) var(--rh-space-6); }
+.vide { display: grid; gap: var(--rh-space-1); padding: var(--rh-space-8) var(--rh-space-2); border-top: 1px solid var(--rh-line); }
 p-paginator { display: block; border-top: 1px solid var(--rh-line); }
 
-@media (max-width: 560px) {
-  .filtres { padding: var(--rh-space-3) var(--rh-space-4); }
+// Name column takes the room; long names and emails truncate instead of widening the table
+:host ::ng-deep .table table { table-layout: fixed; width: 100%; }
+:host ::ng-deep .table th:first-child { width: 42%; }
+:host ::ng-deep .table th:last-child { width: 72px; }
+
+// Phones: rows stack (name, email, then department · role), no horizontal scroll
+@media (max-width: 600px) {
   .filtres .recherche, .filtres p-select { flex: 1 1 100%; max-width: none; }
   .total { margin-left: 0; }
+  :host ::ng-deep .table thead { display: none; }
+  :host ::ng-deep .table :is(td:not(:first-child)) { display: none; }
+  :host ::ng-deep .table th:first-child, :host ::ng-deep .table td:first-child { width: auto; }
+  :host ::ng-deep .table td:first-child { height: auto; padding-block: 10px; white-space: normal; }
+  .personne .meta { display: block; }
 }

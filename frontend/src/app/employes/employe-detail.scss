@@ -1,33 +1,33 @@
-.page { display: grid; gap: var(--rh-space-6); max-width: var(--rh-content-max); }
+.page { display: grid; gap: var(--rh-space-5); max-width: var(--rh-content-max); }
 
-.identite { display: flex; align-items: center; gap: var(--rh-space-5); flex-wrap: wrap; }
+// Identity header: same slim bar as other pages, with the person's initials
+.identite { display: flex; align-items: center; gap: var(--rh-space-4); flex-wrap: wrap; padding-bottom: var(--rh-space-4); border-bottom: 1px solid var(--rh-line); }
 .avatar {
   flex: none;
-  width: 72px;
-  height: 72px;
-  border-radius: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #4f78ff, #2242d6);
-  color: #fff;
-  font: 700 26px var(--rh-font-display);
-  box-shadow: var(--rh-shadow-card);
+  background: var(--rh-surface-3);
+  color: var(--rh-ink-2);
+  font-weight: 600;
+  font-size: var(--rh-text-lg);
 }
 .qui { flex: 1; min-width: 0; }
+.qui .crumb::after { content: none; }
 .tags { display: flex; flex-wrap: wrap; gap: var(--rh-space-2); margin-top: var(--rh-space-2); }
 .modifier { align-self: flex-start; }
 
-.grille { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: var(--rh-space-6); align-items: start; }
-.colonne { display: grid; gap: var(--rh-space-6); min-width: 0; }
+.grille { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--rh-space-4); align-items: start; }
+.colonne { display: grid; gap: var(--rh-space-4); min-width: 0; }
 
 .card-h h2 { font-size: inherit; font-weight: inherit; }
 .ligne-compte { display: flex; flex-wrap: wrap; gap: var(--rh-space-3); align-items: center; justify-content: space-between; }
-.vide { padding: var(--rh-space-5) var(--rh-space-6); }
+.vide { padding: var(--rh-space-4); }
 
+// Narrow screens: balances and recent requests come right after the identity
 @media (max-width: 1100px) {
   .grille { grid-template-columns: minmax(0, 1fr); }
-}
-@media (max-width: 560px) {
-  .avatar { width: 56px; height: 56px; border-radius: 16px; font-size: 20px; }
-  .page-titre { font-size: 26px; }
+  .colonne:last-child { order: -1; }
 }

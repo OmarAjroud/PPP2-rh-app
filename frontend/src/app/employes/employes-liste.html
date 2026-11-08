@@ -7,7 +7,7 @@
     @if (gestion()) { <a pButton routerLink="/employees/new" icon="pi pi-plus">Ajouter un employé</a> }
   </header>
 
-  <section class="card">
+  <section class="liste">
     <div class="filtres">
       <p-iconfield class="recherche">
         <p-inputicon class="pi pi-search" />
@@ -34,7 +34,7 @@
       </div>
     } @else {
       <div class="table" [class.charge]="etat().statut === 'chargement'" [attr.aria-busy]="etat().statut === 'chargement'">
-        <p-table [value]="lignes()?.contenu ?? []" [customSort]="true" (sortFunction)="trier($event)" [sortField]="tri()" [sortOrder]="sens()" dataKey="id" [tableStyle]="{ 'min-width': '720px' }">
+        <p-table [value]="lignes()?.contenu ?? []" [customSort]="true" (sortFunction)="trier($event)" [sortField]="tri()" [sortOrder]="sens()" dataKey="id">
           <ng-template #header>
             <tr>
               <th pSortableColumn="nom">Personne <p-sortIcon field="nom" /></th>
@@ -48,7 +48,7 @@
               <td>
                 <a class="personne" [routerLink]="['/employees', e.id]">
                   <span class="avatar" aria-hidden="true">{{ initiales(e.prenom, e.nom) }}</span>
-                  <span><b>{{ e.prenom }} {{ e.nom }}</b><small>{{ e.email }}</small></span>
+                  <span class="qui"><b>{{ e.prenom }} {{ e.nom }}</b><small>{{ e.email }}</small><small class="meta">{{ e.departementNom }} · {{ libelleRole(e.roleNom) }}</small></span>
                 </a>
               </td>
               <td>{{ e.departementNom }}</td>

@@ -97,6 +97,7 @@ code { font: 500 var(--rh-text-sm) var(--rh-font-mono); }
 
 // ---- PrimeNG: buttons ----
 body .p-button {
+  white-space: nowrap;
   height: var(--rh-control-height);
   padding: 0 12px;
   font-size: var(--rh-text-md);
