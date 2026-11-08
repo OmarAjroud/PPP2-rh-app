@@ -14,6 +14,7 @@ import { Barres, Colonnes, Donnee } from './graphiques';
 
 type Etat = { statut: 'chargement' } | { statut: 'ok'; d: Donnees } | { statut: 'erreur'; message: string };
 
+const INITIALES = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
 const MOIS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
 const pluriel = (v: number, un: string, plusieurs: string) => `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(v)} ${v > 1 ? plusieurs : un}`;
 
@@ -65,6 +66,7 @@ const pluriel = (v: number, un: string, plusieurs: string) => `${new Intl.Number
             @if (d.masseSalariale) {
               <section class="card" aria-labelledby="masse-titre">
                 <h2 id="masse-titre" class="card-h">Masse salariale mensuelle</h2>
+                <div class="defile" tabindex="0" role="region" aria-label="Masse salariale par département">
                 <table class="masse">
                   <thead><tr><th scope="col">Département</th><th scope="col" class="num">Effectif</th><th scope="col" class="num">Total</th><th scope="col" class="num">Moyenne</th></tr></thead>
                   <tbody>
@@ -75,6 +77,7 @@ const pluriel = (v: number, un: string, plusieurs: string) => `${new Intl.Number
                     }
                   </tbody>
                 </table>
+                </div>
               </section>
             }
           </div>
@@ -93,7 +96,8 @@ const pluriel = (v: number, un: string, plusieurs: string) => `${new Intl.Number
     .note { color: var(--rh-muted); font-size: var(--rh-text-sm); }
     .grille { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--rh-space-5); align-items: start; }
     .card-h { margin: 0; }
-    .masse { width: 100%; border-collapse: collapse; }
+    .defile { overflow-x: auto; }
+    .masse { width: 100%; min-width: 440px; border-collapse: collapse; }
     .masse th, .masse td { padding: 12px var(--rh-space-5); border-bottom: 1px solid var(--rh-line-row); text-align: left; font-weight: 400; }
     .masse thead th { color: var(--rh-muted); font-size: var(--rh-text-sm); font-weight: 500; }
     .masse tbody tr:last-child > * { border-bottom: 0; }
@@ -155,7 +159,7 @@ export class TableauDeBord {
   }
 
   protected embauches(d: Donnees): Donnee[] {
-    return d.embauchesParMois.map(e => ({ libelle: MOIS[e.mois - 1], valeur: e.nombre }));
+    return d.embauchesParMois.map(e => ({ libelle: MOIS[e.mois - 1], court: INITIALES[e.mois - 1], valeur: e.nombre }));
   }
 
   protected conges(d: Donnees): Donnee[] {

@@ -4,6 +4,8 @@ import { Component, computed, input } from '@angular/core';
 export interface Donnee {
   libelle: string;
   valeur: number;
+  /** Short label for narrow screens (e.g. 'J' for January); defaults to the label. */
+  court?: string;
 }
 
 type Format = (v: number) => string;
@@ -79,7 +81,7 @@ const STYLES_COMMUNS = `
     .libelle { color: var(--rh-ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .piste { display: flex; align-items: center; gap: var(--rh-space-2); min-width: 0; }
     .barre { display: block; height: 16px; max-width: calc(100% - 7ch); background: var(--rh-accent); border-radius: 0 4px 4px 0; }
-    .valeur { flex: none; color: var(--rh-ink); font: 500 var(--rh-text-sm) var(--rh-font-mono); font-variant-numeric: tabular-nums; }
+    .valeur { flex: none; color: var(--rh-ink); font-size: var(--rh-text-sm); font-weight: 500; font-variant-numeric: tabular-nums; }
     .bulle { left: 34%; bottom: calc(100% + 4px); }
     .vide { color: var(--rh-muted); padding: var(--rh-space-2) 0; }
   `,
@@ -111,7 +113,7 @@ export class Barres {
             @if (d.valeur > 0) { <span class="valeur">{{ format()(d.valeur) }}</span> }
             @if (parts()[i] > 0) { <span class="colonne" [style.height.%]="parts()[i]"></span> }
           </span>
-          <span class="libelle">{{ d.libelle }}</span>
+          <span class="libelle" aria-hidden="true"><span class="long">{{ d.libelle }}</span><span class="court">{{ d.court ?? d.libelle }}</span></span>
           <span class="bulle" aria-hidden="true"><b>{{ format()(d.valeur) }}</b> · {{ d.libelle }}</span>
         </li>
       }
@@ -124,9 +126,11 @@ export class Barres {
     li[tabindex]:hover .zone { background: var(--rh-surface-2); }
     .zone { width: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; border-radius: var(--rh-radius-sm) var(--rh-radius-sm) 0 0; }
     .colonne { display: block; width: min(24px, 70%); max-height: calc(100% - 22px); background: var(--rh-accent); border-radius: 4px 4px 0 0; }
-    .valeur { color: var(--rh-ink); font: 500 var(--rh-text-xs) var(--rh-font-mono); }
+    .valeur { color: var(--rh-ink); font-size: var(--rh-text-xs); font-weight: 600; font-variant-numeric: tabular-nums; }
     .libelle { padding-top: 6px; color: var(--rh-muted); font-size: var(--rh-text-xs); }
     .bulle { bottom: calc(100% - 20px); left: 50%; transform: translateX(-50%); }
+    .court { display: none; }
+    @media (max-width: 600px) { .long { display: none; } .court { display: inline; } }
   `,
 })
 export class Colonnes {
