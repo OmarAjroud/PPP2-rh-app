@@ -152,3 +152,30 @@ export interface Notification {
   dateCreation: string;
   dateLecture: string | null;
 }
+
+/** Dashboard for a year and a scope (one department, or the whole company when departementId is null). */
+export interface TableauDeBord {
+  annee: number;
+  departementId: number | null;
+  indicateurs: { nombreEmployes: number; demandesEnAttente: number; embauchesDuMois: number; absentsAujourdhui: number };
+  effectifParDepartement: { departementId: number; departementNom: string; nombreEmployes: number }[];
+  /** mois: 1 to 12, always the 12 months. */
+  embauchesParMois: { mois: number; nombre: number }[];
+  repartitionConges: { typeCongeCode: string; typeCongeLibelle: string; nombreDemandes: number; nombreJours: number }[];
+  /** ADMIN and RH only: null for managers. */
+  masseSalariale: { departementId: number; departementNom: string; nombreEmployes: number; total: number; moyenne: number }[] | null;
+}
+
+export interface AuditEntree {
+  id: number;
+  dateAction: string;
+  utilisateurId: number | null;
+  nomUtilisateur: string | null;
+  action: string;
+  entite: string | null;
+  entiteId: string | null;
+  anciennesValeurs: unknown;
+  nouvellesValeurs: unknown;
+  details: string | null;
+  adresseIp: string | null;
+}

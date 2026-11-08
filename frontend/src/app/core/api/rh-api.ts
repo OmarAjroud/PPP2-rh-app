@@ -4,8 +4,18 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   Compte, Departement, DepartementDetail, Employe, EmployeDetail, EmployeRequest,
-  DemandeConge, DemandeCongeRequest, JoursOuvrables, NomDescription, Notification, PageReponse, Role, Solde, StatutDemande, TypeConge,
+  DemandeConge, DemandeCongeRequest, JoursOuvrables, NomDescription, Notification, TableauDeBord, AuditEntree, PageReponse, Role, Solde, StatutDemande, TypeConge,
 } from './models';
+
+export interface RechercheAudit {
+  nomUtilisateur?: string | null;
+  action?: string | null;
+  entite?: string | null;
+  du?: string | null; // yyyy-MM-dd
+  au?: string | null;
+  page: number;
+  size: number;
+}
 
 export interface RechercheDemandes {
   statut?: StatutDemande | null;
@@ -96,6 +106,26 @@ export class RhApi {
   /** One-use ticket (30 s) to open the stream: EventSource cannot send the Authorization header. */
   ticketFlux(): Observable<{ ticket: string; expireDans: number }> { return this.http.post<{ ticket: string; expireDans: number }>(`${this.api}/notifications/flux/ticket`, {}); }
   urlFlux(ticket: string): string { return `${this.api}/notifications/flux?ticket=${encodeURIComponent(ticket)}`; }
+
+  // ---- Dashboard (ADMIN, RH, MANAGER) ----
+  tableauDeBord(annee?: number, departementId?: number | null): Observable<TableauDeBord> {
+    let params = new HttpParams();
+    if (annee) params = params.set('annee', annee);
+    if (departementId) params = params.set('departementId', departementId);
+    return this.http.get<TableauDeBord>(`${this.api}/tableau-de-bord`, { params });
+  }
+
+  // ---- Audit log (ADMIN) ----
+  audit(r: RechercheAudit): Observable<PageReponse<AuditEntree>> {
+    let params = new HttpParams().set('page', r.page).set('size', r.size);
+    for (const cle of ['nomUtilisateur', 'action', 'entite', 'du', 'au'] as const) {
+      const v = r[cle]?.trim();
+      if (v) params = params.set(cle, v);
+    }
+    return this.http.get<PageReponse<AuditEntree>>(`${this.api}/admin/audit`, { params });
+  }
+  actionsAudit(): Observable<string[]> { return this.http.get<string[]>(`${this.api}/admin/audit/actions`); }
+  entitesAudit(): Observable<string[]> { return this.http.get<string[]>(`${this.api}/admin/audit/entites`); }
 
   // ---- Roles ----
   roles(): Observable<Role[]> { return this.http.get<Role[]>(`${this.api}/roles`); }
