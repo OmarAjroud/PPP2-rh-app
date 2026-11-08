@@ -102,15 +102,15 @@
 .identite { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .avatar {
   flex: none;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: grid;
   place-items: center;
   background: var(--rh-surface-3);
   color: var(--rh-ink-2);
   font-weight: 600;
-  font-size: var(--rh-text-xs);
+  font-size: var(--rh-text-sm);
 }
 .qui {
   min-width: 0;

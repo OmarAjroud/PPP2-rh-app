@@ -84,7 +84,7 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; d: DepartementDetail } | 
     .personne { display: flex; align-items: center; gap: var(--rh-space-3); color: var(--rh-ink); text-decoration: none; }
     .personne b { font-weight: 500; }
     a.personne:hover b { text-decoration: underline; text-underline-offset: 3px; }
-    .avatar { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--rh-surface-3); color: var(--rh-ink-2); font-size: var(--rh-text-xs); font-weight: 600; }
+    .avatar { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--rh-surface-3); color: var(--rh-ink-2); font-size: var(--rh-text-sm); font-weight: 600; }
     .vide { padding: var(--rh-space-4); }
     @media (max-width: 560px) { .ligne { flex-wrap: wrap; } }
   `,

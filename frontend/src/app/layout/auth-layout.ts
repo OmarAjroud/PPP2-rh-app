@@ -36,6 +36,7 @@ import { ThemeService } from '../core/theme/theme.service';
       padding: 48px 16px;
       background: var(--rh-bg);
       color: var(--rh-ink);
+      font-size: var(--rh-text-lg);
       overflow: hidden;
     }
     .auth-halo {
@@ -50,11 +51,11 @@ import { ThemeService } from '../core/theme/theme.service';
       filter: blur(20px);
       pointer-events: none;
     }
-    .auth-marque { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: var(--rh-text-lg); }
-    .auth-logo { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, var(--rh-indigo-300), var(--rh-indigo-500)); box-shadow: 0 0 24px rgb(124 110 255 / 0.5); }
+    .auth-marque { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 18px; }
+    .auth-logo { width: 26px; height: 26px; border-radius: 7px; background: linear-gradient(135deg, var(--rh-indigo-300), var(--rh-indigo-500)); box-shadow: 0 0 24px rgb(124 110 255 / 0.5); }
     .auth-panneau {
-      width: min(400px, 100%);
-      padding: 28px;
+      width: min(440px, 100%);
+      padding: 36px;
       border: 1px solid var(--rh-line);
       border-radius: var(--rh-radius-lg);
       background: color-mix(in srgb, var(--rh-surface) 82%, transparent);
@@ -62,12 +63,18 @@ import { ThemeService } from '../core/theme/theme.service';
       box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 24px 60px -20px rgb(0 0 0 / 0.8);
     }
     .auth-panneau > :not(router-outlet) { display: block; }
-    .auth-mention { font-size: var(--rh-text-sm); color: var(--rh-muted); }
+    .auth-mention { font-size: var(--rh-text-md); color: var(--rh-muted); }
 
     /* Forms rendered inside the panel (connexion, mot de passe oublié, liens de compte) */
-    .auth-titre { font: 600 22px/1.25 var(--rh-font); letter-spacing: -0.015em; }
+    .auth-titre { font: 600 28px/1.2 var(--rh-font); letter-spacing: -0.02em; }
     .auth-sous-titre { margin-top: 6px; color: var(--rh-muted); }
-    .auth-form { display: grid; gap: var(--rh-space-4); margin-top: 24px; }
+    .auth-form { display: grid; gap: 18px; margin-top: 28px; }
+    /* Login reads at 15px: larger than the dense app (13px), it is a first impression */
+    .auth .champ { gap: 8px; }
+    .auth .champ > label { font-size: 14px; }
+    .auth .champ :is(.aide, .err) { font-size: 13px; }
+    .auth :is(.p-inputtext, .p-password-input) { height: 42px; font-size: 15px; padding-inline: 12px; }
+    .auth .auth-form .p-button { height: 42px; font-size: 15px; }
     .auth-form .p-button { width: 100%; justify-content: center; }
     .auth .auth-form .p-button:not(.p-button-secondary):not(.p-button-outlined):not(.p-button-text):not(.p-button-danger) {
       background: var(--rh-ink);
@@ -78,15 +85,15 @@ import { ThemeService } from '../core/theme/theme.service';
       background: var(--rh-ink-2);
       border-color: var(--rh-ink-2);
     }
-    .auth-liens { display: flex; justify-content: flex-end; gap: var(--rh-space-3); font-size: var(--rh-text-sm); }
+    .auth-liens { display: flex; justify-content: flex-end; gap: var(--rh-space-3); font-size: 14px; }
     .auth-liens a { font-weight: 500; text-decoration: none; }
     .auth-liens a:hover { text-decoration: underline; }
-    .auth-pied { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--rh-line); font-size: var(--rh-text-sm); color: var(--rh-muted); }
+    .auth-pied { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--rh-line); font-size: 13px; line-height: 1.8; color: var(--rh-muted); }
     .auth-pied code { color: var(--rh-ink-2); background: var(--rh-surface-2); border: 1px solid var(--rh-line); border-radius: 4px; padding: 1px 5px; margin-right: 4px; white-space: nowrap; }
 
     @media (max-width: 600px) {
       .auth { justify-content: flex-start; padding-top: 32px; }
-      .auth-panneau { padding: 20px; }
+      .auth-panneau { padding: 24px; }
     }
     @media (prefers-reduced-transparency: reduce) {
       .auth-panneau { background: var(--rh-surface); backdrop-filter: none; }
