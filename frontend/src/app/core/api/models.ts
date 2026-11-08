@@ -115,3 +115,27 @@ export interface DemandeConge {
   dateEscalade: string | null;
   motifInterruption: string | null;
 }
+
+export interface TypeConge {
+  id: number;
+  code: string;
+  libelle: string;
+  deduitDuSolde: boolean;
+  joursParAn: number;
+  retroactifAutorise: boolean;
+}
+
+/** Working days between two dates (weekends and public holidays excluded), computed by the API. */
+export interface JoursOuvrables {
+  dateDebut: string;
+  dateFin: string;
+  joursOuvrables: number;
+  joursCalendaires: number;
+}
+
+export interface DemandeCongeRequest {
+  typeCongeId: number;
+  dateDebut: string; // yyyy-MM-dd
+  dateFin: string;
+  commentaire?: string;
+}

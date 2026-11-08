@@ -4,8 +4,14 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   Compte, Departement, DepartementDetail, Employe, EmployeDetail, EmployeRequest,
-  DemandeConge, NomDescription, PageReponse, Role, Solde,
+  DemandeConge, DemandeCongeRequest, JoursOuvrables, NomDescription, PageReponse, Role, Solde, StatutDemande, TypeConge,
 } from './models';
+
+export interface RechercheDemandes {
+  statut?: StatutDemande | null;
+  page: number;
+  size: number;
+}
 
 export interface RechercheEmployes {
   recherche?: string;
@@ -50,11 +56,35 @@ export class RhApi {
   supprimerDepartement(id: number): Observable<void> { return this.http.delete<void>(`${this.api}/departements/${id}`); }
 
   // ---- Leave (read) ----
-  mesSoldes(): Observable<Solde[]> { return this.http.get<Solde[]>(`${this.api}/conges/soldes/moi`); }
+  /** My balances for a year (the current year when omitted). */
+  mesSoldes(annee?: number): Observable<Solde[]> {
+    return this.http.get<Solde[]>(`${this.api}/conges/soldes/moi`, annee ? { params: { annee } } : {});
+  }
   soldes(employeId: number): Observable<Solde[]> { return this.http.get<Solde[]>(`${this.api}/conges/soldes/${employeId}`); }
   mesDemandes(size = 5): Observable<PageReponse<DemandeConge>> { return this.http.get<PageReponse<DemandeConge>>(`${this.api}/conges/demandes/moi`, { params: { size } }); }
   /** ADMIN and RH only (global view). */
   demandesDe(employeId: number, size = 5): Observable<PageReponse<DemandeConge>> { return this.http.get<PageReponse<DemandeConge>>(`${this.api}/conges/demandes`, { params: { employeId, size } }); }
+
+  // ---- Leave requests ----
+  typesConge(): Observable<TypeConge[]> { return this.http.get<TypeConge[]>(`${this.api}/types-conge`); }
+  joursOuvrables(dateDebut: string, dateFin: string): Observable<JoursOuvrables> {
+    return this.http.get<JoursOuvrables>(`${this.api}/conges/demandes/jours-ouvrables`, { params: { dateDebut, dateFin } });
+  }
+  creerDemande(r: DemandeCongeRequest): Observable<DemandeConge> { return this.http.post<DemandeConge>(`${this.api}/conges/demandes`, r); }
+  demande(id: number): Observable<DemandeConge> { return this.http.get<DemandeConge>(`${this.api}/conges/demandes/${id}`); }
+  annulerDemande(id: number): Observable<DemandeConge> { return this.http.post<DemandeConge>(`${this.api}/conges/demandes/${id}/annulation`, {}); }
+  validerDemande(id: number, motif?: string): Observable<DemandeConge> {
+    return this.http.post<DemandeConge>(`${this.api}/conges/demandes/${id}/validation`, motif?.trim() ? { motif: motif.trim() } : {});
+  }
+  refuserDemande(id: number, motif: string): Observable<DemandeConge> { return this.http.post<DemandeConge>(`${this.api}/conges/demandes/${id}/refus`, { motif }); }
+  interrompreDemande(id: number, motif: string): Observable<DemandeConge> { return this.http.post<DemandeConge>(`${this.api}/conges/demandes/${id}/interruption`, { motif }); }
+  mesDemandesPage(r: RechercheDemandes): Observable<PageReponse<DemandeConge>> { return this.http.get<PageReponse<DemandeConge>>(`${this.api}/conges/demandes/moi`, { params: paramsDemandes(r) }); }
+  /** MANAGER, RH, ADMIN: what the caller can decide now. */
+  aDecider(page = 0, size = 10): Observable<PageReponse<DemandeConge>> { return this.http.get<PageReponse<DemandeConge>>(`${this.api}/conges/demandes/a-decider`, { params: { page, size } }); }
+  /** MANAGER, RH, ADMIN: the caller's team. */
+  demandesEquipe(r: RechercheDemandes): Observable<PageReponse<DemandeConge>> { return this.http.get<PageReponse<DemandeConge>>(`${this.api}/conges/demandes/equipe`, { params: paramsDemandes(r) }); }
+  /** RH, ADMIN: every request. */
+  toutesDemandes(r: RechercheDemandes): Observable<PageReponse<DemandeConge>> { return this.http.get<PageReponse<DemandeConge>>(`${this.api}/conges/demandes`, { params: paramsDemandes(r) }); }
 
   // ---- Roles ----
   roles(): Observable<Role[]> { return this.http.get<Role[]>(`${this.api}/roles`); }
@@ -62,4 +92,10 @@ export class RhApi {
   creerRole(r: NomDescription): Observable<Role> { return this.http.post<Role>(`${this.api}/roles`, r); }
   modifierRole(id: number, r: NomDescription): Observable<Role> { return this.http.put<Role>(`${this.api}/roles/${id}`, r); }
   supprimerRole(id: number): Observable<void> { return this.http.delete<void>(`${this.api}/roles/${id}`); }
+}
+
+function paramsDemandes(r: RechercheDemandes): HttpParams {
+  let p = new HttpParams().set('page', r.page).set('size', r.size);
+  if (r.statut) p = p.set('statut', r.statut);
+  return p;
 }

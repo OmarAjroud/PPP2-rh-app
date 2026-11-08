@@ -4,25 +4,50 @@
       <h1 class="page-titre">Bonjour {{ prenom() }}</h1>
       <p class="date">{{ aujourdhui | date: 'EEEE d MMMM y' }}</p>
     </div>
+    <div class="actions">
+      @switch (etat()) {
+        @case ('verification') { <span class="status s-off">Vérification du serveur…</span> }
+        @case ('UP') { <span class="status s-ok">Serveur disponible</span> }
+        @case ('DOWN') { <span class="status s-no">Serveur en difficulté</span> }
+        @case ('injoignable') { <span class="status s-no">Serveur injoignable</span> }
+      }
+      <a pButton routerLink="/leave-requests/new" icon="pi pi-plus">Nouvelle demande</a>
+    </div>
   </header>
 
-  <section class="card" aria-labelledby="api-titre">
-    <div class="card-h"><h2 id="api-titre">État du serveur</h2>
-      @switch (etat()) {
-        @case ('verification') { <span class="status s-off">Vérification…</span> }
-        @case ('UP') { <span class="status s-ok">Disponible</span> }
-        @case ('DOWN') { <span class="status s-no">En difficulté</span> }
-        @case ('injoignable') { <span class="status s-no">Injoignable</span> }
-      }
+  @if (etat() === 'DOWN' || etat() === 'injoignable') {
+    <div class="alerte erreur serveur" role="alert">
+      @if (etat() === 'DOWN') { Le serveur répond mais signale un problème (base de données ?). }
+      @else { Aucune réponse de {{ apiUrl }}. Lancez le back-end (<code>docker compose up -d</code> à la racine du dépôt), puis réessayez. }
+      <p-button label="Réessayer" severity="secondary" (onClick)="verifier()" />
     </div>
-    @if (etat() === 'DOWN') {
-      <div class="card-b"><p class="hint">Le serveur répond mais signale un problème (base de données ?).</p></div>
-    }
-    @if (etat() === 'injoignable') {
-      <div class="card-b"><p class="hint">Aucune réponse de {{ apiUrl }}. Lancez le back-end (<code>docker compose up -d</code> à la racine du dépôt), puis réessayez.</p></div>
-    }
-    @if (etat() === 'DOWN' || etat() === 'injoignable') {
-      <div class="card-f"><span></span><div class="actions"><p-button label="Réessayer" severity="secondary" (onClick)="verifier()" /></div></div>
-    }
-  </section>
+  }
+
+  @if (decideur() && aDecider() !== null) {
+    <a class="a-decider" routerLink="/approvals">
+      <span><span class="lecture">{{ aDecider() }}</span> {{ aDecider() === 1 ? 'demande à décider' : 'demandes à décider' }}</span>
+      <i class="pi pi-arrow-right" aria-hidden="true"></i>
+    </a>
+  }
+
+  <div class="grille">
+    <section class="card" aria-labelledby="demandes-titre">
+      <div class="card-h"><h2 id="demandes-titre">Mes dernières demandes</h2><a routerLink="/leave-requests">Tout voir</a></div>
+      @if (demandes(); as liste) {
+        @for (d of liste; track d.id) {
+          @let st = statutDemande(d);
+          <a class="ligne demande" [routerLink]="['/leave-requests', d.id]">
+            <span>{{ periode(d.dateDebut, d.dateFin) }}<small>{{ d.typeCongeLibelle }} · {{ jours(d.nombreJours) }}</small></span>
+            <span class="status {{ st.classe }}">{{ st.libelle }}</span>
+          </a>
+        } @empty {
+          <p class="vide hint">Aucune demande pour l'instant. Utilisez « Nouvelle demande » pour poser vos congés.</p>
+        }
+      } @else {
+        <p class="vide hint" aria-busy="true">Chargement…</p>
+      }
+    </section>
+
+    <aside><app-soldes [soldes]="soldes() ?? []" /></aside>
+  </div>
 </div>

@@ -1,5 +1,35 @@
-.page { display: grid; gap: var(--rh-space-4); --page-max: 760px; }
+.page { display: grid; gap: var(--rh-space-4); --page-max: var(--rh-content-max); }
 .entete .salut { flex-direction: column; align-items: flex-start; }
 .date { color: var(--rh-muted); }
 .date::first-letter { text-transform: uppercase; }
+.entete .actions { align-items: center; gap: var(--rh-space-4); }
 .card-h h2 { font-size: inherit; font-weight: inherit; }
+
+.serveur { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--rh-space-3); }
+
+.a-decider {
+  display: flex;
+  align-items: center;
+  gap: var(--rh-space-3);
+  padding: var(--rh-space-3) var(--rh-space-5);
+  border: 1px solid var(--rh-line);
+  border-left: 3px solid var(--rh-accent);
+  border-radius: var(--rh-radius);
+  color: var(--rh-ink);
+  font-weight: 500;
+  text-decoration: none;
+  transition: background var(--rh-fast) var(--rh-ease);
+  .lecture { font-size: var(--rh-text-lg); font-weight: 600; }
+  i { margin-left: auto; color: var(--rh-muted); }
+  &:hover { background: var(--rh-surface-2); }
+}
+
+.grille { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--rh-space-6); align-items: start; }
+.demande { color: var(--rh-ink); text-decoration: none; transition: background var(--rh-fast) var(--rh-ease); }
+.demande:hover { background: var(--rh-surface-2); }
+.vide { padding: var(--rh-space-5); }
+
+@media (max-width: 1100px) {
+  .grille { grid-template-columns: minmax(0, 1fr); }
+  aside { order: -1; }
+}

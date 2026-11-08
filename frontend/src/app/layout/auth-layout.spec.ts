@@ -5,7 +5,8 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../app.routes';
 
-describe('AuthLayout: login screens', () => {
+// The first navigation compiles the lazy pages: slower than 5 s while the whole suite runs in parallel
+describe('AuthLayout: login screens', { timeout: 15000 }, () => {
   beforeEach(() => {
     localStorage.clear();
     document.documentElement.classList.remove('rh-dark');

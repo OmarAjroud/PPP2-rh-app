@@ -12,6 +12,10 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: '', pathMatch: 'full', title: 'Accueil · RH App', loadComponent: () => import('./accueil/accueil').then(m => m.Accueil) },
+      { path: 'leave-requests', title: 'Mes congés · RH App', loadComponent: () => import('./conges/mes-conges').then(m => m.MesConges) },
+      { path: 'leave-requests/new', title: 'Nouvelle demande · RH App', loadComponent: () => import('./conges/demande-form').then(m => m.DemandeForm) },
+      { path: 'leave-requests/:id', title: 'Demande de congé · RH App', loadComponent: () => import('./conges/demande-detail').then(m => m.DemandeDetail) },
+      { path: 'approvals', title: 'À décider · RH App', canActivate: [roleGuard('MANAGER', 'RH', 'ADMIN')], loadComponent: () => import('./conges/a-decider').then(m => m.ADecider) },
       { path: 'security', title: 'Sécurité du compte · RH App', loadComponent: () => import('./compte/securite').then(m => m.Securite) },
       { path: 'profile', title: 'Mon profil · RH App', data: { moi: true }, loadComponent: () => import('./employes/employe-detail').then(m => m.EmployeDetailPage) },
 

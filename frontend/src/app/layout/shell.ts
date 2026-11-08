@@ -15,6 +15,13 @@ function navigation(role: Role): Groupe[] {
   return [
     { titre: null, liens: [{ chemin: '/', libelle: 'Accueil', icone: 'pi-home', exact: true }] },
     {
+      titre: 'Congés',
+      liens: [
+        { chemin: '/leave-requests', libelle: 'Mes congés', icone: 'pi-calendar' },
+        ...(role === 'EMPLOYE' ? [] : [{ chemin: '/approvals', libelle: 'À décider', icone: 'pi-check-square' }]),
+      ],
+    },
+    {
       titre: 'Entreprise',
       liens: [
         ...(role === 'EMPLOYE' ? [] : [{ chemin: '/employees', libelle: role === 'MANAGER' ? 'Mon équipe' : 'Employés', icone: 'pi-users' }]),
