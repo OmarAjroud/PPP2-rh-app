@@ -51,7 +51,7 @@ class CongeNotificationListenerTest {
         verify(notificationService).notify(eq(karim), eq(TypeNotification.CONGE_DEMANDE),
                 eq("Nouvelle demande de congé"),
                 eq("Lina Gharbi a demandé : Congé annuel du 14/12/2026 au 18/12/2026, 5 jours ouvrables."),
-                eq("/conges/demandes/10"));
+                eq("/leave-requests/10"));
         verify(notificationService, times(1)).notify(any(), any(), anyString(), anyString(), anyString());
     }
 
@@ -65,7 +65,7 @@ class CongeNotificationListenerTest {
         listener.onDemandeConge(new DemandeCongeEvenement(DemandeCongeEvenement.Type.ESCALADEE, demande));
 
         verify(notificationService).notify(eq(sara), eq(TypeNotification.CONGE_A_TRAITER),
-                eq("Demande de congé à traiter"), contains("vous pouvez la traiter"), eq("/conges/demandes/10"));
+                eq("Demande de congé à traiter"), contains("vous pouvez la traiter"), eq("/leave-requests/10"));
         verify(notificationService).notify(eq(karim), eq(TypeNotification.CONGE_A_TRAITER),
                 eq("Rappel : demande de congé en attente"), contains("attend toujours votre décision"), anyString());
     }
@@ -83,7 +83,7 @@ class CongeNotificationListenerTest {
                 eq("Demande de congé approuvée"),
                 eq("Votre demande (Congé annuel du 14/12/2026 au 18/12/2026, 5 jours ouvrables) "
                         + "a été approuvée par Karim Mansour. Commentaire : Bon repos"),
-                eq("/conges/demandes/10"));
+                eq("/leave-requests/10"));
     }
 
     @Test
@@ -96,7 +96,7 @@ class CongeNotificationListenerTest {
         listener.onDemandeConge(new DemandeCongeEvenement(DemandeCongeEvenement.Type.REFUSEE, demande));
 
         verify(notificationService).notify(eq(lina), eq(TypeNotification.CONGE_REFUSE),
-                eq("Demande de congé refusée"), contains("Motif : Période de clôture"), eq("/conges/demandes/10"));
+                eq("Demande de congé refusée"), contains("Motif : Période de clôture"), eq("/leave-requests/10"));
     }
 
     @Test

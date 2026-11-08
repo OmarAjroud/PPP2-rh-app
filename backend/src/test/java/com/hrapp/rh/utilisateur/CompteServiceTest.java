@@ -107,7 +107,7 @@ class CompteServiceTest {
         assertThat(mail.to()).isEqualTo("employe@rh.com");
         assertThat(mail.template()).isEqualTo("activation");
         assertThat(mail.variables())
-                .containsEntry("lien", "http://localhost:4200/activer-compte?jeton=RAWTOKEN")
+                .containsEntry("lien", "http://localhost:4200/activate-account?token=RAWTOKEN")
                 .containsEntry("prenom", "Lina");
         verify(auditService).record(eq(AuditAction.INVITATION), eq("Utilisateur"), eq(7L), anyString());
     }
@@ -124,7 +124,7 @@ class CompteServiceTest {
 
         verify(repository, never()).save(any());
         assertThat(captureMail().variables())
-                .containsEntry("lien", "http://localhost:4200/activer-compte?jeton=NEWTOKEN");
+                .containsEntry("lien", "http://localhost:4200/activate-account?token=NEWTOKEN");
     }
 
     @Test
@@ -212,7 +212,7 @@ class CompteServiceTest {
         MailMessage mail = captureMail();
         assertThat(mail.template()).isEqualTo("reinitialisation");
         assertThat(mail.variables())
-                .containsEntry("lien", "http://localhost:4200/reinitialiser-mot-de-passe?jeton=RESETTOKEN");
+                .containsEntry("lien", "http://localhost:4200/reset-password?token=RESETTOKEN");
     }
 
     @Test

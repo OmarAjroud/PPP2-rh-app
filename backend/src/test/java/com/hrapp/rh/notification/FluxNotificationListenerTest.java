@@ -26,7 +26,7 @@ class FluxNotificationListenerTest {
     @InjectMocks private FluxNotificationListener listener;
 
     private final NotificationResponse notification = new NotificationResponse(1L, TypeNotification.CONGE_DEMANDE,
-            "Nouvelle demande de congé", "Lina Gharbi a demandé…", "/conges/demandes/10", false,
+            "Nouvelle demande de congé", "Lina Gharbi a demandé…", "/leave-requests/10", false,
             LocalDateTime.of(2026, 11, 5, 10, 0), null);
 
     @Test

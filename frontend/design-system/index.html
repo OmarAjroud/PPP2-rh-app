@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RH App · système de conception</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--rh-bg); color: var(--rh-ink); font: var(--rh-weight-regular) var(--rh-text-md)/var(--rh-leading) var(--rh-font); }
+h1, h2, h3, h4 { margin: 0; font-weight: var(--rh-weight-strong); letter-spacing: var(--rh-tracking-title); line-height: var(--rh-leading-tight); text-wrap: balance; }
+p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- Reference document chrome ---------- */
+.doc { max-width: 1320px; margin: 0 auto; padding: var(--rh-space-6) max(16px, env(safe-area-inset-right, 0px)) var(--rh-space-12) max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: var(--rh-space-10); }
+.doc-head { display: flex; flex-wrap: wrap; gap: var(--rh-space-4); justify-content: space-between; align-items: end; }
+.doc-head h1 { font-size: var(--rh-text-2xl); }
+.doc-head p { color: var(--rh-muted); margin-top: var(--rh-space-1); max-width: 64ch; }
+.doc-section { display: grid; gap: var(--rh-space-4); }
+.doc-section > h2 { font-size: var(--rh-text-xl); }
+.doc-section > p { color: var(--rh-ink-2); max-width: 70ch; }
+.seg { display: inline-flex; border: 1px solid var(--rh-line-strong); border-radius: var(--rh-radius); overflow: hidden; background: var(--rh-surface); }
+.seg button { border: 0; background: none; padding: 6px 12px; cursor: pointer; color: var(--rh-ink-2); font-weight: var(--rh-weight-medium); }
+.seg button[aria-pressed="true"] { background: var(--rh-surface-2); color: var(--rh-ink); }
+
+/* ---------- App shell ---------- */
+.app { display: grid; grid-template-columns: var(--rh-sidebar) minmax(0, 1fr); border: 1px solid var(--rh-line); border-radius: var(--rh-radius-lg); overflow: hidden; background: var(--rh-bg); min-height: 640px; }
+.side { border-right: 1px solid var(--rh-line); padding: var(--rh-space-4) var(--rh-space-3); display: flex; flex-direction: column; gap: 2px; background: var(--rh-bg); }
+.brand { font-weight: var(--rh-weight-strong); font-size: var(--rh-text-lg); padding: var(--rh-space-1) var(--rh-space-3) var(--rh-space-4); }
+.side .grp { padding: var(--rh-space-4) var(--rh-space-3) var(--rh-space-1); font-size: var(--rh-text-sm); color: var(--rh-muted); font-weight: var(--rh-weight-medium); }
+.side a { display: flex; gap: var(--rh-space-2); align-items: center; padding: 7px var(--rh-space-3); border-radius: var(--rh-radius); color: var(--rh-ink-2); text-decoration: none; font-weight: var(--rh-weight-medium); }
+.side a:hover { background: var(--rh-surface-2); color: var(--rh-ink); }
+.side a[aria-current="page"] { background: var(--rh-surface-2); color: var(--rh-ink); }
+.side .me { margin-top: auto; padding: var(--rh-space-3); border-top: 1px solid var(--rh-line); font-size: var(--rh-text-sm); }
+.side .me span { display: block; color: var(--rh-muted); }
+.main { padding: var(--rh-space-5) var(--rh-space-8) var(--rh-space-8); display: grid; gap: var(--rh-space-6); align-content: start; min-width: 0; }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: var(--rh-space-4); }
+.crumb { color: var(--rh-muted); font-size: var(--rh-text-sm); }
+.topbar h3 { font-size: var(--rh-text-2xl); margin-top: 2px; }
+.work { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--rh-space-8); align-items: start; }
+
+/* ---------- Panels ---------- */
+.panel { background: var(--rh-surface); border: 1px solid var(--rh-line); border-radius: var(--rh-radius-lg); min-width: 0; }
+.panel-h { padding: var(--rh-space-4) var(--rh-space-5); border-bottom: 1px solid var(--rh-line); font-weight: var(--rh-weight-strong); display: flex; justify-content: space-between; align-items: center; gap: var(--rh-space-3); }
+.panel-b { padding: var(--rh-space-5); display: grid; gap: var(--rh-space-5); }
+.panel-f { padding: var(--rh-space-3) var(--rh-space-5); border-top: 1px solid var(--rh-line); display: flex; flex-wrap: wrap; gap: var(--rh-space-3); justify-content: space-between; align-items: center; }
+.panel-f .who { color: var(--rh-muted); font-size: var(--rh-text-sm); flex: 1 1 0; min-width: 16rem; }
+.panel-f .btns { margin-left: auto; }
+.panel-f .who b { color: var(--rh-ink-2); font-weight: var(--rh-weight-medium); }
+.stack { display: grid; gap: var(--rh-space-6); align-content: start; }
+.li { display: flex; justify-content: space-between; align-items: center; gap: var(--rh-space-3); padding: var(--rh-space-3) var(--rh-space-5); border-bottom: 1px solid var(--rh-line); }
+.li:last-child { border-bottom: 0; }
+.li small { display: block; color: var(--rh-muted); font-size: var(--rh-text-sm); }
+.li .fig { font-weight: var(--rh-weight-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ---------- Fields ---------- */
+.row3 { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: var(--rh-space-4); }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field[hidden] { display: none; }
+.field label { font-size: var(--rh-text-sm); font-weight: var(--rh-weight-medium); color: var(--rh-ink-2); }
+.input { height: var(--rh-control-h); width: 100%; border: 1px solid var(--rh-line-strong); border-radius: var(--rh-radius); background: var(--rh-surface); padding: 0 var(--rh-space-3); transition: border-color var(--rh-fast) var(--rh-ease), box-shadow var(--rh-fast) var(--rh-ease); }
+textarea.input { height: auto; min-height: 72px; padding: var(--rh-space-2) var(--rh-space-3); resize: vertical; }
+.input:hover { border-color: var(--rh-muted); }
+.input:focus { outline: none; border-color: var(--rh-accent); box-shadow: var(--rh-focus); }
+.input[aria-invalid="true"] { border-color: var(--rh-danger); }
+.input:disabled { background: var(--rh-surface-2); color: var(--rh-muted); cursor: not-allowed; }
+.hint { font-size: var(--rh-text-sm); color: var(--rh-muted); }
+.err { font-size: var(--rh-text-sm); color: var(--rh-danger); display: flex; gap: 6px; align-items: center; }
+.err[hidden] { display: none; }
+
+/* ---------- Buttons ---------- */
+.btn { height: var(--rh-control-h); display: inline-flex; align-items: center; gap: var(--rh-space-2); padding: 0 var(--rh-space-4); border-radius: var(--rh-radius); border: 1px solid var(--rh-line-strong); background: var(--rh-surface); color: var(--rh-ink); font-weight: var(--rh-weight-strong); cursor: pointer; white-space: nowrap; transition: background var(--rh-fast) var(--rh-ease), border-color var(--rh-fast) var(--rh-ease); }
+.btn:hover { background: var(--rh-surface-2); }
+.btn.primary { background: var(--rh-accent); border-color: var(--rh-accent); color: var(--rh-accent-ink); }
+.btn.primary:hover { background: var(--rh-accent-hover); border-color: var(--rh-accent-hover); }
+.btn.ghost { border-color: transparent; background: none; color: var(--rh-ink-2); }
+.btn.ghost:hover { background: var(--rh-surface-2); color: var(--rh-ink); }
+.btn.danger { color: var(--rh-danger); }
+.btn.danger:hover { background: var(--rh-danger-soft); border-color: var(--rh-danger); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn .spin { width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.btns { display: flex; flex-wrap: wrap; gap: var(--rh-space-3); align-items: center; }
+
+/* ---------- Status: dot + word ---------- */
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: var(--rh-text-sm); font-weight: var(--rh-weight-medium); padding: 2px 8px 2px 7px; border-radius: var(--rh-radius-sm); white-space: nowrap; transition: background var(--rh-base) var(--rh-ease), color var(--rh-base) var(--rh-ease); }
+.status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.s-wait { color: var(--rh-wait); background: var(--rh-wait-soft); }
+.s-ok { color: var(--rh-ok); background: var(--rh-ok-soft); }
+.s-no { color: var(--rh-danger); background: var(--rh-danger-soft); }
+.s-off { color: var(--rh-neutral); background: var(--rh-neutral-soft); }
+.s-esc { color: var(--rh-escalated); background: var(--rh-escalated-soft); }
+
+/* ---------- Day strip + proof row (signature) ---------- */
+.days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.day { border: 1px solid var(--rh-line); border-radius: var(--rh-radius-sm); padding: 6px 8px; font-size: var(--rh-text-sm); color: var(--rh-muted); min-width: 0; }
+.day b { display: block; font-size: var(--rh-text-lg); color: var(--rh-ink); font-weight: var(--rh-weight-strong); font-variant-numeric: tabular-nums; }
+.day small { display: block; font-size: var(--rh-text-xs); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.day.on { background: var(--rh-accent-soft); border-color: var(--rh-accent-line); }
+.day.on b { color: var(--rh-accent); }
+.day.off { background: repeating-linear-gradient(135deg, var(--rh-offday) 0 6px, var(--rh-offday-stripe) 6px 12px); }
+.day.out { color: var(--rh-out); background: none; border-style: dashed; }
+.day.out b { color: var(--rh-out); }
+.strip-note { font-size: var(--rh-text-sm); color: var(--rh-ink-2); }
+.total { display: flex; justify-content: space-between; align-items: baseline; gap: var(--rh-space-4); }
+.total .fig { white-space: nowrap; font-size: 2rem; font-weight: var(--rh-weight-regular); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1; }
+.proof { border-top: 1px solid var(--rh-line); padding-top: var(--rh-space-3); }
+.panel > .proof { border-top: 1px solid var(--rh-line); padding: var(--rh-space-3) var(--rh-space-5) var(--rh-space-4); }
+.proof summary { cursor: pointer; color: var(--rh-accent); font-weight: var(--rh-weight-medium); list-style: none; display: inline-flex; gap: 6px; align-items: center; border-radius: var(--rh-radius-sm); }
+.proof summary::-webkit-details-marker { display: none; }
+.proof summary svg { transition: transform var(--rh-fast) var(--rh-ease); }
+.proof[open] summary svg { transform: rotate(180deg); }
+.proof dl { display: grid; grid-template-columns: 1fr auto; gap: 6px var(--rh-space-6); margin: var(--rh-space-3) 0 0; font-variant-numeric: tabular-nums; }
+.proof dt { color: var(--rh-ink-2); }
+.proof dd { margin: 0; text-align: right; font-weight: var(--rh-weight-medium); }
+.proof .sum { border-top: 1px solid var(--rh-line); padding-top: 6px; font-weight: var(--rh-weight-strong); color: var(--rh-ink); }
+
+/* ---------- Decision list (selected opens in place) ---------- */
+.req { border-bottom: 1px solid var(--rh-line); }
+.req:last-child { border-bottom: 0; }
+.req > button { all: unset; box-sizing: border-box; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--rh-space-3); align-items: center; padding: var(--rh-space-3) var(--rh-space-5); cursor: pointer; }
+.req > button:hover { background: var(--rh-surface-2); }
+.req > button:focus-visible { box-shadow: inset var(--rh-focus); }
+.req[data-open] > button { background: var(--rh-accent-soft); }
+.req .t small { display: block; color: var(--rh-muted); font-size: var(--rh-text-sm); }
+.req .detail { padding: var(--rh-space-4) var(--rh-space-5) var(--rh-space-5); display: grid; gap: var(--rh-space-4); }
+.req .detail[hidden] { display: none; }
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--rh-space-4); }
+.facts div small { display: block; color: var(--rh-muted); font-size: var(--rh-text-sm); }
+.facts div b { font-size: var(--rh-text-lg); font-variant-numeric: tabular-nums; font-weight: var(--rh-weight-strong); }
+.quote { color: var(--rh-ink-2); border-left: 1px solid var(--rh-line-strong); padding-left: var(--rh-space-3); }
+
+/* ---------- Table ---------- */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th { text-align: left; font-size: var(--rh-text-sm); font-weight: var(--rh-weight-medium); color: var(--rh-ink-2); padding: var(--rh-space-2) var(--rh-space-4); border-bottom: 1px solid var(--rh-line); white-space: nowrap; }
+th button { all: unset; cursor: pointer; display: inline-flex; gap: 4px; align-items: center; border-radius: var(--rh-radius-sm); }
+th button:focus-visible { box-shadow: var(--rh-focus); }
+th[aria-sort="ascending"] button { color: var(--rh-ink); }
+td { padding: var(--rh-space-3) var(--rh-space-4); border-bottom: 1px solid var(--rh-line); white-space: nowrap; }
+tbody tr:hover td { background: var(--rh-surface-2); }
+td.num, th.num { text-align: right; }
+.pager { display: flex; justify-content: space-between; align-items: center; padding: var(--rh-space-3) var(--rh-space-4); color: var(--rh-muted); font-size: var(--rh-text-sm); gap: var(--rh-space-3); flex-wrap: wrap; }
+.search { position: relative; }
+.search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--rh-muted); }
+.search .input { padding-left: 32px; width: 260px; max-width: 100%; }
+
+/* ---------- States, toast, notifications ---------- */
+.state { display: grid; gap: var(--rh-space-2); justify-items: start; padding: var(--rh-space-6) var(--rh-space-5); }
+.state h3 { font-size: var(--rh-text-lg); }
+.state p { color: var(--rh-ink-2); max-width: 52ch; }
+.skel { height: 12px; border-radius: 4px; background: linear-gradient(90deg, var(--rh-surface-2), var(--rh-surface-3), var(--rh-surface-2)); background-size: 200% 100%; animation: sh 1.4s ease-in-out infinite; }
+@keyframes sh { to { background-position: -200% 0; } }
+.toast { display: flex; gap: var(--rh-space-3); align-items: center; background: var(--rh-ink); color: var(--rh-bg); border-radius: var(--rh-radius); padding: var(--rh-space-3) var(--rh-space-4); box-shadow: var(--rh-shadow-overlay); max-width: 440px; }
+.toast .btn.ghost { color: var(--rh-bg); height: 28px; }
+.toast .btn.ghost:hover { background: rgb(255 255 255 / .12); }
+.bell { position: relative; }
+.bell .count { position: absolute; top: 3px; right: 3px; min-width: 16px; height: 16px; border-radius: 8px; background: var(--rh-accent); color: var(--rh-accent-ink); font-size: 11px; font-weight: var(--rh-weight-strong); display: grid; place-items: center; padding: 0 4px; font-variant-numeric: tabular-nums; }
+.notif { display: grid; grid-template-columns: 8px minmax(0, 1fr); gap: var(--rh-space-3); padding: var(--rh-space-3) var(--rh-space-4); border-bottom: 1px solid var(--rh-line); }
+.notif .u { width: 8px; height: 8px; border-radius: 50%; background: var(--rh-ink); margin-top: 7px; }
+.notif.read .u { background: transparent; }
+.notif small { display: block; color: var(--rh-muted); font-size: var(--rh-text-sm); }
+
+/* ---------- Foundations ---------- */
+.grid-specimen { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--rh-space-6); }
+.sw { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: var(--rh-space-3); align-items: center; padding: 6px 0; }
+.sw i { width: 40px; height: 28px; border-radius: var(--rh-radius-sm); border: 1px solid var(--rh-line); }
+.sw code { font-size: var(--rh-text-sm); color: var(--rh-muted); }
+.type-row { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: var(--rh-space-4); align-items: baseline; padding: var(--rh-space-2) 0; border-bottom: 1px solid var(--rh-line); }
+.type-row code { color: var(--rh-muted); font-size: var(--rh-text-sm); }
+.sp { display: flex; align-items: center; gap: var(--rh-space-3); font-size: var(--rh-text-sm); color: var(--rh-muted); }
+.sp i { height: 12px; background: var(--rh-surface-3); border: 1px solid var(--rh-line-strong); border-radius: 2px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .work { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 860px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .side { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--rh-line); padding: var(--rh-space-2); }
+  .side .grp, .side .me { display: none; }
+  .side a, .brand { white-space: nowrap; }
+  .brand { padding: 7px var(--rh-space-3); }
+  .main { padding: var(--rh-space-5) var(--rh-space-4); }
+  .row3 { grid-template-columns: minmax(0, 1fr); }
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .topbar h3 { font-size: var(--rh-text-xl); }
+}
+@media (max-width: 520px) {
+  .day { padding: 4px 4px; }
+  .day small { display: none; }
+  .day b { font-size: var(--rh-text-md); }
+  .total { flex-direction: column; align-items: flex-start; gap: var(--rh-space-1); }
+  .panel-f { justify-content: stretch; }
+  .panel-f .btns { width: 100%; }
+  .panel-f .btns .btn { flex: 1; justify-content: center; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-sort" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+</svg>
+
+<div class="doc">
+  <header class="doc-head">
+    <div>
+      <h1>RH App · système de conception</h1>
+      <p>Une échelle neutre porte tout ; l'indigo ne marque que ce qui se clique, se sélectionne ou a le focus. Chaque chiffre calculé montre son calcul. Données de démonstration.</p>
+    </div>
+    <div class="seg" role="group" aria-label="Thème">
+      <button type="button" data-theme-set="system" aria-pressed="true">Système</button>
+      <button type="button" data-theme-set="light" aria-pressed="false">Clair</button>
+      <button type="button" data-theme-set="dark" aria-pressed="false">Sombre</button>
+    </div>
+  </header>
+
+  <!-- ============ Screen 1: Lina requests leave ============ -->
+  <section class="doc-section" aria-labelledby="s1">
+    <h2 id="s1">Lina demande un congé</h2>
+    <p>Écran de référence. Changez les dates : le décompte, la bande des jours et le calcul se mettent à jour. Ouvrez « Voir le calcul » : c'est le geste signature du produit.</p>
+    <div class="app">
+      <nav class="side" aria-label="Navigation principale">
+        <div class="brand">RH App</div>
+        <a href="#"><svg class="i"><use href="#i-home"/></svg>Tableau de bord</a>
+        <div class="grp">Congés</div>
+        <a href="#" aria-current="page"><svg class="i"><use href="#i-cal"/></svg>Nouvelle demande</a>
+        <a href="#">Mes demandes</a>
+        <a href="#">Mes soldes</a>
+        <a href="#">Jours fériés</a>
+        <div class="grp">Entreprise</div>
+        <a href="#"><svg class="i"><use href="#i-users"/></svg>Départements</a>
+        <a href="#">Mon profil</a>
+        <div class="me">Lina Gharbi<span>Employée · Informatique</span></div>
+      </nav>
+      <div class="main">
+        <div class="topbar">
+          <div><div class="crumb">Congés / Nouvelle demande</div><h3>Demander un congé</h3></div>
+          <button class="btn ghost bell" type="button" aria-label="Notifications, 2 non lues"><svg class="i"><use href="#i-bell"/></svg><span class="count">2</span></button>
+        </div>
+        <div class="work">
+          <form class="panel" id="leave" novalidate>
+            <div class="panel-h">Période</div>
+            <div class="panel-b">
+              <div class="row3">
+                <div class="field"><label for="type">Type de congé</label>
+                  <select class="input" id="type"><option value="ANNUEL">Congé annuel</option><option value="MALADIE">Maladie</option><option value="SANS_SOLDE">Sans solde</option></select></div>
+                <div class="field"><label for="du">Du</label><input class="input" id="du" type="date" value="2026-12-14"></div>
+                <div class="field"><label for="au">Au</label><input class="input" id="au" type="date" value="2026-12-18" aria-describedby="au-err"></div>
+              </div>
+              <p class="err" id="au-err" hidden><svg class="i"><use href="#i-alert"/></svg><span></span></p>
+              <div class="days" id="strip" aria-label="Jours de la période"></div>
+              <p class="strip-note" id="strip-note"></p>
+              <div class="total"><span>Jours ouvrables décomptés</span><span class="fig" id="total" aria-live="polite">4 jours</span></div>
+              <details class="proof" id="proof">
+                <summary>Voir le calcul <svg class="i"><use href="#i-down"/></svg></summary>
+                <dl id="proof-dl"></dl>
+              </details>
+              <div class="field"><label for="com">Commentaire <span class="hint">(facultatif)</span></label><textarea class="input" id="com" maxlength="500">Fêtes de fin d'année en famille.</textarea></div>
+            </div>
+            <div class="panel-f">
+              <p class="who">Décidée par <b>Karim Mansour</b>, votre manager. Sans réponse sous 3 jours, elle passe aux RH.</p>
+              <div class="btns"><button class="btn" type="reset">Annuler</button><button class="btn primary" type="submit" id="send">Envoyer la demande</button></div>
+            </div>
+          </form>
+          <div class="stack">
+            <section class="panel" aria-label="Soldes 2026">
+              <div class="panel-h">Soldes 2026</div>
+              <div class="li"><span>Congé annuel<small>Disponible → après cette demande</small></span><span class="fig" id="bal">19 → 15 j</span></div>
+              <div class="li"><span>Maladie<small>Ne réduit pas le solde annuel</small></span><span class="fig">—</span></div>
+              <details class="proof">
+                <summary>Voir le calcul <svg class="i"><use href="#i-down"/></svg></summary>
+                <dl id="bal-dl"></dl>
+              </details>
+            </section>
+            <section class="panel" aria-label="Dernières demandes">
+              <div class="panel-h">Dernières demandes</div>
+              <div class="li"><span>Congé annuel<small>3 au 5 août · 3 j</small></span><span class="status s-ok">Approuvée</span></div>
+              <div class="li"><span>Maladie<small>12 mai · 1 j</small></span><span class="status s-ok">Approuvée</span></div>
+              <div class="li"><span>Congé annuel<small>2 au 6 mars · 5 j</small></span><span class="status s-no">Refusée</span></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Screen 2: Karim decides ============ -->
+  <section class="doc-section" aria-labelledby="s2">
+    <h2 id="s2">Karim décide</h2>
+    <p>La demande choisie s'ouvre sur place avec le même calcul. Valider ou refuser change le statut dans la ligne, sans la déplacer. Un refus exige un motif.</p>
+    <div class="app">
+      <nav class="side" aria-label="Navigation principale">
+        <div class="brand">RH App</div>
+        <a href="#"><svg class="i"><use href="#i-home"/></svg>Tableau de bord</a>
+        <div class="grp">Congés</div>
+        <a href="#" aria-current="page"><svg class="i"><use href="#i-check"/></svg>À décider</a>
+        <a href="#">Mon équipe</a>
+        <a href="#">Mes demandes</a>
+        <div class="grp">Entreprise</div>
+        <a href="#"><svg class="i"><use href="#i-users"/></svg>Employés</a>
+        <a href="#">Départements</a>
+        <div class="me">Karim Mansour<span>Manager · Informatique</span></div>
+      </nav>
+      <div class="main">
+        <div class="topbar">
+          <div><div class="crumb">Congés / À décider</div><h3>Demandes à décider</h3></div>
+          <button class="btn ghost bell" type="button" aria-label="Notifications, 1 non lue"><svg class="i"><use href="#i-bell"/></svg><span class="count">1</span></button>
+        </div>
+        <section class="panel" id="decide">
+          <div class="panel-h">Équipe Informatique <span class="hint" style="font-weight:400">2 en attente</span></div>
+          <div class="req" data-open>
+            <button type="button" aria-expanded="true" aria-controls="d1"><span class="t">Lina Gharbi · Congé annuel<small>14 au 18 déc. 2026 · 4 jours ouvrables · reçue le 7 nov.</small></span><span class="status s-wait" data-status>En attente</span></button>
+            <div class="detail" id="d1">
+              <div class="facts"><div><small>Jours ouvrables</small><b>4</b></div><div><small>Solde après</small><b>15 j</b></div><div><small>À décider avant</small><b>10 nov.</b></div></div>
+              <details class="proof" open><summary>Calcul <svg class="i"><use href="#i-down"/></svg></summary>
+                <dl><dt>Jours en semaine du 14 au 18 déc.</dt><dd>5</dd><dt>Jour férié (jeu. 17, Fête de la Révolution)</dt><dd>− 1</dd><dt class="sum">Jours ouvrables</dt><dd class="sum">4</dd><dt>Solde annuel : 22 alloués − 3 pris (3 au 5 août)</dt><dd>19</dd><dt class="sum">Solde après validation</dt><dd class="sum">15</dd></dl></details>
+              <p class="quote">« Fêtes de fin d'année en famille. »</p>
+              <div class="field" data-refuse hidden><label for="motif1">Motif du refus</label><textarea class="input" id="motif1" aria-describedby="motif1-err"></textarea><p class="err" id="motif1-err" hidden><svg class="i"><use href="#i-alert"/></svg>Indiquez le motif du refus : il est envoyé à Lina avec la décision.</p></div>
+              <div class="btns" data-actions><button class="btn primary" type="button" data-approve><svg class="i"><use href="#i-check"/></svg>Valider</button><button class="btn danger" type="button" data-reject><svg class="i"><use href="#i-x"/></svg>Refuser</button></div>
+            </div>
+          </div>
+          <div class="req">
+            <button type="button" aria-expanded="false" aria-controls="d2"><span class="t">Lina Gharbi · Congé annuel<small>28 au 31 déc. 2026 · 4 jours ouvrables · reçue le 6 nov.</small></span><span class="status s-wait" data-status>En attente</span></button>
+            <div class="detail" id="d2" hidden>
+              <div class="facts"><div><small>Jours ouvrables</small><b>4</b></div><div><small>Solde après</small><b>11 j</b></div><div><small>À décider avant</small><b>9 nov.</b></div></div>
+              <details class="proof" open><summary>Calcul <svg class="i"><use href="#i-down"/></svg></summary>
+                <dl><dt>Jours en semaine du 28 au 31 déc.</dt><dd>4</dd><dt class="sum">Jours ouvrables</dt><dd class="sum">4</dd><dt>Solde annuel : 22 alloués − 3 pris</dt><dd>19</dd><dt>Demande en attente du 14 au 18 déc.</dt><dd>− 4</dd><dt class="sum">Solde après validation des deux</dt><dd class="sum">11</dd></dl></details>
+              <p class="quote">Aucun commentaire.</p>
+              <div class="field" data-refuse hidden><label for="motif2">Motif du refus</label><textarea class="input" id="motif2" aria-describedby="motif2-err"></textarea><p class="err" id="motif2-err" hidden><svg class="i"><use href="#i-alert"/></svg>Indiquez le motif du refus : il est envoyé à Lina avec la décision.</p></div>
+              <div class="btns" data-actions><button class="btn primary" type="button" data-approve><svg class="i"><use href="#i-check"/></svg>Valider</button><button class="btn danger" type="button" data-reject><svg class="i"><use href="#i-x"/></svg>Refuser</button></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Components ============ -->
+  <section class="doc-section" aria-labelledby="s3">
+    <h2 id="s3">Composants</h2>
+    <p>Ce sont les composants Angular Material, restylés par les jetons. Les libellés disent l'action ; les erreurs disent le problème et la façon de le corriger.</p>
+    <div class="grid-specimen">
+      <section class="panel"><div class="panel-h">Boutons</div><div class="panel-b">
+        <div class="btns"><button class="btn primary" type="button">Envoyer la demande</button><button class="btn" type="button">Annuler</button></div>
+        <div class="btns"><button class="btn ghost" type="button">Tout marquer comme lu</button><button class="btn danger" type="button">Désactiver le compte</button></div>
+        <div class="btns"><button class="btn primary" type="button" disabled>Envoyer la demande</button><button class="btn primary" type="button" aria-busy="true"><span class="spin" aria-hidden="true"></span>Envoi…</button></div>
+        <p class="hint">Un seul bouton principal par panneau, en bas à droite. Le bouton danger reste discret jusqu'au survol.</p>
+      </div></section>
+      <section class="panel"><div class="panel-h">Champs</div><div class="panel-b">
+        <div class="field"><label for="c1">Email</label><input class="input" id="c1" value="lina.gharbi@rh-app.local"><span class="hint">Sert à l'invitation et aux notifications.</span></div>
+        <div class="field"><label for="c2">Date d'embauche</label><input class="input" id="c2" value="31/02/2026" aria-invalid="true" aria-describedby="c2e"><p class="err" id="c2e"><svg class="i"><use href="#i-alert"/></svg>Cette date n'existe pas. Format attendu : jj/mm/aaaa.</p></div>
+        <div class="field"><label for="c3">Salaire</label><input class="input" id="c3" value="Non visible pour votre rôle" disabled></div>
+      </div></section>
+      <section class="panel"><div class="panel-h">Statuts</div><div class="panel-b">
+        <div class="btns"><span class="status s-wait">En attente</span><span class="status s-ok">Approuvée</span><span class="status s-no">Refusée</span><span class="status s-off">Annulée</span><span class="status s-esc">Transmise aux RH</span></div>
+        <p class="hint">Toujours un point et un mot : la couleur seule ne porte jamais l'information. Un congé interrompu garde « Approuvée » et affiche son motif d'interruption.</p>
+      </div></section>
+      <section class="panel"><div class="panel-h">Notifications</div>
+        <div class="notif"><span class="u" aria-hidden="true"></span><div><b>Demande de congé approuvée</b><small>Karim Mansour a validé votre congé du 3 au 5 août. · il y a 5 min</small></div></div>
+        <div class="notif read"><span class="u" aria-hidden="true"></span><div>Nouvelle demande de congé<small>Lina Gharbi, 14 au 18 déc. · hier</small></div></div>
+        <div class="panel-b" style="padding-top:var(--rh-space-4)"><div class="toast" role="status"><span>Demande envoyée à Karim Mansour.</span><button class="btn ghost" type="button">Voir</button></div></div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <div class="panel-h">Employés <div class="search"><svg class="i"><use href="#i-search"/></svg><label class="sr" for="q" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Rechercher un employé</label><input class="input" id="q" placeholder="Nom ou email"></div></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th aria-sort="ascending"><button type="button">Nom <svg class="i"><use href="#i-sort"/></svg></button></th><th>Email</th><th>Département</th><th>Rôle</th><th class="num">Solde annuel</th><th>Compte</th></tr></thead>
+        <tbody>
+          <tr><td>Ben Salah Amine</td><td>amine.bensalah@rh-app.local</td><td>Informatique</td><td>ADMIN</td><td class="num">22 j</td><td><span class="status s-ok">Actif</span></td></tr>
+          <tr><td>Gharbi Lina</td><td>lina.gharbi@rh-app.local</td><td>Informatique</td><td>EMPLOYE</td><td class="num">19 j</td><td><span class="status s-ok">Actif</span></td></tr>
+          <tr><td>Mansour Karim</td><td>karim.mansour@rh-app.local</td><td>Informatique</td><td>MANAGER</td><td class="num">17 j</td><td><span class="status s-ok">Actif</span></td></tr>
+          <tr><td>Trabelsi Sara</td><td>sara.trabelsi@rh-app.local</td><td>Ressources Humaines</td><td>RH</td><td class="num">22 j</td><td><span class="status s-wait">Invitation envoyée</span></td></tr>
+        </tbody></table></div>
+      <div class="pager"><span>1–4 sur 4 employés</span><span class="btns"><button class="btn" type="button" disabled>Précédent</button><button class="btn" type="button" disabled>Suivant</button></span></div>
+    </section>
+
+    <div class="grid-specimen">
+      <section class="panel"><div class="panel-h">Liste vide</div><div class="state"><h3>Aucune demande à décider</h3><p>Les nouvelles demandes de votre équipe apparaîtront ici, et vous serez notifié à leur arrivée.</p></div></section>
+      <section class="panel"><div class="panel-h">Accès refusé</div><div class="state"><svg class="i" style="width:20px;height:20px;color:var(--rh-muted)"><use href="#i-lock"/></svg><h3>Cette demande est à traiter par Karim Mansour</h3><p>Les RH pourront la traiter à partir du 10/11/2026 si elle n'est pas décidée d'ici là.</p></div></section>
+      <section class="panel"><div class="panel-h">Erreur réseau</div><div class="state"><h3>Le serveur ne répond pas</h3><p>Vos saisies sont conservées. Vérifiez la connexion puis réessayez.</p><button class="btn" type="button">Réessayer</button></div></section>
+      <section class="panel"><div class="panel-h">Chargement</div><div class="panel-b"><div class="skel" style="width:70%"></div><div class="skel" style="width:90%"></div><div class="skel" style="width:55%"></div></div></section>
+    </div>
+  </section>
+
+  <!-- ============ Foundations ============ -->
+  <section class="doc-section" aria-labelledby="s4">
+    <h2 id="s4">Fondations</h2>
+    <p>Valeurs définies dans <code>tokens.css</code>. Basculez le thème en haut de page : les nuanciers montrent les valeurs actives.</p>
+    <div class="grid-specimen">
+      <section class="panel"><div class="panel-h">Couleurs</div><div class="panel-b" id="swatches" style="gap:0"></div></section>
+      <section class="panel"><div class="panel-h">Typographie · Figtree</div><div class="panel-b" style="gap:0">
+        <div class="type-row"><code>2xl · 24/600</code><span style="font-size:var(--rh-text-2xl);font-weight:600;letter-spacing:-.01em">Demander un congé</span></div>
+        <div class="type-row"><code>3xl · 28/600</code><span style="font-size:var(--rh-text-3xl);font-weight:600;font-variant-numeric:tabular-nums">18 jours</span></div>
+        <div class="type-row"><code>xl · 20/600</code><span style="font-size:var(--rh-text-xl);font-weight:600">Soldes 2026</span></div>
+        <div class="type-row"><code>lg · 16/600</code><span style="font-size:var(--rh-text-lg);font-weight:600">Période</span></div>
+        <div class="type-row"><code>md · 14/400</code><span>Décidée par Karim Mansour, votre manager.</span></div>
+        <div class="type-row"><code>sm · 13/500</code><span style="font-size:var(--rh-text-sm);font-weight:500;color:var(--rh-ink-2)">Type de congé</span></div>
+      </div></section>
+      <section class="panel"><div class="panel-h">Espacements et rayons</div><div class="panel-b" style="gap:var(--rh-space-2)">
+        <div class="sp"><i style="width:4px"></i>4 · écart icône-texte</div>
+        <div class="sp"><i style="width:8px"></i>8 · dans un groupe</div>
+        <div class="sp"><i style="width:16px"></i>16 · entre champs</div>
+        <div class="sp"><i style="width:24px"></i>24 · entre panneaux</div>
+        <div class="sp"><i style="width:32px"></i>32 · marges de page</div>
+        <div class="sp" style="margin-top:var(--rh-space-3)">Rayons : 5 badges et jours · 7 champs et boutons · 10 panneaux. Ombre : uniquement les surcouches.</div>
+      </div></section>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  // ---- Theme toggle (persisted per viewer when storage is available) ----
+  const root = document.documentElement;
+  const btns = document.querySelectorAll('[data-theme-set]');
+  const apply = (v) => {
+    if (v === 'system') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', v);
+    btns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.themeSet === v)));
+    renderSwatches();
+  };
+  btns.forEach(b => b.addEventListener('click', () => { apply(b.dataset.themeSet); try { localStorage.setItem('rh-theme', b.dataset.themeSet); } catch (e) {} }));
+
+  // ---- Working days: weekends and public holidays excluded (demo: Tunisia 2026) ----
+  const HOLIDAYS = { '2026-12-17': 'Fête de la Révolution', '2027-01-01': 'Jour de l’an' };
+  const ALLOWED = 22, TAKEN = 3, BALANCE = ALLOWED - TAKEN; // 3 days approved (3 to 5 August)
+  const WD = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
+  const iso = d => d.toISOString().slice(0, 10);
+  const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); };
+  const $ = id => document.getElementById(id);
+  const fmt = s => { const d = parse(s); return `${WD[d.getUTCDay()]}. ${d.getUTCDate()}`; };
+
+  function update() {
+    const du = $('du').value, au = $('au').value, type = $('type').value;
+    const err = $('au-err'), strip = $('strip');
+    strip.innerHTML = '';
+    if (!du || !au) return;
+    const a = parse(du), b = parse(au);
+    if (b < a) {
+      err.hidden = false; err.querySelector('span').textContent = 'La date de fin doit être le même jour ou après la date de début.';
+      $('au').setAttribute('aria-invalid', 'true'); $('send').disabled = true; $('total').textContent = '—'; return;
+    }
+    err.hidden = true; $('au').removeAttribute('aria-invalid');
+    let weekdays = 0, holidays = [], start = new Date(a);
+    start.setUTCDate(start.getUTCDate() - ((start.getUTCDay() + 6) % 7)); // Monday of first week
+    const end = new Date(b); end.setUTCDate(end.getUTCDate() + (7 - ((end.getUTCDay() + 6) % 7) - 1) % 7);
+    const span = Math.round((end - start) / 864e5) + 1;
+    for (let i = 0; i < span; i++) {
+      const d = new Date(start); d.setUTCDate(start.getUTCDate() + i);
+      const k = iso(d), wd = d.getUTCDay(), inRange = d >= a && d <= b;
+      const weekend = wd === 0 || wd === 6, hol = HOLIDAYS[k];
+      if (inRange && !weekend) { weekdays++; if (hol) holidays.push([k, hol]); }
+      if (span <= 21) {
+        const cell = document.createElement('div');
+        cell.className = 'day' + (!inRange ? ' out' : (weekend || hol) ? ' off' : ' on');
+        cell.innerHTML = `${WD[wd]}<b>${d.getUTCDate()}</b><small>${hol ? 'férié' : (weekend && inRange ? 'week-end' : '&nbsp;')}</small>`;
+        if (hol) cell.title = hol;
+        strip.appendChild(cell);
+      }
+    }
+    const days = weekdays - holidays.length;
+    const counts = type === 'ANNUEL';
+    const after = BALANCE - days;
+    $('total').textContent = days + (days > 1 ? ' jours' : ' jour');
+    $('bal').textContent = counts ? `${BALANCE} → ${after} j` : `${BALANCE} j`;
+    $('bal-dl').innerHTML = `<dt>Jours alloués 2026</dt><dd>${ALLOWED}</dd><dt>Pris (3 au 5 août)</dt><dd>− ${TAKEN}</dd><dt class="sum">Disponible</dt><dd class="sum">${BALANCE}</dd>`
+      + (counts ? `<dt>Cette demande</dt><dd>− ${days}</dd><dt class="sum">Après validation</dt><dd class="sum">${after}</dd>` : `<dt>Cette demande (${$('type').selectedOptions[0].text.toLowerCase()})</dt><dd>0</dd>`);
+    const notes = holidays.map(([k, n]) => `${fmt(k)} : férié (${n})`);
+    $('strip-note').textContent = (notes.length ? notes.join(' · ') + ' · ' : '') + 'samedi et dimanche ne sont pas décomptés.';
+    const over = counts && after < 0;
+    $('send').disabled = over || days === 0;
+    if (over) { err.hidden = false; err.querySelector('span').textContent = `Solde insuffisant : ${days} jours demandés pour ${BALANCE} disponibles.`; }
+    let rows = `<dt>Jours en semaine du ${parse(du).getUTCDate()}/${parse(du).getUTCMonth() + 1} au ${parse(au).getUTCDate()}/${parse(au).getUTCMonth() + 1}</dt><dd>${weekdays}</dd>`;
+    holidays.forEach(([k, n]) => rows += `<dt>Jour férié (${fmt(k)}, ${n})</dt><dd>− 1</dd>`);
+    rows += `<dt class="sum">Jours ouvrables</dt><dd class="sum">${days}</dd>`;
+    rows += counts ? `<dt>Solde annuel disponible</dt><dd>${BALANCE}</dd><dt class="sum">Solde après validation</dt><dd class="sum">${after}</dd>`
+                   : `<dt>Effet sur le solde annuel</dt><dd>aucun</dd>`;
+    $('proof-dl').innerHTML = rows;
+  }
+  ['du', 'au', 'type'].forEach(id => $(id).addEventListener('input', update));
+  $('leave').addEventListener('reset', () => setTimeout(update));
+  $('leave').addEventListener('submit', e => { e.preventDefault(); });
+
+  // ---- Decision list: open in place, status restyles in place ----
+  document.querySelectorAll('#decide .req').forEach(req => {
+    const head = req.querySelector(':scope > button'), detail = req.querySelector('.detail');
+    head.addEventListener('click', () => {
+      const open = detail.hidden; detail.hidden = !open;
+      head.setAttribute('aria-expanded', String(open)); req.toggleAttribute('data-open', open);
+    });
+    const status = req.querySelector('[data-status]'), refuse = req.querySelector('[data-refuse]'), actions = req.querySelector('[data-actions]');
+    const ta = refuse.querySelector('textarea'), terr = refuse.querySelector('.err');
+    const done = (cls, label) => { status.className = 'status ' + cls; status.textContent = label; actions.innerHTML = `<span class="hint">${label} à l'instant. Lina est notifiée.</span>`; refuse.hidden = true; };
+    req.querySelector('[data-approve]').addEventListener('click', () => done('s-ok', 'Approuvée'));
+    req.querySelector('[data-reject]').addEventListener('click', () => {
+      if (refuse.hidden) { refuse.hidden = false; ta.focus(); return; }
+      if (!ta.value.trim()) { terr.hidden = false; ta.setAttribute('aria-invalid', 'true'); ta.focus(); return; }
+      done('s-no', 'Refusée');
+    });
+    ta.addEventListener('input', () => { terr.hidden = true; ta.removeAttribute('aria-invalid'); });
+  });
+
+  // ---- Swatches read the live token values ----
+  const TOKENS = [['--rh-bg', 'Fond'], ['--rh-surface', 'Surface'], ['--rh-line', 'Filet'], ['--rh-ink', 'Encre'], ['--rh-muted', 'Discret'], ['--rh-accent', 'Accent (action, sélection, focus)'], ['--rh-ok', 'Approuvée'], ['--rh-wait', 'En attente'], ['--rh-danger', 'Refusée, erreur'], ['--rh-escalated', 'Transmise aux RH']];
+  function renderSwatches() {
+    const cs = getComputedStyle(root), box = $('swatches');
+    box.innerHTML = TOKENS.map(([t, n]) => `<div class="sw"><i style="background:var(${t})"></i><span>${n}<br><code>${t} · ${cs.getPropertyValue(t).trim()}</code></span></div>`).join('');
+  }
+
+  let saved = 'system'; try { saved = localStorage.getItem('rh-theme') || 'system'; } catch (e) {}
+  const forced = new URLSearchParams(location.search).get('theme'); // ?theme=light|dark for captures
+  if (forced === 'light' || forced === 'dark') saved = forced;
+  apply(saved);
+  update();
+  if (new URLSearchParams(location.search).get('proof') === 'open') {
+    document.querySelectorAll('details.proof').forEach(d => d.open = true);
+    document.querySelectorAll('#decide .req').forEach(req => {
+      req.querySelector('.detail').hidden = false; req.setAttribute('data-open', '');
+      req.querySelector(':scope > button').setAttribute('aria-expanded', 'true');
+    });
+  }
+  // Narrow screens: the nav becomes a scrolling strip. Scroll only as far as needed
+  // to show the current page's label in full, so the brand stays visible when it can.
+  document.querySelectorAll('.side').forEach(side => {
+    const cur = side.querySelector('[aria-current="page"]');
+    if (!cur || side.scrollWidth <= side.clientWidth) return;
+    const right = cur.offsetLeft - side.offsetLeft + cur.offsetWidth + 8;
+    side.scrollLeft = Math.max(0, right - side.clientWidth);
+  });
+})();
+</script>
+</body>
+</html>

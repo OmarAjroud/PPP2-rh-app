@@ -1,0 +1,33 @@
+<p class="crumb">Accueil</p>
+<h1 class="page-titre">Bonjour {{ nom() }}</h1>
+
+<section class="panel" aria-labelledby="api-titre">
+  <h2 id="api-titre" class="panel-h">Connexion à l'API</h2>
+  <div class="panel-b">
+    @switch (etat()) {
+      @case ('verification') { <p class="status s-off">Vérification…</p> }
+      @case ('UP') { <p class="status s-ok">API : UP</p> }
+      @case ('DOWN') { <p class="status s-no">API : DOWN</p><p class="hint">Le serveur répond mais signale un problème (base de données ?).</p> }
+      @case ('injoignable') {
+        <p class="status s-no">API injoignable</p>
+        <p class="hint">Aucune réponse de {{ apiUrl }}. Lancez le back-end (<code>docker compose up -d</code> à la racine du dépôt), puis réessayez.</p>
+      }
+    }
+    <div><button mat-stroked-button type="button" (click)="verifier()">Réessayer</button></div>
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="locale-titre">
+  <h2 id="locale-titre" class="panel-h">Format français</h2>
+  <div class="panel-b">
+    <p>Aujourd'hui : {{ aujourdhui | date: 'fullDate' }}</p>
+    <mat-form-field>
+      <mat-label>Date de début</mat-label>
+      <input matInput [matDatepicker]="picker" [value]="aujourdhui">
+      <mat-hint>jj/mm/aaaa</mat-hint>
+      <mat-datepicker-toggle matIconSuffix [for]="picker" />
+      <mat-datepicker #picker />
+    </mat-form-field>
+    <div><button mat-flat-button type="button">Bouton principal</button></div>
+  </div>
+</section>
