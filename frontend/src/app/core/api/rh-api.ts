@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   Compte, Departement, DepartementDetail, Employe, EmployeDetail, EmployeRequest,
-  DemandeConge, DemandeCongeRequest, JoursOuvrables, NomDescription, PageReponse, Role, Solde, StatutDemande, TypeConge,
+  DemandeConge, DemandeCongeRequest, JoursOuvrables, NomDescription, Notification, PageReponse, Role, Solde, StatutDemande, TypeConge,
 } from './models';
 
 export interface RechercheDemandes {
@@ -85,6 +85,17 @@ export class RhApi {
   demandesEquipe(r: RechercheDemandes): Observable<PageReponse<DemandeConge>> { return this.http.get<PageReponse<DemandeConge>>(`${this.api}/conges/demandes/equipe`, { params: paramsDemandes(r) }); }
   /** RH, ADMIN: every request. */
   toutesDemandes(r: RechercheDemandes): Observable<PageReponse<DemandeConge>> { return this.http.get<PageReponse<DemandeConge>>(`${this.api}/conges/demandes`, { params: paramsDemandes(r) }); }
+
+  // ---- Notifications ----
+  notifications(nonLues: boolean, page = 0, size = 10): Observable<PageReponse<Notification>> {
+    return this.http.get<PageReponse<Notification>>(`${this.api}/notifications`, { params: { nonLues, page, size } });
+  }
+  nombreNonLues(): Observable<{ nombre: number }> { return this.http.get<{ nombre: number }>(`${this.api}/notifications/non-lues/nombre`); }
+  marquerLue(id: number): Observable<Notification> { return this.http.post<Notification>(`${this.api}/notifications/${id}/lecture`, {}); }
+  toutMarquerLu(): Observable<{ nombre: number }> { return this.http.post<{ nombre: number }>(`${this.api}/notifications/lecture`, {}); }
+  /** One-use ticket (30 s) to open the stream: EventSource cannot send the Authorization header. */
+  ticketFlux(): Observable<{ ticket: string; expireDans: number }> { return this.http.post<{ ticket: string; expireDans: number }>(`${this.api}/notifications/flux/ticket`, {}); }
+  urlFlux(ticket: string): string { return `${this.api}/notifications/flux?ticket=${encodeURIComponent(ticket)}`; }
 
   // ---- Roles ----
   roles(): Observable<Role[]> { return this.http.get<Role[]>(`${this.api}/roles`); }
