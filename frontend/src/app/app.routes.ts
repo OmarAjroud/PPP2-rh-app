@@ -12,6 +12,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: '', pathMatch: 'full', title: 'Accueil · RH App', loadComponent: () => import('./accueil/accueil').then(m => m.Accueil) },
+      { path: 'notifications', title: 'Notifications · RH App', loadComponent: () => import('./notifications/notifications-page').then(m => m.NotificationsPage) },
       { path: 'leave-requests', title: 'Mes congés · RH App', loadComponent: () => import('./conges/mes-conges').then(m => m.MesConges) },
       { path: 'leave-requests/new', title: 'Nouvelle demande · RH App', loadComponent: () => import('./conges/demande-form').then(m => m.DemandeForm) },
       { path: 'leave-requests/:id', title: 'Demande de congé · RH App', loadComponent: () => import('./conges/demande-detail').then(m => m.DemandeDetail) },

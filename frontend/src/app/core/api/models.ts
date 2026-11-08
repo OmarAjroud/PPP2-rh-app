@@ -139,3 +139,16 @@ export interface DemandeCongeRequest {
   dateFin: string;
   commentaire?: string;
 }
+
+export type TypeNotification = 'CONGE_DEMANDE' | 'CONGE_APPROUVE' | 'CONGE_REFUSE' | 'CONGE_ANNULE' | 'CONGE_A_TRAITER' | string;
+
+export interface Notification {
+  id: number;
+  type: TypeNotification;
+  titre: string;
+  message: string;
+  lien: string | null; // front-end path, e.g. /leave-requests/42
+  lue: boolean;
+  dateCreation: string;
+  dateLecture: string | null;
+}

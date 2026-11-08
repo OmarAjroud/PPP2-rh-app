@@ -212,3 +212,19 @@
   .sortie { min-height: 44px; padding: 0 10px; }
   .travail { margin: 0; border: 0; border-radius: 0; padding: 16px 16px 32px; }
 }
+
+// ---- Unread notifications: a count in the rail, a dot on the phone menu button ----
+.compte {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  display: inline-grid;
+  place-items: center;
+  background: var(--rh-accent);
+  color: var(--rh-accent-ink);
+  font: 600 var(--rh-text-xs) var(--rh-font-mono);
+}
+.menu { position: relative; }
+.point { position: absolute; top: 10px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: var(--rh-accent); box-shadow: 0 0 0 2px var(--rh-rail-bg); }
