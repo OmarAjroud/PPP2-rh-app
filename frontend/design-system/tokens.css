@@ -1,124 +1,155 @@
 /*
- * RH App · design tokens ("Nuit et lumière")
- * Single source of truth for colour, type, space, shape and motion.
- * PrimeNG's preset (src/app/core/theme/rh-preset.ts) maps its own tokens onto the same values.
+ * RH App · design tokens (direction « Linear »)
+ * Single source of truth for colour, type, space, shape and motion, in three layers:
+ *   1. primitives  (raw scales: --rh-gray-*, --rh-indigo-*, …)        never used by screens directly
+ *   2. semantic    (roles: --rh-bg, --rh-surface, --rh-ink, --rh-accent, …)  redefined for dark
+ *   3. component   (--rh-rail-*, --rh-control-height, --rh-row-height, …)
+ * The PrimeNG preset (src/app/core/theme/rh-preset.ts) points at the semantic layer with var().
  *
- * Light is the default. Dark applies when <html> has the class "rh-dark",
- * set by ThemeService from the user's choice (Système / Clair / Sombre).
- * The navy rail is identical in both themes.
+ * Light is the default. Dark applies on <html class="rh-dark"> (set by ThemeService from
+ * Système / Clair / Sombre) and on any subtree with class "rh-theme-sombre" (login screens).
+ * Contrast is checked by `npm run check:contraste` (design-system/verifier-contraste.mjs).
  */
 
 :root {
-  /* ---- Rail (sidebar, login brand panel): same in both themes ---- */
-  --rh-rail: #0b1230;
-  --rh-rail-light: #26387a;            /* the top-left light fade */
-  --rh-rail-ink: #c9d1ea;              /* nav text */
-  --rh-rail-ink-strong: #ffffff;
-  --rh-rail-muted: #b4bedf;            /* group names, hints (>= 4.5:1 on the rail) */
-  --rh-rail-line: rgb(255 255 255 / 0.1);
-  --rh-rail-hover: rgb(255 255 255 / 0.06);
-  --rh-rail-active: rgb(255 255 255 / 0.09);
-  --rh-rail-accent: #8ab4ff;
+  /* ---- 1. Primitives ---- */
+  --rh-gray-0: #ffffff;
+  --rh-gray-25: #f7f7f8;
+  --rh-gray-50: #f4f4f5;
+  --rh-gray-75: #f0f0f2;
+  --rh-gray-100: #ececee;
+  --rh-gray-150: #e6e6e9;
+  --rh-gray-400: #8e8f96;
+  --rh-gray-500: #6b6d73;
+  --rh-gray-600: #4b4d53;
+  --rh-gray-700: #3c3e44;
+  --rh-gray-900: #1b1c1e;
+  --rh-gray-d300: #d0d6e0;
+  --rh-gray-d400: #8a8f98;
+  --rh-gray-d500: #686b73;
+  --rh-gray-d700: #26282c;
+  --rh-gray-d750: #1f2023;
+  --rh-gray-d800: #1c1d1f;
+  --rh-gray-d850: #18191b;
+  --rh-gray-d900: #141516;
+  --rh-gray-d950: #0f1011;
+  --rh-gray-d1000: #08090a;
+  --rh-gray-d0: #f7f8f8;
 
-  /* ---- Work area (light) ---- */
-  --rh-bg: #f4f6fb;
-  --rh-surface: #ffffff;
-  --rh-surface-2: #f8f9fc;             /* fields, quiet fills */
-  --rh-surface-3: #eef1f7;             /* hover rows, skeletons */
-  --rh-line: #e6e9f2;
-  --rh-line-strong: #d6dbe8;
-  --rh-ink: #0e1630;
-  --rh-ink-2: #46506b;
-  --rh-muted: #5d6783;
+  --rh-indigo-300: #a4abf2;
+  --rh-indigo-400: #8f98ef;
+  --rh-indigo-500: #5e6ad2;
+  --rh-indigo-600: #535fc4;
+  --rh-indigo-700: #4752b3;
 
-  /* ---- Accent: action, selection, focus, links ---- */
-  --rh-accent: #2d5bff;
-  --rh-accent-strong: #2450f0;
+  --rh-green-600: #19774a;  --rh-green-300: #4cb782;
+  --rh-amber-700: #855c00;  --rh-amber-300: #f2c94c;
+  --rh-red-600: #c22f2f;    --rh-red-300: #eb6f6f;
+
+  /* ---- 2. Semantic (light) ---- */
+  --rh-bg: var(--rh-gray-25);              /* app frame, rail */
+  --rh-surface: var(--rh-gray-0);          /* work area, panels */
+  --rh-surface-2: var(--rh-gray-50);       /* hover, fields */
+  --rh-surface-3: var(--rh-gray-100);      /* active chip, selected row, avatar */
+  --rh-line: var(--rh-gray-100);
+  --rh-line-row: var(--rh-gray-75);
+  --rh-line-strong: var(--rh-gray-400);    /* field outlines (>= 3:1) */
+  --rh-ink: var(--rh-gray-900);
+  --rh-ink-2: var(--rh-gray-700);
+  --rh-muted: var(--rh-gray-500);
+
+  --rh-accent: var(--rh-indigo-500);
+  --rh-accent-hover: var(--rh-indigo-600);
   --rh-accent-ink: #ffffff;
-  --rh-accent-soft: #eaf0ff;
-  --rh-accent-line: #bfd0ff;
-  --rh-focus: 0 0 0 3px rgb(91 140 255 / 0.3);
+  --rh-accent-text: var(--rh-indigo-700);  /* links and accent words */
+  --rh-accent-soft: rgb(94 106 210 / 0.1);
+  --rh-focus: 0 0 0 2px var(--rh-surface), 0 0 0 4px var(--rh-indigo-500);
 
-  /* ---- Status: dot + word on a soft tint ---- */
-  --rh-ok: #0b7350;        --rh-ok-soft: #e7f6ef;
-  --rh-wait: #875a00;      --rh-wait-soft: #fbf3e0;
-  --rh-danger: #c2362b;    --rh-danger-soft: #fbecea;
-  --rh-neutral: #5d6783;   --rh-neutral-soft: #eef1f7;
-  --rh-escalated: #46506b; --rh-escalated-soft: #e6e9f2;
+  --rh-ok: var(--rh-green-600);
+  --rh-wait: var(--rh-amber-700);
+  --rh-danger: var(--rh-red-600);
+  --rh-neutral: var(--rh-gray-500);
   --rh-on-danger: #ffffff;
 
-  /* ---- Days outside a range / off days ---- */
-  --rh-offday: #eef1f7;
-  --rh-offday-stripe: #e5e9f2;
+  --rh-offday: var(--rh-gray-50);
+  --rh-offday-stripe: var(--rh-gray-100);
 
-  /* ---- Depth ---- */
-  --rh-shadow-card: 0 1px 2px rgb(14 22 48 / 0.06), 0 14px 34px -14px rgb(14 22 48 / 0.18);
-  --rh-shadow-button: inset 0 1px 0 rgb(255 255 255 / 0.3), 0 8px 20px -10px rgb(14 22 48 / 0.6);
-  --rh-shadow-overlay: 0 24px 48px -12px rgb(14 22 48 / 0.28), 0 2px 6px rgb(14 22 48 / 0.08);
-  --rh-scrim: rgb(8 11 22 / 0.45);
+  --rh-shadow-overlay: 0 0 0 1px rgb(0 0 0 / 0.04), 0 12px 32px -8px rgb(0 0 0 / 0.18);
+  --rh-scrim: rgb(0 0 0 / 0.4);
+
+  /* ---- 3. Component ---- */
+  --rh-rail-width: 232px;
+  --rh-rail-bg: var(--rh-bg);
+  --rh-rail-item-hover: var(--rh-gray-75);
+  --rh-rail-item-active: var(--rh-gray-150);
+  --rh-control-height: 32px;
+  --rh-row-height: 40px;
+  --rh-header-height: 44px;
+  --rh-content-max: 1200px;
 
   /* ---- Type ---- */
-  --rh-font: "Hanken Grotesk", "Segoe UI", system-ui, sans-serif;
-  --rh-font-display: "Bricolage Grotesque", "Hanken Grotesk", system-ui, sans-serif;
+  --rh-font: "Inter", "Segoe UI", system-ui, sans-serif;
   --rh-font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
-  --rh-text-xs: 0.75rem;     /* 12 */
-  --rh-text-sm: 0.8125rem;   /* 13 */
-  --rh-text-md: 0.875rem;    /* 14 · body */
-  --rh-text-lg: 1rem;        /* 16 */
-  --rh-text-xl: 1.25rem;     /* 20 */
-  --rh-title: 2.125rem;      /* 34 · page titles (display) */
-  --rh-figure: 1.75rem;      /* 28 · readings (display) */
-  --rh-figure-xl: 3.5rem;    /* 56 · the one key total (display) */
+  --rh-text-xs: 11px;
+  --rh-text-sm: 12px;
+  --rh-text-md: 13px;      /* body */
+  --rh-text-lg: 15px;
+  --rh-title: 22px;        /* page titles */
+  --rh-figure: 24px;       /* readings */
 
   /* ---- Space (4px grid) ---- */
   --rh-space-1: 4px;  --rh-space-2: 8px;  --rh-space-3: 12px; --rh-space-4: 16px;
-  --rh-space-5: 20px; --rh-space-6: 24px; --rh-space-8: 32px; --rh-space-10: 40px; --rh-space-11: 44px;
+  --rh-space-5: 20px; --rh-space-6: 24px; --rh-space-8: 32px; --rh-space-10: 40px;
 
   /* ---- Shape ---- */
-  --rh-radius-sm: 7px;   /* badges, tags, kbd */
-  --rh-radius: 10px;     /* fields, buttons, nav items */
-  --rh-radius-lg: 16px;  /* cards */
-
-  /* ---- Layout ---- */
-  --rh-rail-width: 248px;
-  --rh-content-max: 1240px;
+  --rh-radius-sm: 6px;     /* controls, nav items, chips, tags */
+  --rh-radius: 8px;        /* panels */
+  --rh-radius-lg: 12px;    /* dialogs, login panel */
 
   /* ---- Motion ---- */
-  --rh-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --rh-fast: 150ms;
-  --rh-base: 220ms;
+  --rh-ease: cubic-bezier(0.25, 0.8, 0.25, 1);
+  --rh-fast: 120ms;
+  --rh-base: 160ms;
 
   color-scheme: light;
 }
 
-/* ---- Dark work area ---- */
-:root.rh-dark {
-  --rh-bg: #080b16;
-  --rh-surface: #111729;
-  --rh-surface-2: #0c1120;
-  --rh-surface-3: #161d33;
-  --rh-line: #1e2640;
-  --rh-line-strong: #2a3352;
-  --rh-ink: #eceff7;
-  --rh-ink-2: #b3bad0;
-  --rh-muted: #8d96b2;
-  --rh-accent: #8ab4ff;
-  --rh-accent-strong: #a6c4ff;
-  --rh-accent-ink: #081028;
-  --rh-accent-soft: rgb(91 140 255 / 0.14);
-  --rh-accent-line: rgb(138 180 255 / 0.45);
-  --rh-ok: #4ade80;        --rh-ok-soft: rgb(74 222 128 / 0.1);
-  --rh-wait: #fbbf24;      --rh-wait-soft: rgb(251 191 36 / 0.1);
-  --rh-danger: #f87171;    --rh-danger-soft: rgb(248 113 113 / 0.1);
-  --rh-neutral: #8d96b2;   --rh-neutral-soft: rgb(141 150 178 / 0.12);
-  --rh-escalated: #b3bad0; --rh-escalated-soft: rgb(179 186 208 / 0.12);
-  --rh-on-danger: #0c1120;
-  --rh-offday: #0d1222;
-  --rh-offday-stripe: #121831;
-  --rh-shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 20px 40px -24px rgb(0 0 0 / 0.8);
-  --rh-shadow-button: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 8px 20px -10px rgb(0 0 0 / 0.8);
-  --rh-shadow-overlay: 0 24px 48px -12px rgb(0 0 0 / 0.7);
+/* ---- 2. Semantic (dark): the whole app in dark, or a forced-dark subtree ---- */
+:root.rh-dark, .rh-theme-sombre {
+  --rh-bg: var(--rh-gray-d1000);
+  --rh-surface: var(--rh-gray-d950);
+  --rh-surface-2: var(--rh-gray-d900);
+  --rh-surface-3: var(--rh-gray-d800);
+  --rh-line: var(--rh-gray-d800);
+  --rh-line-row: var(--rh-gray-d850);
+  --rh-line-strong: var(--rh-gray-d500);
+  --rh-ink: var(--rh-gray-d0);
+  --rh-ink-2: var(--rh-gray-d300);
+  --rh-muted: var(--rh-gray-d400);
+
+  --rh-accent: var(--rh-indigo-500);
+  --rh-accent-hover: var(--rh-indigo-400);
+  --rh-accent-ink: #ffffff;
+  --rh-accent-text: var(--rh-indigo-300);
+  --rh-accent-soft: rgb(94 106 210 / 0.18);
+  --rh-focus: 0 0 0 2px var(--rh-surface), 0 0 0 4px var(--rh-indigo-400);
+
+  --rh-ok: var(--rh-green-300);
+  --rh-wait: var(--rh-amber-300);
+  --rh-danger: var(--rh-red-300);
+  --rh-neutral: var(--rh-gray-d400);
+  --rh-on-danger: #0f1011;
+
+  --rh-offday: var(--rh-gray-d900);
+  --rh-offday-stripe: var(--rh-gray-d850);
+
+  --rh-shadow-overlay: 0 0 0 1px rgb(255 255 255 / 0.06), 0 16px 40px -8px rgb(0 0 0 / 0.7);
   --rh-scrim: rgb(0 0 0 / 0.6);
+
+  --rh-rail-bg: var(--rh-bg);   /* redeclared: a var() in a custom property resolves where it is declared */
+  --rh-rail-item-hover: var(--rh-gray-d850);
+  --rh-rail-item-active: var(--rh-gray-d750);
+
   color-scheme: dark;
 }
 
@@ -126,7 +157,7 @@
 ::selection { background: var(--rh-accent-soft); color: var(--rh-ink); }
 html { accent-color: var(--rh-accent); caret-color: var(--rh-accent); scrollbar-color: var(--rh-line-strong) transparent; }
 :focus-visible { outline: none; box-shadow: var(--rh-focus); }
-a { color: var(--rh-accent); text-underline-offset: 3px; }
+a { color: var(--rh-accent-text); text-underline-offset: 3px; }
 
 @media (prefers-reduced-motion: reduce) {
   :root { --rh-fast: 0ms; --rh-base: 0ms; }
