@@ -108,7 +108,8 @@ const ICONES: Record<string, string> = {
     .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
     @media (max-width: 560px) {
       .notif button { flex-wrap: wrap; }
-      time { order: 3; margin-left: 40px; }
+      .texte { flex: 1 1 calc(100% - 44px); }
+      time { margin-left: 40px; }
     }
   `,
 })
