@@ -11,6 +11,7 @@ const ACTIONS: Record<string, string> = {
   SUPPRESSION: 'Suppression',
   CONNEXION: 'Connexion',
   ECHEC_CONNEXION: 'Échec de connexion',
+  DECONNEXION: 'Déconnexion',
   INVITATION: 'Invitation',
   ACTIVATION_COMPTE: 'Activation de compte',
   CHANGEMENT_MOT_DE_PASSE: 'Changement de mot de passe',
@@ -19,6 +20,11 @@ const ACTIONS: Record<string, string> = {
   DESACTIVATION_COMPTE: 'Désactivation de compte',
   REACTIVATION_COMPTE: 'Réactivation de compte',
 };
+
+/** Whether the action has its own French label (used to check every backend action is covered). */
+export function actionConnue(action: string): boolean {
+  return action in ACTIONS;
+}
 
 /** French label of an audit action; an unknown one is made readable ("NOUVELLE_ACTION" → "Nouvelle action"). */
 export function libelleAction(action: string): string {

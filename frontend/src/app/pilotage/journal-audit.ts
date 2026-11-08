@@ -69,7 +69,7 @@ function versDate(iso: string | null): Date | null {
                 <li class="entree" [class.ouverte]="ouvert">
                   <button type="button" class="resume" [attr.aria-expanded]="ouvert" [attr.aria-controls]="'audit-' + e.id" (click)="basculer(e.id)">
                     <time [attr.datetime]="e.dateAction">{{ e.dateAction | date: 'd MMM y, HH:mm:ss' }}</time>
-                    <span class="qui">{{ e.nomUtilisateur ?? 'système' }}</span>
+                    <span class="qui">{{ qui(e) }}</span>
                     <span class="action" [class.echec]="e.action === 'ECHEC_CONNEXION'">{{ libelleAction(e.action) }}</span>
                     <span class="objet">@if (e.entite) { {{ e.entite }}@if (e.entiteId) { <span class="mono"> #{{ e.entiteId }}</span> } } @else { <span class="hint">—</span> }</span>
                     <i class="pi pi-chevron-down" aria-hidden="true"></i>
@@ -228,6 +228,11 @@ export class JournalAudit {
 
   protected basculer(id: number): void {
     this.ouverte.update(o => (o === id ? null : id));
+  }
+
+  /** The backend records actions without a user as "systeme". */
+  protected qui(e: AuditEntree): string {
+    return !e.nomUtilisateur || e.nomUtilisateur === 'systeme' ? 'Système' : e.nomUtilisateur;
   }
 
   protected changements(e: AuditEntree): Difference[] {

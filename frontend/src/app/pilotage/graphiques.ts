@@ -63,7 +63,7 @@ const STYLES_COMMUNS = `
         <li tabindex="0" [attr.aria-label]="d.libelle + ' : ' + format()(d.valeur)">
           <span class="libelle">{{ d.libelle }}</span>
           <span class="piste">
-            @if (parts()[i] > 0) { <span class="barre" [style.width.%]="parts()[i]"></span> }
+            @if (parts()[i] > 0) { <span class="barre" [style.--p]="parts()[i] / 100"></span> }
             <span class="valeur">{{ format()(d.valeur) }}</span>
           </span>
           <span class="bulle" aria-hidden="true"><b>{{ format()(d.valeur) }}</b> · {{ d.libelle }}@if (total() > 0) { · {{ pourcent(d) }} % }</span>
@@ -79,8 +79,9 @@ const STYLES_COMMUNS = `
     li[tabindex] { position: relative; display: grid; grid-template-columns: minmax(80px, 34%) minmax(0, 1fr); align-items: center; gap: var(--rh-space-3); min-height: 32px; padding: 0 4px; }
     li[tabindex]:hover { background: var(--rh-surface-2); border-radius: var(--rh-radius-sm); }
     .libelle { color: var(--rh-ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .piste { display: flex; align-items: center; gap: var(--rh-space-2); min-width: 0; }
-    .barre { display: block; height: 16px; max-width: calc(100% - 7ch); background: var(--rh-accent); border-radius: 0 4px 4px 0; }
+    /* The bar is a share of the track minus the room kept for the value: it never shrinks, so lengths stay proportional */
+    .piste { --etiquette: 12ch; display: flex; align-items: center; gap: var(--rh-space-2); min-width: 0; }
+    .barre { flex: none; display: block; height: 16px; width: calc((100% - var(--etiquette) - var(--rh-space-2)) * var(--p)); background: var(--rh-accent); border-radius: 0 4px 4px 0; }
     .valeur { flex: none; color: var(--rh-ink); font-size: var(--rh-text-sm); font-weight: 500; font-variant-numeric: tabular-nums; }
     .bulle { left: 34%; bottom: calc(100% + 4px); }
     .vide { color: var(--rh-muted); padding: var(--rh-space-2) 0; }
@@ -111,7 +112,7 @@ export class Barres {
         <li tabindex="0" [attr.aria-label]="d.libelle + ' : ' + format()(d.valeur)">
           <span class="zone">
             @if (d.valeur > 0) { <span class="valeur">{{ format()(d.valeur) }}</span> }
-            @if (parts()[i] > 0) { <span class="colonne" [style.height.%]="parts()[i]"></span> }
+            @if (parts()[i] > 0) { <span class="colonne" [style.--p]="parts()[i] / 100"></span> }
           </span>
           <span class="libelle" aria-hidden="true"><span class="long">{{ d.libelle }}</span><span class="court">{{ d.court ?? d.libelle }}</span></span>
           <span class="bulle" aria-hidden="true"><b>{{ format()(d.valeur) }}</b> · {{ d.libelle }}</span>
@@ -125,7 +126,9 @@ export class Barres {
     li[tabindex] { position: relative; display: grid; grid-template-rows: 160px auto; justify-items: center; }
     li[tabindex]:hover .zone { background: var(--rh-surface-2); }
     .zone { width: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; border-radius: var(--rh-radius-sm) var(--rh-radius-sm) 0 0; }
-    .colonne { display: block; width: min(24px, 70%); max-height: calc(100% - 22px); background: var(--rh-accent); border-radius: 4px 4px 0 0; }
+    /* Fixed plot height (130px) below the value: the tallest column is never clipped */
+    .colonne { flex: none; display: block; width: min(24px, 70%); height: calc(130px * var(--p)); background: var(--rh-accent); border-radius: 4px 4px 0 0; }
+    .zone .valeur { flex: none; }
     .valeur { color: var(--rh-ink); font-size: var(--rh-text-xs); font-weight: 600; font-variant-numeric: tabular-nums; }
     .libelle { padding-top: 6px; color: var(--rh-muted); font-size: var(--rh-text-xs); }
     .bulle { bottom: calc(100% - 20px); left: 50%; transform: translateX(-50%); }

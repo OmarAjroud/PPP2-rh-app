@@ -24,9 +24,13 @@ describe('Graphiques', () => {
 
   it('draws bars in proportion to the largest value, value written at the tip', () => {
     const el = rendre([{ libelle: 'Informatique', valeur: 4 }, { libelle: 'Finance', valeur: 2 }]);
+    // the bar is sized from its share (--p) of a track that excludes the value label, so it never shrinks
     const barres = el.querySelectorAll<HTMLElement>('app-barres .barre');
-    expect(barres[0].style.width).toBe('100%');
-    expect(barres[1].style.width).toBe('50%');
+    expect(barres[0].style.getPropertyValue('--p')).toBe('1');
+    expect(barres[1].style.getPropertyValue('--p')).toBe('0.5');
+    const colonnes = el.querySelectorAll<HTMLElement>('app-colonnes .colonne');
+    expect(colonnes[0].style.getPropertyValue('--p')).toBe('1');
+    expect(colonnes[1].style.getPropertyValue('--p')).toBe('0.5');
     expect(el.querySelector('app-barres')!.textContent).toContain('4 employés');
   });
 

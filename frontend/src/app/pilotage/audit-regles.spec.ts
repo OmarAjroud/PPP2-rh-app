@@ -1,4 +1,4 @@
-import { differences, libelleAction } from './audit-regles';
+import { actionConnue, differences, libelleAction } from './audit-regles';
 
 describe('differences', () => {
   it('lists only the fields that changed, before → after', () => {
@@ -28,5 +28,11 @@ describe('libelleAction', () => {
     expect(libelleAction('CONNEXION')).toBe('Connexion');
     expect(libelleAction('ECHEC_CONNEXION')).toBe('Échec de connexion');
     expect(libelleAction('NOUVELLE_ACTION')).toBe('Nouvelle action');
+  });
+
+  it('has a French label for every action the backend records', () => {
+    const backend = ['CREATION', 'MODIFICATION', 'SUPPRESSION', 'CONNEXION', 'ECHEC_CONNEXION', 'DECONNEXION', 'INVITATION', 'ACTIVATION_COMPTE', 'CHANGEMENT_MOT_DE_PASSE', 'REINITIALISATION_MOT_DE_PASSE', 'APPEL_ASSISTANT', 'DESACTIVATION_COMPTE', 'REACTIVATION_COMPTE'];
+    expect(libelleAction('DECONNEXION')).toBe('Déconnexion');
+    for (const a of backend) expect(actionConnue(a), a).toBe(true);
   });
 });

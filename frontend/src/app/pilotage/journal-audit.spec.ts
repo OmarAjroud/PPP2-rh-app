@@ -70,6 +70,14 @@ describe('Journal d’audit', () => {
     expect(detail).toContain('127.0.0.1');
   });
 
+  it('names actions without a user « Système »', async () => {
+    await harness.navigateByUrl('/audit');
+    listes();
+    http.expectOne(r => r.url === api).flush(page([entree({ nomUtilisateur: 'systeme', utilisateurId: null })]));
+    harness.detectChanges();
+    expect(el().querySelector('.qui')!.textContent!.trim()).toBe('Système');
+  });
+
   it('shows a login without values, its details only', async () => {
     await harness.navigateByUrl('/audit');
     listes();
