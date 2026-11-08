@@ -3,9 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { ButtonModule } from 'primeng/button';
+import { PasswordModule } from 'primeng/password';
 import { environment } from '../../environments/environment';
 import { messageErreur } from '../core/api/erreurs';
 import { MESSAGE_MOT_DE_PASSE } from '../core/auth/auth.models';
@@ -46,37 +45,36 @@ const VARIANTES: Record<'activation' | 'reinitialisation', Variante> = {
  */
 @Component({
   selector: 'app-lien-mot-de-passe',
-  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [ReactiveFormsModule, RouterLink, ButtonModule, PasswordModule],
   template: `
-    <section class="panel carte-auth" aria-labelledby="titre">
-      <h1 id="titre" class="panel-h">{{ v.titre }}</h1>
-      <div class="panel-b">
-        @if (!jeton) {
-          <p class="alerte erreur" role="alert">Ce lien est incomplet. Ouvrez le lien reçu par email tel quel, ou demandez-en un nouveau.</p>
-          <p class="liens"><a routerLink="/forgot-password">Recevoir un nouveau lien</a></p>
-        } @else if (termine()) {
-          <p class="alerte succes" role="status">{{ v.succes }}</p>
-          <p class="liens"><a routerLink="/login">Se connecter</a></p>
-        } @else {
-          <p class="hint">{{ v.intro }}</p>
-          @if (erreur()) { <p class="alerte erreur" role="alert">{{ erreur() }}</p> }
-          <form [formGroup]="form" (ngSubmit)="valider()" novalidate>
-            <mat-form-field>
-              <mat-label>Mot de passe</mat-label>
-              <input matInput type="password" formControlName="nouveau" autocomplete="new-password" required>
-              <mat-hint>{{ regle }}</mat-hint>
-              <mat-error>{{ regle }}</mat-error>
-            </mat-form-field>
-            <mat-form-field>
-              <mat-label>Confirmation</mat-label>
-              <input matInput type="password" formControlName="confirmation" autocomplete="new-password" required>
-              <mat-error>Les deux mots de passe doivent être identiques.</mat-error>
-            </mat-form-field>
-            <button mat-flat-button type="submit" [disabled]="envoi()">{{ envoi() ? 'Enregistrement…' : v.bouton }}</button>
-          </form>
-        }
+    <h1 class="auth-titre">{{ v.titre }}</h1>
+    @if (!jeton) {
+      <div class="auth-form">
+        <p class="alerte erreur" role="alert">Ce lien est incomplet. Ouvrez le lien reçu par email tel quel, ou demandez-en un nouveau.</p>
+        <p class="auth-liens"><a routerLink="/forgot-password">Recevoir un nouveau lien</a></p>
       </div>
-    </section>
+    } @else if (termine()) {
+      <div class="auth-form">
+        <p class="alerte succes" role="status">{{ v.succes }}</p>
+        <p class="auth-liens"><a routerLink="/login">Se connecter</a></p>
+      </div>
+    } @else {
+      <p class="auth-sous-titre">{{ v.intro }}</p>
+      <form class="auth-form" [formGroup]="form" (ngSubmit)="valider()" novalidate>
+        @if (erreur()) { <p class="alerte erreur" role="alert">{{ erreur() }}</p> }
+        <div class="champ">
+          <label for="nouveau">Mot de passe</label>
+          <p-password inputId="nouveau" formControlName="nouveau" [feedback]="false" [toggleMask]="true" autocomplete="new-password" />
+          <span [class]="form.controls.nouveau.invalid && form.controls.nouveau.touched ? 'err' : 'aide'">{{ regle }}</span>
+        </div>
+        <div class="champ">
+          <label for="confirmation">Confirmation</label>
+          <p-password inputId="confirmation" formControlName="confirmation" [feedback]="false" [toggleMask]="true" autocomplete="new-password" />
+          @if (form.controls.confirmation.invalid && form.controls.confirmation.touched) { <span class="err">Les deux mots de passe doivent être identiques.</span> }
+        </div>
+        <p-button type="submit" [label]="envoi() ? 'Enregistrement…' : v.bouton" [loading]="envoi()" />
+      </form>
+    }
   `,
 })
 export class LienMotDePasse {

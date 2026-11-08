@@ -1,41 +1,126 @@
 // Global styles. Tokens come from design-system/tokens.css (loaded first in angular.json);
-// the Angular Material theme maps its system tokens onto them. See DESIGN.md.
-@use 'design-system/material-theme';
+// PrimeNG reads the same values through src/app/core/theme/rh-preset.ts. See DESIGN.md.
 
 * { box-sizing: border-box; }
 html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--rh-bg);
+  color: var(--rh-ink);
+  font: 400 var(--rh-text-md)/1.5 var(--rh-font);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
 
-// ---- Shared building blocks from the design system (DESIGN.md, Components) ----
-.page-titre { margin: 2px 0 0; font-size: var(--rh-text-2xl); font-weight: var(--rh-weight-strong); letter-spacing: var(--rh-tracking-title); text-wrap: balance; }
-.crumb { margin: 0; color: var(--rh-muted); font-size: var(--rh-text-sm); }
+// ---- Page header: breadcrumb + display title ----
+.entete { display: flex; flex-wrap: wrap; gap: var(--rh-space-4); justify-content: space-between; align-items: end; }
+.crumb { color: var(--rh-muted); font-size: var(--rh-text-sm); }
+.crumb a { color: var(--rh-muted); text-decoration: none; }
+.crumb a:hover { color: var(--rh-ink); text-decoration: underline; }
+.page-titre { margin-top: var(--rh-space-1); font: 700 var(--rh-title)/1.1 var(--rh-font-display); letter-spacing: -0.03em; }
 
-.panel { background: var(--rh-surface); border: 1px solid var(--rh-line); border-radius: var(--rh-radius-lg); min-width: 0; }
-.panel-h { margin: 0; padding: var(--rh-space-4) var(--rh-space-5); border-bottom: 1px solid var(--rh-line); font-size: var(--rh-text-md); font-weight: var(--rh-weight-strong); }
-.panel-b { padding: var(--rh-space-5); display: grid; gap: var(--rh-space-4); }
-.panel-b > p { margin: 0; }
-.panel-f { padding: var(--rh-space-3) var(--rh-space-5); border-top: 1px solid var(--rh-line); display: flex; flex-wrap: wrap; gap: var(--rh-space-3); justify-content: flex-end; align-items: center; }
+// ---- Cards: white, 16px, hairline + soft depth ----
+.card { background: var(--rh-surface); border: 1px solid var(--rh-line); border-radius: var(--rh-radius-lg); box-shadow: var(--rh-shadow-card); min-width: 0; }
+.card-h { display: flex; justify-content: space-between; align-items: center; gap: var(--rh-space-3); padding: var(--rh-space-4) var(--rh-space-6); border-bottom: 1px solid var(--rh-line); font-size: var(--rh-text-md); font-weight: 600; }
+.card-h a { font-size: var(--rh-text-sm); font-weight: 600; text-decoration: none; }
+.card-h a:hover { text-decoration: underline; }
+.card-b { padding: var(--rh-space-5) var(--rh-space-6); display: grid; gap: var(--rh-space-4); }
+.card-f { display: flex; flex-wrap: wrap; gap: var(--rh-space-3); justify-content: space-between; align-items: center; padding: var(--rh-space-3) var(--rh-space-6); border-top: 1px solid var(--rh-line); color: var(--rh-muted); font-size: var(--rh-text-sm); }
+.card-f .actions { display: flex; flex-wrap: wrap; gap: var(--rh-space-3); margin-left: auto; }
 
+// Rows inside a card (lists, readings)
+.ligne { display: flex; justify-content: space-between; align-items: center; gap: var(--rh-space-4); padding: 13px var(--rh-space-6); border-bottom: 1px solid var(--rh-line); }
+.ligne:last-child { border-bottom: 0; }
+.ligne small { display: block; color: var(--rh-muted); font-size: var(--rh-text-xs); }
+
+// Definition list (record cards)
+.fiche { display: grid; grid-template-columns: 200px minmax(0, 1fr); margin: 0; }
+.fiche dt, .fiche dd { margin: 0; padding: 13px var(--rh-space-6); border-bottom: 1px solid var(--rh-line); }
+.fiche dt { color: var(--rh-muted); font-size: var(--rh-text-sm); }
+.fiche dd { font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
+.fiche dt:last-of-type, .fiche dd:last-of-type { border-bottom: 0; }
+@media (max-width: 560px) {
+  .fiche { grid-template-columns: minmax(0, 1fr); }
+  .fiche dt { border-bottom: 0; padding-bottom: 0; }
+}
+
+// ---- Readings: amounts, balances, calculations (instrument voice) ----
+.mono { font-family: var(--rh-font-mono); font-variant-numeric: tabular-nums; }
+.lecture { font: 500 15px var(--rh-font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lecture .fleche { color: var(--rh-muted); margin: 0 4px; }
+.chiffre { font: 700 var(--rh-figure)/1.1 var(--rh-font-display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+// ---- Text helpers ----
 .hint { color: var(--rh-muted); font-size: var(--rh-text-sm); }
 
-// Form-level message (field-level messages use mat-error)
-.alerte { margin: 0; padding: var(--rh-space-3) var(--rh-space-4); border-radius: var(--rh-radius); font-size: var(--rh-text-sm); }
+// Form-level message (field-level messages sit under each field)
+.alerte { padding: 10px 14px; border-radius: var(--rh-radius); font-size: var(--rh-text-sm); }
 .alerte.erreur { color: var(--rh-danger); background: var(--rh-danger-soft); }
-.alerte.info { color: var(--rh-ink-2); background: var(--rh-surface-2); }
+.alerte.info { color: var(--rh-ink-2); background: var(--rh-surface-3); }
 .alerte.succes { color: var(--rh-ok); background: var(--rh-ok-soft); }
 
-// Status: dot + word, never colour alone
-.status { display: inline-flex; align-items: center; gap: 6px; font-size: var(--rh-text-sm); font-weight: var(--rh-weight-medium); padding: 2px 8px 2px 7px; border-radius: var(--rh-radius-sm); white-space: nowrap; }
-.status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+// ---- Status: dot + word on a soft tint ----
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: var(--rh-text-xs); font-weight: 600; padding: 4px 10px; border-radius: var(--rh-radius-sm); white-space: nowrap; }
+.status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .s-ok { color: var(--rh-ok); background: var(--rh-ok-soft); }
 .s-wait { color: var(--rh-wait); background: var(--rh-wait-soft); }
 .s-no { color: var(--rh-danger); background: var(--rh-danger-soft); }
 .s-off { color: var(--rh-neutral); background: var(--rh-neutral-soft); }
 .s-esc { color: var(--rh-escalated); background: var(--rh-escalated-soft); }
 
-// Narrow auth forms (login, account links)
-// Routed page hosts are inline by default; in the centred auth layout they must be the 400px column
-app-auth-layout main > :not(router-outlet):not(.brand) { display: block; width: min(400px, 100%); }
-.carte-auth { width: 100%; }
-.carte-auth form { display: grid; gap: var(--rh-space-2); }
-.carte-auth mat-form-field { width: 100%; }
-.carte-auth .liens { display: flex; justify-content: space-between; gap: var(--rh-space-3); font-size: var(--rh-text-sm); }
+// Small neutral tag (role, department, seniority)
+.tag { display: inline-flex; font-size: var(--rh-text-xs); font-weight: 600; padding: 3px 10px; border-radius: var(--rh-radius-sm); background: var(--rh-surface); border: 1px solid var(--rh-line); color: var(--rh-ink-2); }
+
+// ---- Forms ----
+.champ { display: grid; gap: 6px; min-width: 0; }
+.champ > label { font-size: var(--rh-text-sm); font-weight: 600; color: var(--rh-ink-2); }
+.champ .aide { font-size: var(--rh-text-xs); color: var(--rh-muted); }
+.champ .err { font-size: var(--rh-text-xs); color: var(--rh-danger); }
+.champ .p-inputtext, .champ .p-select, .champ .p-datepicker, .champ .p-password, .champ .p-inputnumber, .champ textarea { width: 100%; }
+.champ .p-password-input, .champ .p-inputnumber-input { width: 100%; }
+
+// ---- Auth forms (login, account links): one 400px column ----
+app-auth-layout main > :not(router-outlet) { display: block; width: min(400px, 100%); }
+.auth-titre { font: 700 32px/1.1 var(--rh-font-display); letter-spacing: -0.03em; }
+.auth-sous-titre { margin-top: 6px; color: var(--rh-muted); }
+.auth-form { display: grid; gap: var(--rh-space-4); margin-top: 28px; }
+.auth-form .p-button { width: 100%; height: 46px; justify-content: center; }
+.auth-liens { display: flex; justify-content: flex-end; gap: var(--rh-space-3); font-size: var(--rh-text-sm); }
+.auth-liens a { font-weight: 600; text-decoration: none; }
+.auth-liens a:hover { text-decoration: underline; }
+.auth-pied { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--rh-line); font-size: var(--rh-text-sm); color: var(--rh-muted); }
+.auth-pied code { font: 500 12px var(--rh-font-mono); color: var(--rh-ink-2); background: var(--rh-surface); border: 1px solid var(--rh-line); border-radius: 6px; padding: 2px 6px; margin-right: 4px; white-space: nowrap; }
+
+// ---- PrimeNG: buttons in the system's voice ----
+.p-button { font-weight: 600; border-radius: var(--rh-radius); text-decoration: none; }
+a.p-button:hover { text-decoration: none; }
+.p-button:not(.p-button-secondary):not(.p-button-outlined):not(.p-button-text):not(.p-button-danger) {
+  background: linear-gradient(180deg, #3d69ff, #2450f0);
+  border-color: transparent;
+  box-shadow: var(--rh-shadow-button);
+}
+.rh-dark .p-button:not(.p-button-secondary):not(.p-button-outlined):not(.p-button-text):not(.p-button-danger) {
+  background: linear-gradient(180deg, #a6c4ff, #7aa2ff);
+  color: var(--rh-accent-ink);
+}
+.p-button.p-button-secondary, .p-button.p-button-outlined {
+  background: var(--rh-surface);
+  border: 1px solid var(--rh-line-strong);
+  color: var(--rh-ink);
+}
+.p-button.p-button-secondary:not(:disabled):hover, .p-button.p-button-outlined:not(:disabled):hover { background: var(--rh-surface-3); border-color: var(--rh-line-strong); color: var(--rh-ink); }
+.p-button.p-button-danger.p-button-outlined { color: var(--rh-danger); }
+.p-button.p-button-danger.p-button-outlined:not(:disabled):hover { background: var(--rh-danger-soft); border-color: var(--rh-danger); color: var(--rh-danger); }
+.p-button.p-button-danger:not(.p-button-outlined) { background: var(--rh-danger); border-color: var(--rh-danger); color: var(--rh-on-danger); }
+
+// ---- PrimeNG: tables as hairline rows ----
+.p-datatable .p-datatable-thead > tr > th { font-size: var(--rh-text-xs); font-weight: 600; color: var(--rh-muted); text-transform: uppercase; letter-spacing: 0.06em; background: var(--rh-surface); }
+.p-datatable .p-datatable-tbody > tr > td { white-space: nowrap; }
+.p-paginator { background: transparent; }
+// Sorted column: the arrow says it, no coloured band
+.p-datatable .p-datatable-thead > tr > th.p-datatable-sortable-column.p-datatable-column-sorted { background: var(--rh-surface); color: var(--rh-ink); }
+.p-datatable .p-datatable-sort-icon { width: 11px; height: 11px; margin-left: 4px; }
+// PrimeNG uses 1rem for controls; the system's controls read at 15px
+.p-button, .p-inputtext, .p-select-label, .p-datepicker-input, .p-inputnumber-input, .p-password-input { font-size: 0.9375rem; }

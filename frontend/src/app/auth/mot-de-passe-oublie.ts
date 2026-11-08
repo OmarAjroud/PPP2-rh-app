@@ -3,37 +3,34 @@ import { HttpClient } from '@angular/common/http';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
 import { environment } from '../../environments/environment';
 import { messageErreur } from '../core/api/erreurs';
 
 @Component({
   selector: 'app-mot-de-passe-oublie',
-  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [ReactiveFormsModule, RouterLink, ButtonModule, InputTextModule],
   template: `
-    <section class="panel carte-auth" aria-labelledby="titre">
-      <h1 id="titre" class="panel-h">Mot de passe oublié</h1>
-      <div class="panel-b">
-        @if (envoye()) {
-          <p class="alerte succes" role="status">{{ envoye() }}</p>
-          <p class="hint">Le lien est valable une heure. Pensez à vérifier les courriers indésirables.</p>
-        } @else {
-          <p class="hint">Indiquez l'adresse email de votre compte : nous vous enverrons un lien pour choisir un nouveau mot de passe.</p>
-          @if (erreur()) { <p class="alerte erreur" role="alert">{{ erreur() }}</p> }
-          <form (ngSubmit)="valider()" novalidate>
-            <mat-form-field>
-              <mat-label>Email</mat-label>
-              <input matInput type="email" [formControl]="email" autocomplete="email" required>
-              <mat-error>Indiquez une adresse email valide.</mat-error>
-            </mat-form-field>
-            <button mat-flat-button type="submit" [disabled]="envoi()">{{ envoi() ? 'Envoi…' : 'Recevoir le lien' }}</button>
-          </form>
-        }
-        <p class="liens"><a routerLink="/login">Retour à la connexion</a></p>
+    <h1 class="auth-titre">Mot de passe oublié</h1>
+    @if (envoye()) {
+      <div class="auth-form">
+        <p class="alerte succes" role="status">{{ envoye() }}</p>
+        <p class="hint">Le lien est valable une heure. Pensez à vérifier les courriers indésirables.</p>
       </div>
-    </section>
+    } @else {
+      <p class="auth-sous-titre">Indiquez l'adresse email de votre compte : vous recevrez un lien pour choisir un nouveau mot de passe.</p>
+      <form class="auth-form" (ngSubmit)="valider()" novalidate>
+        @if (erreur()) { <p class="alerte erreur" role="alert">{{ erreur() }}</p> }
+        <div class="champ">
+          <label for="email">Email</label>
+          <input pInputText id="email" type="email" [formControl]="email" autocomplete="email" [attr.aria-invalid]="email.invalid && email.touched">
+          @if (email.invalid && email.touched) { <span class="err">Indiquez une adresse email valide.</span> }
+        </div>
+        <p-button type="submit" [label]="envoi() ? 'Envoi…' : 'Recevoir le lien'" [loading]="envoi()" />
+      </form>
+    }
+    <p class="auth-pied"><a routerLink="/login">Retour à la connexion</a></p>
   `,
 })
 export class MotDePasseOublie {

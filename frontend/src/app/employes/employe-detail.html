@@ -1,0 +1,146 @@
+@switch (etat().statut) {
+  @case ('chargement') {
+    <p class="crumb">{{ moi ? 'Mon compte' : libelleListe() }}</p>
+    <p class="hint" aria-busy="true">Chargement…</p>
+  }
+  @case ('erreur') {
+    <p class="crumb"><a routerLink="/employees">{{ libelleListe() }}</a></p>
+    <p class="alerte erreur" role="alert">{{ $any(etat()).message }}</p>
+  }
+  @case ('ok') {
+    @let e = employe()!;
+    <div class="page" rhApparition>
+      <header class="identite">
+        <span class="avatar" aria-hidden="true">{{ initiales() }}</span>
+        <div class="qui">
+          <p class="crumb">@if (moi) { Mon compte } @else { <a routerLink="/employees">{{ libelleListe() }}</a> }</p>
+          <h1 class="page-titre">{{ e.prenom }} {{ e.nom }}</h1>
+          <p class="tags"><span class="tag">{{ libelleRole(e.roleNom) }}</span><span class="tag">{{ e.departementNom }}</span><span class="tag">Depuis {{ e.dateEmbauche | date: 'MMM y' }}</span></p>
+        </div>
+        @if (gestion() && !moi) { <a pButton [routerLink]="['/employees', e.id, 'edit']" severity="secondary" class="modifier">Modifier</a> }
+      </header>
+
+      <div class="grille">
+        <div class="colonne">
+          <section class="card" aria-labelledby="fiche">
+            <h2 id="fiche" class="card-h">Fiche</h2>
+            <dl class="fiche">
+              <dt>Email</dt><dd>{{ e.email }}</dd>
+              <dt>Département</dt><dd><a [routerLink]="['/departments', e.departementId]">{{ e.departementNom }}</a></dd>
+              <dt>Manager</dt>
+              <dd>@if (e.managerId) {
+                @if (gestion()) { <a [routerLink]="['/employees', e.managerId]">{{ e.managerNomComplet }}</a> } @else { {{ e.managerNomComplet }} }
+              } @else { <span class="hint">Aucun</span> }</dd>
+              <dt>Date d'embauche</dt><dd>{{ e.dateEmbauche | date: 'longDate' }}</dd>
+              <dt>Salaire mensuel</dt>
+              <dd>@if (e.salaire !== null) { <span class="mono">{{ e.salaire | currency: 'EUR' }}</span> }
+                @else if (peutVoirSalaire()) { <span class="hint">Non renseigné</span> }
+                @else { <span class="hint">Non visible pour votre rôle</span> }</dd>
+              <dt>N° employé</dt><dd class="mono">{{ e.id.toString().padStart(4, '0') }}</dd>
+            </dl>
+          </section>
+
+          @if (moi) {
+            <section class="card" aria-labelledby="securite">
+              <div class="card-h"><h2 id="securite">Sécurité du compte</h2><a routerLink="/security">Gérer</a></div>
+              <div class="ligne"><span>Mot de passe<small>Vos autres sessions sont fermées au changement</small></span><a pButton routerLink="/security" severity="secondary" size="small">Changer</a></div>
+              <div class="ligne"><span>Sessions ouvertes<small>Fermez-les toutes si un appareil est perdu</small></span><a pButton routerLink="/security" severity="secondary" size="small">Tout fermer</a></div>
+            </section>
+          }
+
+          @if (gestion() && !moi) {
+            <section class="card" aria-labelledby="compte">
+              <h2 id="compte" class="card-h">Compte de connexion</h2>
+              <div class="card-b">
+                @if (messageCompte(); as m) { <p class="alerte" [class.succes]="m.type === 'succes'" [class.erreur]="m.type === 'erreur'" role="status">{{ m.texte }}</p> }
+                @switch (compte()) {
+                  @case (undefined) { <p class="hint">Chargement…</p> }
+                  @case (null) { <p>Aucun compte. Invitez cette personne : elle recevra un email pour choisir son mot de passe.</p> }
+                  @default {
+                    @let c = compte()!;
+                    <p class="ligne-compte"><span>Identifiant <strong class="mono">{{ c.nomUtilisateur }}</strong></span><span class="status {{ statutsCompte[c.statut].classe }}">{{ statutsCompte[c.statut].libelle }}</span></p>
+                    @if (c.statut === 'EN_ATTENTE') { <p class="hint">Le mot de passe n'a pas encore été choisi. Renvoyez l'invitation si le lien a expiré.</p> }
+                    @if (c.statut === 'DESACTIVE') { <p class="hint">Connexion refusée. L'historique (congés, décisions) est conservé.</p> }
+                  }
+                }
+              </div>
+              @if (compte() !== undefined) {
+                @let c = compte();
+                <div class="card-f">
+                  @if (!c || c.statut === 'EN_ATTENTE') {
+                    <div class="actions"><p-button [label]="c ? 'Renvoyer l’invitation' : 'Inviter'" [loading]="occupe()" (onClick)="actionCompte('inviter')" /></div>
+                  } @else if (c.statut === 'ACTIF') {
+                    @if (confirmerDesactivation()) {
+                      <span>Désactiver ce compte ? Ses sessions seront fermées tout de suite.</span>
+                      <div class="actions">
+                        <p-button label="Annuler" severity="secondary" (onClick)="confirmerDesactivation.set(false)" />
+                        <p-button label="Désactiver" severity="danger" [loading]="occupe()" (onClick)="actionCompte('desactiver')" />
+                      </div>
+                    } @else {
+                      <div class="actions"><p-button label="Désactiver le compte" severity="danger" [outlined]="true" (onClick)="confirmerDesactivation.set(true)" /></div>
+                    }
+                  } @else {
+                    <div class="actions"><p-button label="Réactiver le compte" [loading]="occupe()" (onClick)="actionCompte('reactiver')" /></div>
+                  }
+                </div>
+              }
+            </section>
+
+            <section class="card" aria-labelledby="suppression">
+              <h2 id="suppression" class="card-h">Supprimer l'employé</h2>
+              <div class="card-b">
+                <p>Possible uniquement s'il n'a aucun historique (congés, soldes, décisions). Sinon, désactivez son compte.</p>
+                @if (erreurSuppression()) { <p class="alerte erreur" role="alert">{{ erreurSuppression() }}</p> }
+              </div>
+              <div class="card-f">
+                @if (confirmerSuppression()) {
+                  <span>Supprimer définitivement {{ e.prenom }} {{ e.nom }} ?</span>
+                  <div class="actions">
+                    <p-button label="Annuler" severity="secondary" (onClick)="confirmerSuppression.set(false)" />
+                    <p-button label="Supprimer" severity="danger" [loading]="occupe()" (onClick)="supprimer()" />
+                  </div>
+                } @else {
+                  <div class="actions"><p-button label="Supprimer" severity="danger" [outlined]="true" (onClick)="confirmerSuppression.set(true)" /></div>
+                }
+              </div>
+            </section>
+          }
+        </div>
+
+        <div class="colonne">
+          @if (soldes(); as liste) {
+            <section class="card" aria-labelledby="soldes">
+              <h2 id="soldes" class="card-h">Soldes {{ liste[0]?.annee ?? '' }}</h2>
+              @for (s of liste; track s.typeCongeId) {
+                @let l = lecture(s);
+                <div class="ligne">
+                  <span>{{ s.typeCongeLibelle }}<small>{{ s.joursAlloues }} alloués · {{ s.joursPris }} pris@if (s.joursEnAttente > 0) { · {{ s.joursEnAttente }} en attente }</small></span>
+                  <span class="lecture" [attr.aria-label]="l.avant !== null ? l.avant + ' jours, puis ' + l.apres + ' après les demandes en attente' : l.apres + ' jours disponibles'">
+                    @if (l.avant !== null) { {{ l.avant }}<span class="fleche" aria-hidden="true">→</span> }<span [rhCompteur]="l.apres"></span>
+                  </span>
+                </div>
+              } @empty {
+                <p class="vide hint">Aucun solde pour cette année.</p>
+              }
+            </section>
+          }
+
+          @if (demandes(); as liste) {
+            <section class="card" aria-labelledby="demandes">
+              <h2 id="demandes" class="card-h">Dernières demandes</h2>
+              @for (d of liste; track d.id) {
+                @let st = statutDemande(d);
+                <div class="ligne">
+                  <span>{{ periode(d.dateDebut, d.dateFin) }}<small>{{ d.typeCongeLibelle }} · {{ jours(d.nombreJours) }}</small></span>
+                  <span class="status {{ st.classe }}">{{ st.libelle }}</span>
+                </div>
+              } @empty {
+                <p class="vide hint">Aucune demande de congé pour l'instant.</p>
+              }
+            </section>
+          }
+        </div>
+      </div>
+    </div>
+  }
+}

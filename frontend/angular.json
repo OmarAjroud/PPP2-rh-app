@@ -30,9 +30,13 @@
               }
             ],
             "styles": [
-              "@fontsource/figtree/400.css",
-              "@fontsource/figtree/500.css",
-              "@fontsource/figtree/600.css",
+              "@fontsource/hanken-grotesk/400.css",
+              "@fontsource/hanken-grotesk/500.css",
+              "@fontsource/hanken-grotesk/600.css",
+              "@fontsource/bricolage-grotesque/700.css",
+              "@fontsource/jetbrains-mono/400.css",
+              "@fontsource/jetbrains-mono/500.css",
+              "primeicons/primeicons.css",
               "design-system/tokens.css",
               "src/styles.scss"
             ],
@@ -45,7 +49,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
+                  "maximumWarning": "600kB",
                   "maximumError": "1MB"
                 },
                 {

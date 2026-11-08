@@ -1,2 +1,8 @@
 # Variables locales (secrets) : jamais dans Git
 .env
+
+# Skills Claude Code locales (non utilisés par l’application)
+skills/
+
+# Maquettes de brainstorming (outil local)
+.superpowers/
