@@ -43,7 +43,7 @@ function luminance(hex, nom) {
 }
 
 const clair = bloc(':root');
-const themes = { clair, sombre: { ...clair, ...bloc(':root.rh-dark, .rh-theme-sombre') } };
+const themes = { clair, sombre: { ...clair, ...bloc(':root.rh-dark') } };
 
 let echecs = 0;
 for (const [theme, vars] of Object.entries(themes)) {

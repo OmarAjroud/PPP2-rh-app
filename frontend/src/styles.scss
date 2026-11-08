@@ -95,18 +95,6 @@ code { font: 500 var(--rh-text-sm) var(--rh-font-mono); }
 .champ .p-inputtext, .champ .p-select, .champ .p-datepicker, .champ .p-password, .champ .p-inputnumber, .champ textarea { width: 100%; }
 .champ .p-password-input, .champ .p-inputnumber-input { width: 100%; }
 
-// ---- Auth forms (login, account links): moved into auth-layout in a later step ----
-app-auth-layout main > :not(router-outlet) { display: block; width: min(400px, 100%); }
-.auth-titre { font: 600 24px/1.2 var(--rh-font); letter-spacing: -0.02em; }
-.auth-sous-titre { margin-top: 6px; color: var(--rh-muted); }
-.auth-form { display: grid; gap: var(--rh-space-4); margin-top: 24px; }
-.auth-form .p-button { width: 100%; justify-content: center; }
-.auth-liens { display: flex; justify-content: flex-end; gap: var(--rh-space-3); font-size: var(--rh-text-sm); }
-.auth-liens a { font-weight: 500; text-decoration: none; }
-.auth-liens a:hover { text-decoration: underline; }
-.auth-pied { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--rh-line); font-size: var(--rh-text-sm); color: var(--rh-muted); }
-.auth-pied code { color: var(--rh-ink-2); background: var(--rh-surface-2); border: 1px solid var(--rh-line); border-radius: 4px; padding: 1px 5px; margin-right: 4px; white-space: nowrap; }
-
 // ---- PrimeNG: buttons ----
 body .p-button {
   height: var(--rh-control-height);

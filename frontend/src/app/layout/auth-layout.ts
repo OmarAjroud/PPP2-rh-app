@@ -1,64 +1,102 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, ViewEncapsulation, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { ThemeService } from '../core/theme/theme.service';
 
 /**
- * Public pages (login, forgotten password, account links): split screen.
- * Left, the navy panel with the product promise and a calculation sample (the app's signature);
- * right, the routed form.
+ * Public pages (login, forgotten password, account links): one centred panel on a deep
+ * background lit by a soft violet halo. Always dark, whatever theme the app uses: the layout
+ * forces the dark theme on <html> while it is shown (PrimeNG declares its component variables
+ * on :root, so a dark subtree alone cannot restyle them) and gives the choice back on leaving.
+ * This is the only place the system allows a halo (DESIGN.md, Login).
  */
 @Component({
   selector: 'app-auth-layout',
   imports: [RouterOutlet],
+  encapsulation: ViewEncapsulation.None,
   template: `
-    <div class="split">
-      <section class="marque" aria-label="RH App">
-        <p class="logo">RH<span>·</span>App</p>
-        <div class="promesse">
-          <h2>Les congés, les équipes, sans zone grise.</h2>
-          <p>Chaque chiffre montre son calcul, chaque demande dit qui décide et quand.</p>
-          <dl class="exemple" aria-label="Exemple de calcul">
-            <dt>Jours en semaine</dt><dd>5</dd>
-            <dt>Jeu. 17 · férié</dt><dd>− 1</dd>
-            <dt class="total">Jours ouvrables</dt><dd class="total">4</dd>
-          </dl>
-        </div>
-        <p class="pied">Stage 2026 · données de démonstration</p>
-      </section>
-      <main class="formulaire">
+    <div class="auth">
+      <div class="auth-halo" aria-hidden="true"></div>
+      <header class="auth-marque"><span class="auth-logo" aria-hidden="true"></span>RH App</header>
+      <main class="auth-panneau">
         <router-outlet />
       </main>
+      <p class="auth-mention">Stage 2026 · données de démonstration</p>
     </div>
   `,
   styles: `
-    .split { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; background: var(--rh-bg); }
-    .marque {
-      display: flex; flex-direction: column; justify-content: space-between; gap: 40px;
-      padding: 56px 64px;
-      background: radial-gradient(700px 520px at 0 0, #2a3d85, transparent 70%), radial-gradient(500px 400px at 100% 100%, #16245a, transparent 70%), var(--rh-rail);
-      color: var(--rh-rail-ink);
+    .auth {
+      position: relative;
+      isolation: isolate;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--rh-space-6);
+      padding: 48px 16px;
+      background: var(--rh-bg);
+      color: var(--rh-ink);
+      overflow: hidden;
     }
-    .logo { font: 700 26px var(--rh-font-display); letter-spacing: -0.02em; color: #fff; }
-    .logo span { color: var(--rh-rail-accent); }
-    h2 { font: 700 48px/1.05 var(--rh-font-display); letter-spacing: -0.035em; color: #fff; max-width: 13ch; }
-    .promesse p { margin-top: 18px; max-width: 42ch; color: #c3cbe6; font-size: var(--rh-text-lg); }
-    .exemple {
-      margin: 34px 0 0; width: min(360px, 100%);
-      display: grid; grid-template-columns: 1fr auto; gap: 4px 20px;
-      padding: 16px 18px; border: 1px solid rgb(255 255 255 / 0.12); border-radius: 14px; background: rgb(255 255 255 / 0.04);
-      font: 13px var(--rh-font-mono); color: #c3cbe6;
+    .auth-halo {
+      position: absolute;
+      z-index: -1;
+      inset: -30vh -20vw auto;
+      height: 75vh;
+      background:
+        radial-gradient(closest-side at 50% 60%, rgb(124 110 255 / 0.28), transparent),
+        radial-gradient(closest-side at 30% 40%, rgb(94 106 210 / 0.22), transparent 80%),
+        radial-gradient(closest-side at 72% 45%, rgb(96 165 250 / 0.12), transparent 80%);
+      filter: blur(20px);
+      pointer-events: none;
     }
-    .exemple dt, .exemple dd { margin: 0; }
-    .exemple dd { text-align: right; }
-    .exemple .total { color: #fff; }
-    .pied { font-size: var(--rh-text-sm); color: var(--rh-rail-muted); }
-    .formulaire { display: grid; place-items: center; padding: 48px 24px; }
-    @media (max-width: 960px) {
-      .split { grid-template-columns: minmax(0, 1fr); }
-      .marque { padding: 28px max(16px, env(safe-area-inset-left, 0px)); gap: 16px; }
-      .promesse p, .exemple, .pied { display: none; }
-      h2 { font-size: 28px; max-width: none; }
-      .formulaire { place-items: start center; padding: 32px 16px 48px; }
+    .auth-marque { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: var(--rh-text-lg); }
+    .auth-logo { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, var(--rh-indigo-300), var(--rh-indigo-500)); box-shadow: 0 0 24px rgb(124 110 255 / 0.5); }
+    .auth-panneau {
+      width: min(400px, 100%);
+      padding: 28px;
+      border: 1px solid var(--rh-line);
+      border-radius: var(--rh-radius-lg);
+      background: color-mix(in srgb, var(--rh-surface) 82%, transparent);
+      backdrop-filter: blur(12px);
+      box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 24px 60px -20px rgb(0 0 0 / 0.8);
+    }
+    .auth-panneau > :not(router-outlet) { display: block; }
+    .auth-mention { font-size: var(--rh-text-sm); color: var(--rh-muted); }
+
+    /* Forms rendered inside the panel (connexion, mot de passe oublié, liens de compte) */
+    .auth-titre { font: 600 22px/1.25 var(--rh-font); letter-spacing: -0.015em; }
+    .auth-sous-titre { margin-top: 6px; color: var(--rh-muted); }
+    .auth-form { display: grid; gap: var(--rh-space-4); margin-top: 24px; }
+    .auth-form .p-button { width: 100%; justify-content: center; }
+    .auth .auth-form .p-button:not(.p-button-secondary):not(.p-button-outlined):not(.p-button-text):not(.p-button-danger) {
+      background: var(--rh-ink);
+      border-color: var(--rh-ink);
+      color: var(--rh-bg);
+    }
+    .auth .auth-form .p-button:not(.p-button-secondary):not(.p-button-outlined):not(.p-button-text):not(.p-button-danger):not(:disabled):hover {
+      background: var(--rh-ink-2);
+      border-color: var(--rh-ink-2);
+    }
+    .auth-liens { display: flex; justify-content: flex-end; gap: var(--rh-space-3); font-size: var(--rh-text-sm); }
+    .auth-liens a { font-weight: 500; text-decoration: none; }
+    .auth-liens a:hover { text-decoration: underline; }
+    .auth-pied { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--rh-line); font-size: var(--rh-text-sm); color: var(--rh-muted); }
+    .auth-pied code { color: var(--rh-ink-2); background: var(--rh-surface-2); border: 1px solid var(--rh-line); border-radius: 4px; padding: 1px 5px; margin-right: 4px; white-space: nowrap; }
+
+    @media (max-width: 600px) {
+      .auth { justify-content: flex-start; padding-top: 32px; }
+      .auth-panneau { padding: 20px; }
+    }
+    @media (prefers-reduced-transparency: reduce) {
+      .auth-panneau { background: var(--rh-surface); backdrop-filter: none; }
     }
   `,
 })
-export class AuthLayout {}
+export class AuthLayout {
+  constructor() {
+    const theme = inject(ThemeService);
+    theme.forcerSombre(true);
+    inject(DestroyRef).onDestroy(() => theme.forcerSombre(false));
+  }
+}

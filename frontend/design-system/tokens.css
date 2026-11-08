@@ -7,7 +7,7 @@
  * The PrimeNG preset (src/app/core/theme/rh-preset.ts) points at the semantic layer with var().
  *
  * Light is the default. Dark applies on <html class="rh-dark"> (set by ThemeService from
- * Système / Clair / Sombre) and on any subtree with class "rh-theme-sombre" (login screens).
+ * Système / Clair / Sombre; forced while a login screen is shown).
  * Contrast is checked by `npm run check:contraste` (design-system/verifier-contraste.mjs).
  */
 
@@ -114,8 +114,8 @@
   color-scheme: light;
 }
 
-/* ---- 2. Semantic (dark): the whole app in dark, or a forced-dark subtree ---- */
-:root.rh-dark, .rh-theme-sombre {
+/* ---- 2. Semantic (dark) ---- */
+:root.rh-dark {
   --rh-bg: var(--rh-gray-d1000);
   --rh-surface: var(--rh-gray-d950);
   --rh-surface-2: var(--rh-gray-d900);
@@ -146,7 +146,6 @@
   --rh-shadow-overlay: 0 0 0 1px rgb(255 255 255 / 0.06), 0 16px 40px -8px rgb(0 0 0 / 0.7);
   --rh-scrim: rgb(0 0 0 / 0.6);
 
-  --rh-rail-bg: var(--rh-bg);   /* redeclared: a var() in a custom property resolves where it is declared */
   --rh-rail-item-hover: var(--rh-gray-d850);
   --rh-rail-item-active: var(--rh-gray-d750);
 

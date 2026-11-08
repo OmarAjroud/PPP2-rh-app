@@ -13,7 +13,9 @@ export class ThemeService {
   readonly choix = signal<ChoixTheme>(lire());
   private readonly media = typeof window.matchMedia === 'function' ? window.matchMedia('(prefers-color-scheme: dark)') : null;
   private readonly systemeSombre = signal(this.media?.matches ?? false);
-  readonly sombre = computed(() => this.choix() === 'sombre' || (this.choix() === 'systeme' && this.systemeSombre()));
+  /** Set while a login screen is shown: those screens are always dark, whatever the choice. */
+  private readonly forcer = signal(false);
+  readonly sombre = computed(() => this.forcer() || this.choix() === 'sombre' || (this.choix() === 'systeme' && this.systemeSombre()));
 
   constructor() {
     this.media?.addEventListener('change', e => { this.systemeSombre.set(e.matches); this.appliquer(); });
@@ -23,6 +25,12 @@ export class ThemeService {
   choisir(c: ChoixTheme): void {
     this.choix.set(c);
     try { localStorage.setItem(CLE, c); } catch { /* storage unavailable */ }
+    this.appliquer();
+  }
+
+  /** Forces the dark theme (true) or gives the user's choice back (false). */
+  forcerSombre(actif: boolean): void {
+    this.forcer.set(actif);
     this.appliquer();
   }
 
