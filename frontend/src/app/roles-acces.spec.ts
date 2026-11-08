@@ -13,7 +13,8 @@ function connecter(role: Role): void {
   }));
 }
 
-describe('Access per role', () => {
+// The first navigation compiles the lazy pages: slower than 5 s while the whole suite runs in parallel
+describe('Access per role', { timeout: 15000 }, () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({ providers: [provideRouter(routes), provideHttpClient(), provideHttpClientTesting()] });

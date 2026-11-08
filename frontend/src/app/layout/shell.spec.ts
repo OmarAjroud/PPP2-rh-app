@@ -4,7 +4,8 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../app.routes';
 
-describe('Shell: navigation drawer on small screens', () => {
+// The first navigation compiles the lazy pages: slower than 5 s while the whole suite runs in parallel
+describe('Shell: navigation drawer on small screens', { timeout: 15000 }, () => {
   let harness: RouterTestingHarness;
   const doc = () => harness.routeNativeElement!.ownerDocument;
   const bouton = () => doc().querySelector<HTMLButtonElement>('button.menu')!;

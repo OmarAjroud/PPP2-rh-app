@@ -4,7 +4,8 @@ import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from './app.routes';
 
-describe('Routing and guards', () => {
+// The first navigation compiles the lazy pages: slower than 5 s while the whole suite runs in parallel
+describe('Routing and guards', { timeout: 15000 }, () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({ providers: [provideRouter(routes), provideHttpClient()] });
