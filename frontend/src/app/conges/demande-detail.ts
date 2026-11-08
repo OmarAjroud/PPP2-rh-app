@@ -65,7 +65,7 @@ type Action = 'annuler' | 'approuver' | 'refuser' | 'interrompre';
                 @if (d.motifDecision) { <dt>{{ d.statut === 'REFUSEE' ? 'Motif' : 'Commentaire' }}</dt><dd>{{ d.motifDecision }}</dd> }
                 @if (d.dateEscalade) { <dt>Transmise aux RH</dt><dd>{{ d.dateEscalade | date: 'd MMMM y' }}<span class="hint"> · sans décision du manager</span></dd> }
                 @if (d.motifInterruption) { <dt>Interrompu</dt><dd>{{ d.motifInterruption }}</dd> }
-                @if (d.statut === 'EN_ATTENTE' && !d.dateEscalade) { <dt>Délai</dt><dd class="hint">Sans réponse sous 3 jours, la demande passe aux RH.</dd> }
+                @if (d.statut === 'EN_ATTENTE' && !d.dateEscalade) { <dt>Qui décide</dt><dd>À traiter par le manager<span class="hint"> · transmise aux RH sans réponse sous 3 jours</span></dd> }
               </dl>
             </section>
 
@@ -96,7 +96,13 @@ type Action = 'annuler' | 'approuver' | 'refuser' | 'interrompre';
                       <p-button label="Interrompre le congé" severity="danger" [outlined]="true" [loading]="occupe() === 'interrompre'" [disabled]="!!occupe()" (onClick)="agir('interrompre')" />
                     }
                     @if (peutAnnuler()) {
-                      <p-button label="Annuler la demande" severity="danger" [outlined]="true" [loading]="occupe() === 'annuler'" [disabled]="!!occupe()" (onClick)="agir('annuler')" />
+                      @if (confirmerAnnulation()) {
+                        <span class="hint">Annuler définitivement cette demande ?</span>
+                        <p-button label="Non" severity="secondary" (onClick)="confirmerAnnulation.set(false)" />
+                        <p-button label="Confirmer l’annulation" severity="danger" [loading]="occupe() === 'annuler'" [disabled]="!!occupe()" (onClick)="agir('annuler')" />
+                      } @else {
+                        <p-button label="Annuler la demande" severity="danger" [outlined]="true" (onClick)="confirmerAnnulation.set(true)" />
+                      }
                     }
                   </div>
                 </div>
@@ -129,6 +135,7 @@ export class DemandeDetail {
   protected readonly motif = signal('');
   protected readonly erreur = signal('');
   protected readonly occupe = signal<Action | null>(null);
+  protected readonly confirmerAnnulation = signal(false);
 
   private readonly role = computed(() => this.auth.profil()?.role);
   protected readonly moi = computed(() => this.demande()?.employeId === this.auth.profil()?.employeId);
@@ -138,7 +145,9 @@ export class DemandeDetail {
   });
   protected readonly peutDecider = computed(() => {
     const d = this.demande(), r = this.role();
-    return !!d && !this.moi() && d.statut === 'EN_ATTENTE' && (r === 'MANAGER' || r === 'RH' || r === 'ADMIN');
+    if (!d || this.moi() || d.statut !== 'EN_ATTENTE') return false;
+    // RH and ADMIN decide only once the request has been passed to them (no manager, manager unavailable, delay over)
+    return r === 'MANAGER' || ((r === 'RH' || r === 'ADMIN') && !!d.dateEscalade);
   });
   protected readonly peutInterrompre = computed(() => {
     const d = this.demande(), r = this.role();
@@ -175,6 +184,7 @@ export class DemandeDetail {
     try {
       this.demande.set(await firstValueFrom(appels[action]()));
       this.motif.set('');
+      this.confirmerAnnulation.set(false);
     } catch (e) {
       this.erreur.set(messageErreur(e));
     } finally {

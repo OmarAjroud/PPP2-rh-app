@@ -103,4 +103,24 @@ describe('Détail d’une demande de congé', () => {
     const req = http.expectOne(r => r.method === 'POST' && r.url === `${api}/conges/demandes/7/interruption`);
     expect(req.request.body).toEqual({ motif: 'Retour anticipé' });
   });
+  it('does not offer HR a decision on a fresh request that is still the manager’s to decide', async () => {
+    await ouvrir('RH', 2, demande({ dateEscalade: null }));
+    expect(bouton('Approuver')).toBeUndefined();
+    expect(bouton('Refuser')).toBeUndefined();
+    expect(el().textContent).toContain('À traiter par le manager');
+  });
+
+  it('offers HR the decision once the request has been passed to HR', async () => {
+    await ouvrir('RH', 2, demande({ dateEscalade: '2099-11-11T08:00:00' }));
+    expect(bouton('Approuver')).toBeDefined();
+  });
+
+  it('asks the owner to confirm before cancelling', async () => {
+    await ouvrir('EMPLOYE', 4);
+    bouton('Annuler la demande')!.click();
+    harness.detectChanges();
+    http.expectNone(r => r.url.endsWith('/annulation'));
+    bouton('Confirmer l’annulation')!.click();
+    http.expectOne(r => r.method === 'POST' && r.url === `${api}/conges/demandes/7/annulation`).flush(demande({ statut: 'ANNULEE' }));
+  });
 });

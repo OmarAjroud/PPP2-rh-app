@@ -80,7 +80,7 @@ type Calcul = { statut: 'calcul' } | { statut: 'ok'; j: JoursOuvrables } | { sta
               <div class="ligne total"><span><b>{{ jours(j.joursOuvrables) }} ouvrables</b></span><span class="lecture">{{ j.joursOuvrables }}</span></div>
               @if (solde(); as s) {
                 <div class="ligne">
-                  <span>Solde {{ s.typeCongeLibelle }}<small>disponible → après cette demande</small></span>
+                  <span>Solde {{ s.typeCongeLibelle }} {{ s.annee }}<small>disponible → après cette demande</small></span>
                   <span class="lecture">{{ s.joursDisponibles }}<span class="fleche" aria-hidden="true">→</span>{{ apres() }}</span>
                 </div>
                 @if ((apres() ?? 0) < 0) {
@@ -133,13 +133,20 @@ export class DemandeForm {
   });
 
   protected readonly types = toSignal(this.api.typesConge().pipe(catchError(() => of<TypeConge[]>([]))), { initialValue: [] });
-  private readonly soldes = toSignal(this.api.mesSoldes().pipe(catchError(() => of<Solde[]>([]))), { initialValue: [] });
   private readonly valeur = toSignal(this.form.valueChanges.pipe(startWith(this.form.getRawValue()), map(() => this.form.getRawValue())), { initialValue: this.form.getRawValue() });
+
+  /** The balance that counts is the one of the year the leave starts in (the API checks that year). */
+  private readonly annee = computed(() => this.valeur().dateDebut?.getFullYear() ?? null);
+  private readonly soldes = toSignal(
+    toObservable(this.annee).pipe(switchMap(a => this.api.mesSoldes(a ?? undefined).pipe(catchError(() => of<Solde[]>([]))))),
+    { initialValue: [] as Solde[] },
+  );
 
   protected readonly type = computed(() => this.types().find(t => t.id === this.valeur().typeCongeId) ?? null);
   protected readonly solde = computed(() => {
     const t = this.type();
-    return t?.deduitDuSolde ? this.soldes().find(s => s.typeCongeId === t.id) ?? null : null;
+    const a = this.annee();
+    return t?.deduitDuSolde ? this.soldes().find(s => s.typeCongeId === t.id && (a === null || s.annee === a)) ?? null : null;
   });
 
   /** Period sent to the API, as local calendar days; null while incomplete or inconsistent. */

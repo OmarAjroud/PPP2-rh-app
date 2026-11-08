@@ -56,7 +56,10 @@ export class RhApi {
   supprimerDepartement(id: number): Observable<void> { return this.http.delete<void>(`${this.api}/departements/${id}`); }
 
   // ---- Leave (read) ----
-  mesSoldes(): Observable<Solde[]> { return this.http.get<Solde[]>(`${this.api}/conges/soldes/moi`); }
+  /** My balances for a year (the current year when omitted). */
+  mesSoldes(annee?: number): Observable<Solde[]> {
+    return this.http.get<Solde[]>(`${this.api}/conges/soldes/moi`, annee ? { params: { annee } } : {});
+  }
   soldes(employeId: number): Observable<Solde[]> { return this.http.get<Solde[]>(`${this.api}/conges/soldes/${employeId}`); }
   mesDemandes(size = 5): Observable<PageReponse<DemandeConge>> { return this.http.get<PageReponse<DemandeConge>>(`${this.api}/conges/demandes/moi`, { params: { size } }); }
   /** ADMIN and RH only (global view). */

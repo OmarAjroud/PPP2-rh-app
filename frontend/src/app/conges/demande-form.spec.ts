@@ -93,4 +93,16 @@ describe('Nouvelle demande de congé', () => {
     await harness.fixture.whenStable();
     expect(TestBed.inject(Router).url).toBe('/leave-requests/42');
   });
+  it('compares against the balance of the year the leave starts in', async () => {
+    await ouvrir();
+    form.form.setValue({ typeCongeId: 1, dateDebut: new Date(2100, 0, 4), dateFin: new Date(2100, 0, 8), commentaire: '' });
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    const soldes = http.expectOne(r => r.url === `${api}/conges/soldes/moi` && r.params.get('annee') === '2100');
+    soldes.flush([{ typeCongeId: 1, typeCongeCode: 'CP', typeCongeLibelle: 'Congé annuel', annee: 2100, joursAlloues: 25, joursPris: 0, joursEnAttente: 0, joursDisponibles: 25 }]);
+    http.expectOne(r => r.url === `${api}/conges/demandes/jours-ouvrables`).flush({ dateDebut: '2100-01-04', dateFin: '2100-01-08', joursOuvrables: 5, joursCalendaires: 5 });
+    harness.detectChanges();
+    expect(texte()).toMatch(/25s*→s*20/);
+    expect(texte()).toContain('2100');
+  });
 });
