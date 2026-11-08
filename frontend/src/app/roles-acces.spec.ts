@@ -75,4 +75,19 @@ describe('Access per role', () => {
     expect(rh).toContain('Employés');
     expect(rh).toContain('Rôles');
   });
+  it('gives everyone « Mes congés » but keeps employees out of « À décider »', async () => {
+    connecter('EMPLOYE');
+    const r = await aller('/leave-requests');
+    expect(r.url).toBe('/leave-requests');
+    expect(r.nav).toContain('Mes congés');
+    expect(r.nav).not.toContain('À décider');
+    expect((await aller('/approvals')).url).toBe('/');
+  });
+
+  it('opens « À décider » to managers', async () => {
+    connecter('MANAGER');
+    const r = await aller('/approvals');
+    expect(r.url).toBe('/approvals');
+    expect(r.nav).toContain('À décider');
+  });
 });
