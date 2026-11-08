@@ -1,11 +1,13 @@
-import { ApplicationConfig, LOCALE_ID, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, LOCALE_ID, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
-import { authInterceptor } from './core/auth/auth.interceptor';
 import { provideRouter } from '@angular/router';
-import { MAT_DATE_LOCALE, provideNativeDateAdapter } from '@angular/material/core';
-import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
+import { providePrimeNG } from 'primeng/config';
+import { authInterceptor } from './core/auth/auth.interceptor';
+import { RhPreset } from './core/theme/rh-preset';
+import { PRIMENG_FR } from './core/theme/primeng-fr';
+import { ThemeService } from './core/theme/theme.service';
 import { routes } from './app.routes';
 
 registerLocaleData(localeFr);
@@ -15,11 +17,14 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
-    // French everywhere: pipes (dates, numbers), datepicker (jj/mm/aaaa, lundi en premier)
+    // French everywhere: Angular pipes and PrimeNG components (dates jj/mm/aaaa, Monday first)
     { provide: LOCALE_ID, useValue: 'fr' },
-    provideNativeDateAdapter(),
-    { provide: MAT_DATE_LOCALE, useValue: 'fr-FR' },
-    // The design system uses outlined fields (see DESIGN.md)
-    { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'outline', subscriptSizing: 'dynamic' } },
+    providePrimeNG({
+      theme: { preset: RhPreset, options: { darkModeSelector: '.rh-dark', cssLayer: false } },
+      translation: PRIMENG_FR,
+      ripple: false,
+    }),
+    // Apply the remembered light/dark choice before the first paint
+    provideAppInitializer(() => { inject(ThemeService); }),
   ],
 };

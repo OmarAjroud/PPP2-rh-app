@@ -1,0 +1,68 @@
+<div class="page" rhApparition>
+  <header class="entete">
+    <div>
+      <p class="crumb">Entreprise</p>
+      <h1 class="page-titre">{{ titre() }}</h1>
+    </div>
+    @if (gestion()) { <a pButton routerLink="/employees/new" icon="pi pi-plus">Ajouter un employé</a> }
+  </header>
+
+  <section class="liste">
+    <div class="filtres">
+      <p-iconfield class="recherche">
+        <p-inputicon class="pi pi-search" />
+        <input pInputText type="search" [formControl]="recherche" placeholder="Nom, prénom ou email" aria-label="Rechercher un employé">
+      </p-iconfield>
+      @if (gestion()) {
+        <p-select [options]="departements()" [ngModel]="dept()" (ngModelChange)="filtrer('dept', $event)" placeholder="Tous les départements" ariaLabel="Filtrer par département" />
+        <p-select [options]="roles()" [ngModel]="roleFiltre()" (ngModelChange)="filtrer('role', $event)" placeholder="Tous les rôles" ariaLabel="Filtrer par rôle" />
+      }
+      @if (lignes(); as p) { <span class="total hint" aria-live="polite">{{ p.totalElements }} {{ p.totalElements > 1 ? 'personnes' : 'personne' }}</span> }
+    </div>
+
+    @if (etat().statut === 'erreur') {
+      <div class="vide"><p class="alerte erreur" role="alert">{{ $any(etat()).message }}</p></div>
+    } @else if (vide()) {
+      <div class="vide">
+        @if (q() || dept() || roleFiltre()) {
+          <p><strong>Aucun employé ne correspond à cette recherche.</strong></p>
+          <p class="hint">Essayez un autre nom ou retirez les filtres.</p>
+        } @else {
+          <p><strong>Aucun employé pour l'instant.</strong></p>
+          @if (gestion()) { <p class="hint">Ajoutez le premier avec « Ajouter un employé ».</p> }
+        }
+      </div>
+    } @else {
+      <div class="table" [class.charge]="etat().statut === 'chargement'" [attr.aria-busy]="etat().statut === 'chargement'">
+        <p-table [value]="lignes()?.contenu ?? []" [customSort]="true" (sortFunction)="trier($event)" [sortField]="tri()" [sortOrder]="sens()" dataKey="id">
+          <ng-template #header>
+            <tr>
+              <th pSortableColumn="nom">Personne <p-sortIcon field="nom" /></th>
+              <th pSortableColumn="departement">Département <p-sortIcon field="departement" /></th>
+              <th pSortableColumn="role">Rôle <p-sortIcon field="role" /></th>
+              <th pSortableColumn="id" class="num">N° <p-sortIcon field="id" /></th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-e>
+            <tr>
+              <td>
+                <a class="personne" [routerLink]="['/employees', e.id]">
+                  <span class="avatar" aria-hidden="true">{{ initiales(e.prenom, e.nom) }}</span>
+                  <span class="qui"><b>{{ e.prenom }} {{ e.nom }}</b><small>{{ e.email }}</small><small class="meta">{{ e.departementNom }} · {{ libelleRole(e.roleNom) }}</small></span>
+                </a>
+              </td>
+              <td class="discret">{{ e.departementNom }}</td>
+              <td class="discret">{{ libelleRole(e.roleNom) }}</td>
+              <td class="num mono">{{ e.id.toString().padStart(4, '0') }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+      @if (lignes(); as p) {
+        @if (p.totalElements > taille()) {
+          <p-paginator [first]="page() * taille()" [rows]="taille()" [totalRecords]="p.totalElements" [rowsPerPageOptions]="[10, 25, 50]" (onPageChange)="paginer($event)" />
+        }
+      }
+    }
+  </section>
+</div>

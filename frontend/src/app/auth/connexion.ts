@@ -2,37 +2,38 @@ import { Component, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { PasswordModule } from 'primeng/password';
+import { environment } from '../../environments/environment';
 import { AuthService } from '../core/auth/auth.service';
 import { messageErreur } from '../core/api/erreurs';
 
 @Component({
   selector: 'app-connexion',
-  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [ReactiveFormsModule, RouterLink, ButtonModule, InputTextModule, PasswordModule],
   template: `
-    <section class="panel carte-auth" aria-labelledby="titre">
-      <h1 id="titre" class="panel-h">Connexion</h1>
-      <div class="panel-b">
-        @if (expiree) { <p class="alerte info">Votre session a expiré. Reconnectez-vous pour continuer.</p> }
-        @if (erreur()) { <p class="alerte erreur" role="alert">{{ erreur() }}</p> }
-        <form [formGroup]="form" (ngSubmit)="valider()" novalidate>
-          <mat-form-field>
-            <mat-label>Nom d'utilisateur</mat-label>
-            <input matInput formControlName="nomUtilisateur" autocomplete="username" required>
-            <mat-error>Indiquez votre nom d'utilisateur.</mat-error>
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>Mot de passe</mat-label>
-            <input matInput type="password" formControlName="motDePasse" autocomplete="current-password" required>
-            <mat-error>Indiquez votre mot de passe.</mat-error>
-          </mat-form-field>
-          <button mat-flat-button type="submit" [disabled]="envoi()">{{ envoi() ? 'Connexion…' : 'Se connecter' }}</button>
-        </form>
-        <p class="liens"><a routerLink="/forgot-password">Mot de passe oublié ?</a></p>
+    <h1 class="auth-titre">Connexion</h1>
+    <p class="auth-sous-titre">Accédez à votre espace RH.</p>
+    <form class="auth-form" [formGroup]="form" (ngSubmit)="valider()" novalidate>
+      @if (expiree) { <p class="alerte info">Votre session a expiré. Reconnectez-vous pour continuer.</p> }
+      @if (erreur()) { <p class="alerte erreur" role="alert">{{ erreur() }}</p> }
+      <div class="champ">
+        <label for="nom">Nom d'utilisateur</label>
+        <input pInputText id="nom" formControlName="nomUtilisateur" autocomplete="username" [attr.aria-invalid]="invalide('nomUtilisateur')">
+        @if (invalide('nomUtilisateur')) { <span class="err">Indiquez votre nom d'utilisateur.</span> }
       </div>
-    </section>
+      <div class="champ">
+        <label for="mdp">Mot de passe</label>
+        <p-password inputId="mdp" formControlName="motDePasse" [feedback]="false" [toggleMask]="true" autocomplete="current-password" />
+        @if (invalide('motDePasse')) { <span class="err">Indiquez votre mot de passe.</span> }
+      </div>
+      <p class="auth-liens"><a routerLink="/forgot-password">Mot de passe oublié ?</a></p>
+      <p-button type="submit" [label]="envoi() ? 'Connexion…' : 'Se connecter'" [loading]="envoi()" />
+    </form>
+    @if (comptesDemo) {
+      <p class="auth-pied">Comptes de démonstration : <code>admin</code><code>rh</code><code>manager</code><code>employe</code> · mot de passe <code>Test1234!</code></p>
+    }
   `,
 })
 export class Connexion {
@@ -40,6 +41,7 @@ export class Connexion {
   private readonly router = inject(Router);
   private readonly params = inject(ActivatedRoute).snapshot.queryParamMap;
 
+  protected readonly comptesDemo = environment.comptesDemo;
   protected readonly expiree = this.params.has('expired');
   protected readonly erreur = signal('');
   protected readonly envoi = signal(false);
@@ -47,6 +49,11 @@ export class Connexion {
     nomUtilisateur: new FormControl('', { nonNullable: true, validators: Validators.required }),
     motDePasse: new FormControl('', { nonNullable: true, validators: Validators.required }),
   });
+
+  protected invalide(nom: 'nomUtilisateur' | 'motDePasse'): boolean {
+    const c = this.form.controls[nom];
+    return c.invalid && c.touched;
+  }
 
   protected async valider(): Promise<void> {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }

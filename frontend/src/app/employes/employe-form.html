@@ -1,0 +1,75 @@
+<div class="page" rhApparition>
+  <header class="entete">
+    <div>
+      <p class="crumb"><a routerLink="/employees">Employés</a></p>
+      <h1 class="page-titre">{{ id === null ? 'Ajouter un employé' : 'Modifier l’employé' }}</h1>
+    </div>
+  </header>
+
+  @if (chargement()) {
+    <p class="hint" aria-busy="true">Chargement…</p>
+  } @else {
+    <form class="card" [formGroup]="form" (ngSubmit)="enregistrer()" novalidate>
+      <h2 class="card-h">Identité</h2>
+      <div class="card-b">
+        @if (erreur()) { <p class="alerte erreur" role="alert">{{ erreur() }}</p> }
+        <div class="grille">
+          <div class="champ">
+            <label for="prenom">Prénom</label>
+            <input pInputText id="prenom" formControlName="prenom" autocomplete="off">
+            @if (erreurChamp('prenom', 'Le prénom est obligatoire.'); as m) { <span class="err">{{ m }}</span> }
+          </div>
+          <div class="champ">
+            <label for="nom">Nom</label>
+            <input pInputText id="nom" formControlName="nom" autocomplete="off">
+            @if (erreurChamp('nom', 'Le nom est obligatoire.'); as m) { <span class="err">{{ m }}</span> }
+          </div>
+          <div class="champ large">
+            <label for="email">Email</label>
+            <input pInputText id="email" type="email" formControlName="email" autocomplete="off">
+            @if (erreurChamp('email', 'Indiquez une adresse email valide.'); as m) { <span class="err">{{ m }}</span> } @else { <span class="aide">Sert à l'invitation et aux notifications.</span> }
+          </div>
+        </div>
+      </div>
+
+      <h2 class="card-h separe">Poste</h2>
+      <div class="card-b">
+        <div class="grille">
+          <div class="champ">
+            <label for="departement">Département</label>
+            <p-select inputId="departement" formControlName="departementId" [options]="departements()" optionLabel="nom" optionValue="id" placeholder="Choisir" />
+            @if (erreurChamp('departementId', 'Choisissez un département.'); as m) { <span class="err">{{ m }}</span> }
+          </div>
+          <div class="champ">
+            <label for="role">Rôle</label>
+            <p-select inputId="role" formControlName="roleId" [options]="roles()" optionLabel="label" optionValue="value" placeholder="Choisir" />
+            @if (erreurChamp('roleId', 'Choisissez un rôle.'); as m) { <span class="err">{{ m }}</span> }
+          </div>
+          <div class="champ">
+            <label for="manager">Manager</label>
+            <p-select inputId="manager" formControlName="managerId" [options]="managers()" [showClear]="true" [filter]="true" placeholder="Aucun" />
+            @if (erreurChamp('managerId', ''); as m) { <span class="err">{{ m }}</span> } @else { <span class="aide">Décide de ses demandes de congé.</span> }
+          </div>
+          <div class="champ">
+            <label for="embauche">Date d'embauche</label>
+            <p-datepicker inputId="embauche" formControlName="dateEmbauche" [showIcon]="true" iconDisplay="input" dateFormat="dd/mm/yy" placeholder="jj/mm/aaaa" />
+            @if (erreurChamp('dateEmbauche', 'Indiquez une date valide (jj/mm/aaaa).'); as m) { <span class="err">{{ m }}</span> }
+          </div>
+          <div class="champ">
+            <label for="salaire">Salaire mensuel</label>
+            <p-inputnumber inputId="salaire" formControlName="salaire" mode="currency" currency="EUR" locale="fr-FR" [min]="0" />
+            @if (erreurChamp('salaire', 'Montant positif, 2 décimales au plus.'); as m) { <span class="err">{{ m }}</span> } @else { <span class="aide">Facultatif. Visible des RH, des administrateurs et de l'intéressé.</span> }
+          </div>
+        </div>
+      </div>
+
+      <div class="card-f">
+        <span>Les champs sans mention « Facultatif » sont obligatoires.</span>
+        <div class="actions">
+          <a pButton severity="secondary" [routerLink]="id === null ? ['/employees'] : ['/employees', id]">Annuler</a>
+          <p-button type="submit" [label]="envoi() ? 'Enregistrement…' : (id === null ? 'Ajouter l’employé' : 'Enregistrer')" [loading]="envoi()" />
+        </div>
+      </div>
+    </form>
+  }
+</div>

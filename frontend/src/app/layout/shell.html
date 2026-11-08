@@ -1,17 +1,53 @@
 <div class="shell">
-  <nav class="side" aria-label="Navigation principale">
-    <span class="brand">RH App</span>
-    <a routerLink="/" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }">Accueil</a>
-    <a routerLink="/security" routerLinkActive="active" ariaCurrentWhenActive="page">Sécurité du compte</a>
-    @if (auth.profil(); as p) {
-      <div class="me">
-        <span class="me-nom">{{ p.nomUtilisateur }}</span>
-        <span class="me-role">{{ role() }}</span>
-        <button type="button" class="me-sortie" (click)="auth.logout()">Se déconnecter</button>
+  <header class="barre-mobile">
+    <button #boutonMenu type="button" class="menu" aria-controls="rail" [attr.aria-expanded]="menuOuvert()" aria-label="Menu de navigation" (click)="basculerMenu()">
+      <i class="pi pi-bars" aria-hidden="true"></i>
+    </button>
+    <a class="marque" routerLink="/" aria-label="RH App, accueil"><span class="logo" aria-hidden="true"></span>RH App</a>
+  </header>
+
+  @if (menuOuvert()) { <div class="voile" aria-hidden="true" (click)="fermerMenu()"></div> }
+
+  <nav #rail class="rail" id="rail" [class.ouvert]="menuOuvert()" aria-label="Navigation principale">
+    <a class="marque" routerLink="/" aria-label="RH App, accueil"><span class="logo" aria-hidden="true"></span>RH App</a>
+
+    @if (rechercheVisible()) {
+      <form class="recherche" role="search" (submit)="$event.preventDefault(); rechercher(champ)">
+        <i class="pi pi-search" aria-hidden="true"></i>
+        <input #champ #recherche type="search" placeholder="Rechercher…" aria-label="Rechercher un employé (Ctrl K)">
+        <kbd aria-hidden="true">Ctrl K</kbd>
+      </form>
+    }
+
+    @for (g of groupes(); track g.titre) {
+      @if (g.titre) { <span class="groupe">{{ g.titre }}</span> }
+      @for (l of g.liens; track l.chemin) {
+        <a class="lien" [routerLink]="l.chemin" routerLinkActive="actif" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: !!l.exact }">
+          <i class="pi {{ l.icone }}" aria-hidden="true"></i><span>{{ l.libelle }}</span>
+        </a>
+      }
+    }
+
+    @if (auth.profil()) {
+      <div class="moi">
+        <div class="identite">
+          <span class="avatar" aria-hidden="true">{{ initiales() }}</span>
+          <span class="qui"><b>{{ nomComplet() }}</b><span>{{ role() }}@if (departement()) { · {{ departement() }} }</span></span>
+        </div>
+        <div class="reglages">
+          <div class="themes" role="group" aria-label="Thème">
+            @for (t of themes; track t.valeur) {
+              <button type="button" [attr.aria-pressed]="theme.choix() === t.valeur" [attr.aria-label]="t.libelle" [title]="t.libelle" (click)="theme.choisir(t.valeur)">
+                <i class="pi {{ t.icone }}" aria-hidden="true"></i>
+              </button>
+            }
+          </div>
+          <button type="button" class="sortie" (click)="auth.logout()"><i class="pi pi-sign-out" aria-hidden="true"></i>Déconnexion</button>
+        </div>
       </div>
     }
   </nav>
-  <main class="work">
+  <main class="travail" [attr.inert]="menuOuvert() ? '' : null">
     <router-outlet />
   </main>
 </div>
