@@ -7,7 +7,7 @@ function mouvementAutorise(): boolean {
 }
 
 /**
- * Page arrival: the direct children rise 8px and fade in, 40ms apart, once (DESIGN.md, Motion).
+ * Page arrival: the direct children fade in (4px rise), 30ms apart, once (DESIGN.md, Motion).
  * Content is never left hidden: GSAP clears its inline styles when done.
  */
 @Directive({ selector: '[rhApparition]' })
@@ -19,7 +19,7 @@ export class Apparition implements AfterViewInit, OnDestroy {
     if (!mouvementAutorise()) return;
     const enfants = Array.from(this.el.nativeElement.children);
     if (!enfants.length) return;
-    this.tween = gsap.from(enfants, { y: 8, autoAlpha: 0, duration: 0.26, stagger: 0.04, ease: 'power2.out', clearProps: 'transform,opacity,visibility' });
+    this.tween = gsap.from(enfants, { y: 4, autoAlpha: 0, duration: 0.16, stagger: 0.03, ease: 'power2.out', clearProps: 'transform,opacity,visibility' });
   }
 
   ngOnDestroy(): void {
