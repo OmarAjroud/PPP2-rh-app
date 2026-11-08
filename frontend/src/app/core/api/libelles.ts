@@ -1,4 +1,4 @@
-import { DemandeConge } from './models';
+import { DemandeConge, Role } from './models';
 
 /** Status of a leave request as shown everywhere: one word and its tint class (DESIGN.md, Status). */
 export function statutDemande(d: DemandeConge): { libelle: string; classe: string } {
@@ -36,4 +36,9 @@ const ROLES: Record<string, string> = { ADMIN: 'Administrateur', RH: 'Ressources
 /** French label for the four system roles; custom roles keep their own name. */
 export function libelleRole(nom: string): string {
   return ROLES[nom] ?? nom;
+}
+
+/** Select options for roles, labelled in French (system roles) or by their own name. */
+export function optionsRoles(roles: Role[]): { label: string; value: number }[] {
+  return roles.map(r => ({ label: libelleRole(r.nom), value: r.id }));
 }

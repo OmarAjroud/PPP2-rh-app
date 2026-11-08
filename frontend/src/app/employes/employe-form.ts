@@ -9,6 +9,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { RhApi } from '../core/api/rh-api';
+import { optionsRoles } from '../core/api/libelles';
 import { EmployeRequest } from '../core/api/models';
 import { appliquerErreursChamps, messageErreur } from '../core/api/erreurs';
 import { Apparition } from '../core/motion/motion';
@@ -26,7 +27,7 @@ export class EmployeForm {
   protected readonly id = numeroOuNull(inject(ActivatedRoute).snapshot.paramMap.get('id'));
 
   protected readonly departements = toSignal(this.api.departements().pipe(catchError(() => of([]))), { initialValue: [] });
-  protected readonly roles = toSignal(this.api.roles().pipe(catchError(() => of([]))), { initialValue: [] });
+  protected readonly roles = toSignal(this.api.roles().pipe(map(optionsRoles), catchError(() => of([]))), { initialValue: [] });
   /** Possible managers: everyone except the person being edited. */
   protected readonly managers = toSignal(
     this.api.employes({ page: 0, size: 500, sort: 'nom,asc' }).pipe(

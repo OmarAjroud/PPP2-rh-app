@@ -42,7 +42,7 @@
           </div>
           <div class="champ">
             <label for="role">Rôle</label>
-            <p-select inputId="role" formControlName="roleId" [options]="roles()" optionLabel="nom" optionValue="id" placeholder="Choisir" />
+            <p-select inputId="role" formControlName="roleId" [options]="roles()" optionLabel="label" optionValue="value" placeholder="Choisir" />
             @if (erreurChamp('roleId', 'Choisissez un rôle.'); as m) { <span class="err">{{ m }}</span> }
           </div>
           <div class="champ">

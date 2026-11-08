@@ -14,7 +14,7 @@ import { SortEvent } from 'primeng/api';
 import { RhApi } from '../core/api/rh-api';
 import { Employe, PageReponse } from '../core/api/models';
 import { messageErreur } from '../core/api/erreurs';
-import { initiales, libelleRole } from '../core/api/libelles';
+import { initiales, libelleRole, optionsRoles } from '../core/api/libelles';
 import { AuthService } from '../core/auth/auth.service';
 import { Apparition } from '../core/motion/motion';
 
@@ -85,7 +85,7 @@ export class EmployesListe {
     { initialValue: [] },
   );
   protected readonly roles = toSignal(
-    this.api.roles().pipe(map(l => [{ label: 'Tous les rôles', value: null as number | null }, ...l.map(r => ({ label: r.nom, value: r.id as number | null }))]), catchError(() => of([]))),
+    this.api.roles().pipe(map(l => [{ label: 'Tous les rôles', value: null as number | null }, ...optionsRoles(l) as { label: string; value: number | null }[]]), catchError(() => of([]))),
     { initialValue: [] },
   );
 
