@@ -91,4 +91,10 @@ describe('Access per role', { timeout: 15000 }, () => {
     expect(r.url).toBe('/approvals');
     expect(r.nav).toContain('À décider');
   });
+  it('opens the notifications page to every role', async () => {
+    connecter('EMPLOYE');
+    const r = await aller('/notifications');
+    expect(r.url).toBe('/notifications');
+    expect(r.nav).toContain('Notifications');
+  });
 });
