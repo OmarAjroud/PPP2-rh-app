@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../app.routes';
+import { Notifications } from '../core/notifications/notifications';
 
 // The first navigation compiles the lazy pages: slower than 5 s while the whole suite runs in parallel
 describe('Shell: navigation drawer on small screens', { timeout: 15000 }, () => {
@@ -61,5 +62,13 @@ describe('Shell: navigation drawer on small screens', { timeout: 15000 }, () => 
     harness.detectChanges();
     expect(main.hasAttribute('inert')).toBe(false);
     expect(focus).toHaveBeenCalled();
+  });
+  it('shows the unread count next to « Notifications » and as a dot on the menu button', () => {
+    TestBed.inject(Notifications).nonLues.set(3);
+    harness.detectChanges();
+    const lien = [...doc().querySelectorAll('nav .lien')].find(a => a.textContent?.includes('Notifications'))!;
+    expect(lien.querySelector('.compte')?.textContent?.trim()).toBe('3');
+    expect(lien.getAttribute('aria-label')).toBe('Notifications, 3 non lues');
+    expect(bouton().querySelector('.point')).not.toBeNull();
   });
 });

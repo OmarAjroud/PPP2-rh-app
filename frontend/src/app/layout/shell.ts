@@ -5,6 +5,8 @@ import { AuthService } from '../core/auth/auth.service';
 import { LIBELLES_ROLE, Role } from '../core/auth/auth.models';
 import { Moi } from '../core/auth/moi';
 import { ChoixTheme, ThemeService } from '../core/theme/theme.service';
+import { Notifications } from '../core/notifications/notifications';
+import { ToastNotification } from './toast-notification';
 
 interface Lien { chemin: string; libelle: string; icone: string; exact?: boolean }
 interface Groupe { titre: string | null; liens: Lien[] }
@@ -13,7 +15,13 @@ interface Groupe { titre: string | null; liens: Lien[] }
 function navigation(role: Role): Groupe[] {
   const gestion = role === 'ADMIN' || role === 'RH';
   return [
-    { titre: null, liens: [{ chemin: '/', libelle: 'Accueil', icone: 'pi-home', exact: true }] },
+    {
+      titre: null,
+      liens: [
+        { chemin: '/', libelle: 'Accueil', icone: 'pi-home', exact: true },
+        { chemin: '/notifications', libelle: 'Notifications', icone: 'pi-bell' },
+      ],
+    },
     {
       titre: 'Congés',
       liens: [
@@ -42,13 +50,15 @@ function navigation(role: Role): Groupe[] {
 /** Application shell: Linear-style rail + routed work area; under 900px the rail is a drawer (DESIGN.md, Layout). */
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastNotification],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
 })
 export class Shell {
   protected readonly auth = inject(AuthService);
   protected readonly theme = inject(ThemeService);
+  /** Opens the real-time stream for the session (the service follows login and logout). */
+  protected readonly notifs = inject(Notifications);
   private readonly router = inject(Router);
   private readonly moi = inject(Moi);
   private readonly champRecherche = viewChild<ElementRef<HTMLInputElement>>('recherche');
