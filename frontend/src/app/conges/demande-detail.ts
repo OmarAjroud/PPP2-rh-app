@@ -47,7 +47,7 @@ type Action = 'annuler' | 'approuver' | 'refuser' | 'interrompre';
               <dt>Type</dt><dd>{{ d.typeCongeLibelle }}</dd>
               <dt>Du</dt><dd>{{ d.dateDebut | date: 'EEEE d MMMM y' }}</dd>
               <dt>Au</dt><dd>{{ d.dateFin | date: 'EEEE d MMMM y' }}</dd>
-              <dt>Jours ouvrables</dt><dd class="lecture">{{ jours(d.nombreJours) }}</dd>
+              <dt>Jours ouvrables</dt><dd><span class="lecture">{{ d.nombreJours }}</span> {{ d.nombreJours > 1 ? 'jours' : 'jour' }}</dd>
               <dt>Commentaire</dt><dd>@if (d.commentaire) { {{ d.commentaire }} } @else { <span class="hint">Aucun</span> }</dd>
               <dt>Envoyée le</dt><dd>{{ d.dateCreation | date: 'd MMMM y, HH:mm' }}</dd>
             </dl>
@@ -111,7 +111,6 @@ type Action = 'annuler' | 'approuver' | 'refuser' | 'interrompre';
     .page { display: grid; gap: var(--rh-space-4); --page-max: var(--rh-content-max); }
     .grille { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: var(--rh-space-6); align-items: start; }
     .colonne { display: grid; gap: var(--rh-space-4); min-width: 0; }
-    .fiche dd.lecture { font-weight: 500; }
     .fiche dd::first-letter { text-transform: uppercase; }
     textarea { width: 100%; resize: vertical; }
     @media (max-width: 1100px) { .grille { grid-template-columns: minmax(0, 1fr); } }

@@ -53,9 +53,8 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; page: PageReponse<Demande
               <div class="ligne demande">
                 <a class="quoi" [routerLink]="['/leave-requests', d.id]">
                   <b>{{ d.employeNomComplet }}</b>
-                  <small>{{ periode(d.dateDebut, d.dateFin) }} · {{ d.typeCongeLibelle }} · <span class="mono">{{ jours(d.nombreJours) }}</span></small>
+                  <small>{{ periode(d.dateDebut, d.dateFin) }} · {{ d.typeCongeLibelle }} · {{ jours(d.nombreJours) }}</small>
                 </a>
-                @if (d.dateEscalade) { <span class="hint escalade">Transmise aux RH</span> }
                 <span class="status {{ st.classe }}">{{ st.libelle }}</span>
                 <div class="actions">
                   @if (vue() === 'a-decider') {
@@ -95,7 +94,6 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; page: PageReponse<Demande
     .quoi { flex: 1; min-width: 0; color: var(--rh-ink); text-decoration: none; }
     .quoi b { display: block; font-weight: 500; }
     .quoi:hover b { text-decoration: underline; text-underline-offset: 3px; }
-    .escalade { white-space: nowrap; }
     .actions { display: flex; gap: var(--rh-space-2); justify-content: flex-end; }
     .vide { display: grid; gap: var(--rh-space-1); padding: var(--rh-space-8) var(--rh-space-2); }
     .alerte { margin-top: var(--rh-space-3); }

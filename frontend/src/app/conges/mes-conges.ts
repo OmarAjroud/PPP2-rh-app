@@ -56,7 +56,7 @@ export const FILTRES_STATUT: { label: string; value: StatutDemande | null }[] = 
                 <div class="ligne demande">
                   <a class="quoi" [routerLink]="['/leave-requests', d.id]">
                     <b>{{ periode(d.dateDebut, d.dateFin) }}</b>
-                    <small>{{ d.typeCongeLibelle }} · <span class="mono">{{ jours(d.nombreJours) }}</span></small>
+                    <small>{{ d.typeCongeLibelle }} · {{ jours(d.nombreJours) }}</small>
                   </a>
                   <span class="status {{ st.classe }}">{{ st.libelle }}</span>
                   <div class="actions">
