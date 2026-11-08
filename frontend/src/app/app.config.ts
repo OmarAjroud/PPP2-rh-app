@@ -20,7 +20,7 @@ export const appConfig: ApplicationConfig = {
     // French everywhere: Angular pipes and PrimeNG components (dates jj/mm/aaaa, Monday first)
     { provide: LOCALE_ID, useValue: 'fr' },
     providePrimeNG({
-      theme: { preset: RhPreset, options: { darkModeSelector: '.rh-dark', cssLayer: false } },
+      theme: { preset: RhPreset, options: { darkModeSelector: '.rh-dark, .rh-theme-sombre', cssLayer: false } },
       translation: PRIMENG_FR,
       ripple: false,
     }),

@@ -93,34 +93,72 @@ app-auth-layout main > :not(router-outlet) { display: block; width: min(400px, 1
 .auth-pied { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--rh-line); font-size: var(--rh-text-sm); color: var(--rh-muted); }
 .auth-pied code { font: 500 12px var(--rh-font-mono); color: var(--rh-ink-2); background: var(--rh-surface); border: 1px solid var(--rh-line); border-radius: 6px; padding: 2px 6px; margin-right: 4px; white-space: nowrap; }
 
-// ---- PrimeNG: buttons in the system's voice ----
-.p-button { font-weight: 600; border-radius: var(--rh-radius); text-decoration: none; }
-a.p-button:hover { text-decoration: none; }
-.p-button:not(.p-button-secondary):not(.p-button-outlined):not(.p-button-text):not(.p-button-danger) {
-  background: linear-gradient(180deg, #3d69ff, #2450f0);
-  border-color: transparent;
-  box-shadow: var(--rh-shadow-button);
+// ---- PrimeNG: buttons ----
+body .p-button {
+  height: var(--rh-control-height);
+  padding: 0 12px;
+  font-size: var(--rh-text-md);
+  font-weight: 500;
+  border-radius: var(--rh-radius-sm);
+  text-decoration: none;
+  box-shadow: none;
+  transition: background var(--rh-fast) var(--rh-ease), border-color var(--rh-fast) var(--rh-ease), color var(--rh-fast) var(--rh-ease);
 }
-.rh-dark .p-button:not(.p-button-secondary):not(.p-button-outlined):not(.p-button-text):not(.p-button-danger) {
-  background: linear-gradient(180deg, #a6c4ff, #7aa2ff);
+a.p-button:hover { text-decoration: none; }
+.p-button.p-button-icon-only { width: var(--rh-control-height); padding: 0; }
+.p-button .p-button-icon { font-size: 13px; }
+.p-button:not(.p-button-secondary):not(.p-button-outlined):not(.p-button-text):not(.p-button-danger) {
+  background: var(--rh-accent);
+  border-color: var(--rh-accent);
   color: var(--rh-accent-ink);
+}
+.p-button:not(.p-button-secondary):not(.p-button-outlined):not(.p-button-text):not(.p-button-danger):not(:disabled):hover {
+  background: var(--rh-accent-hover);
+  border-color: var(--rh-accent-hover);
 }
 .p-button.p-button-secondary, .p-button.p-button-outlined {
   background: var(--rh-surface);
-  border: 1px solid var(--rh-line-strong);
+  border: 1px solid var(--rh-line);
   color: var(--rh-ink);
 }
-.p-button.p-button-secondary:not(:disabled):hover, .p-button.p-button-outlined:not(:disabled):hover { background: var(--rh-surface-3); border-color: var(--rh-line-strong); color: var(--rh-ink); }
+.p-button.p-button-secondary:not(:disabled):hover, .p-button.p-button-outlined:not(:disabled):hover { background: var(--rh-surface-2); border-color: var(--rh-line-strong); color: var(--rh-ink); }
+.p-button.p-button-text { background: transparent; border-color: transparent; color: var(--rh-ink-2); }
+.p-button.p-button-text:not(:disabled):hover { background: var(--rh-surface-2); color: var(--rh-ink); }
 .p-button.p-button-danger.p-button-outlined { color: var(--rh-danger); }
-.p-button.p-button-danger.p-button-outlined:not(:disabled):hover { background: var(--rh-danger-soft); border-color: var(--rh-danger); color: var(--rh-danger); }
+.p-button.p-button-danger.p-button-outlined:not(:disabled):hover { background: var(--rh-surface-2); border-color: var(--rh-danger); color: var(--rh-danger); }
 .p-button.p-button-danger:not(.p-button-outlined) { background: var(--rh-danger); border-color: var(--rh-danger); color: var(--rh-on-danger); }
 
+// ---- PrimeNG: fields at the control height ----
+body :is(.p-inputtext, .p-select-label, .p-datepicker-input, .p-inputnumber-input, .p-password-input) { font-size: var(--rh-text-md); }
+body :is(.p-inputtext:not(textarea), .p-select, .p-datepicker-input, .p-inputnumber-input, .p-password-input) { height: var(--rh-control-height); }
+.p-select { align-items: center; }
+.p-select-label { padding-block: 0; }
+.p-select-overlay, .p-datepicker-panel, .p-popover { border-radius: var(--rh-radius); }
+.p-select-option { font-size: var(--rh-text-md); border-radius: var(--rh-radius-sm); }
+.p-dialog { border-radius: var(--rh-radius-lg); }
+
 // ---- PrimeNG: tables as hairline rows ----
-.p-datatable .p-datatable-thead > tr > th { font-size: var(--rh-text-xs); font-weight: 600; color: var(--rh-muted); text-transform: uppercase; letter-spacing: 0.06em; background: var(--rh-surface); }
-.p-datatable .p-datatable-tbody > tr > td { white-space: nowrap; }
-.p-paginator { background: transparent; }
+.p-datatable .p-datatable-thead > tr > th {
+  height: 34px;
+  padding-block: 0;
+  font-size: var(--rh-text-sm);
+  font-weight: 500;
+  color: var(--rh-muted);
+  background: var(--rh-surface);
+  border-color: var(--rh-line);
+}
+.p-datatable .p-datatable-tbody > tr { background: var(--rh-surface); color: var(--rh-ink); transition: background var(--rh-fast) var(--rh-ease); }
+.p-datatable .p-datatable-tbody > tr:hover { background: var(--rh-surface-2); }
+.p-datatable .p-datatable-tbody > tr > td { height: var(--rh-row-height); padding-block: 0; white-space: nowrap; border-color: var(--rh-line-row); }
+.p-datatable .p-datatable-tbody > tr:last-child > td { border-bottom: 0; }
 // Sorted column: the arrow says it, no coloured band
 .p-datatable .p-datatable-thead > tr > th.p-datatable-sortable-column.p-datatable-column-sorted { background: var(--rh-surface); color: var(--rh-ink); }
-.p-datatable .p-datatable-sort-icon { width: 11px; height: 11px; margin-left: 4px; }
-// PrimeNG uses 1rem for controls; the system's controls read at 15px
-.p-button, .p-inputtext, .p-select-label, .p-datepicker-input, .p-inputnumber-input, .p-password-input { font-size: 0.9375rem; }
+.p-datatable .p-datatable-thead > tr > th.p-datatable-sortable-column:not(.p-datatable-column-sorted):hover { background: var(--rh-surface-2); color: var(--rh-ink); }
+.p-datatable .p-datatable-sort-icon { width: 10px; height: 10px; margin-left: 4px; }
+.p-paginator { background: transparent; font-size: var(--rh-text-sm); padding: 6px 12px; }
+.p-paginator .p-paginator-page, .p-paginator .p-paginator-first, .p-paginator .p-paginator-prev, .p-paginator .p-paginator-next, .p-paginator .p-paginator-last { min-width: 28px; height: 28px; border-radius: var(--rh-radius-sm); }
+
+// ---- Touch: controls reach 44px on small screens ----
+@media (max-width: 600px) {
+  .p-button, .p-inputtext:not(textarea), .p-select, .p-datepicker-input, .p-inputnumber-input, .p-password-input { min-height: 44px; }
+}
