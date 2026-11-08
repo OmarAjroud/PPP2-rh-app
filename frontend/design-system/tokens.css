@@ -78,24 +78,24 @@
   --rh-scrim: rgb(0 0 0 / 0.4);
 
   /* ---- 3. Component ---- */
-  --rh-rail-width: 232px;
+  --rh-rail-width: 248px;
   --rh-rail-bg: var(--rh-bg);
   --rh-rail-item-hover: var(--rh-gray-75);
   --rh-rail-item-active: var(--rh-gray-150);
-  --rh-control-height: 32px;
-  --rh-row-height: 40px;
-  --rh-header-height: 44px;
+  --rh-control-height: 38px;
+  --rh-row-height: 48px;
+  --rh-header-height: 52px;
   --rh-content-max: 1200px;
 
   /* ---- Type ---- */
   --rh-font: "Inter", "Segoe UI", system-ui, sans-serif;
   --rh-font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
-  --rh-text-xs: 11px;
-  --rh-text-sm: 12px;
-  --rh-text-md: 13px;      /* body */
-  --rh-text-lg: 15px;
-  --rh-title: 22px;        /* page titles */
-  --rh-figure: 24px;       /* readings */
+  --rh-text-xs: 12px;
+  --rh-text-sm: 13px;
+  --rh-text-md: 14px;      /* body */
+  --rh-text-lg: 16px;
+  --rh-title: 26px;        /* page titles */
+  --rh-figure: 28px;       /* readings */
 
   /* ---- Space (4px grid) ---- */
   --rh-space-1: 4px;  --rh-space-2: 8px;  --rh-space-3: 12px; --rh-space-4: 16px;
