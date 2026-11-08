@@ -22,6 +22,8 @@ export const appConfig: ApplicationConfig = {
     providePrimeNG({
       theme: { preset: RhPreset, options: { darkModeSelector: '.rh-dark', cssLayer: false } },
       translation: PRIMENG_FR,
+      // Overlays open on <body>: panels (.card) clip their content, a calendar inside one was cut off
+      overlayAppendTo: 'body',
       ripple: false,
     }),
     // Apply the remembered light/dark choice before the first paint

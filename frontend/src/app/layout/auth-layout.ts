@@ -54,7 +54,7 @@ import { ThemeService } from '../core/theme/theme.service';
     .auth-marque { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 18px; }
     .auth-logo { width: 26px; height: 26px; border-radius: 7px; background: linear-gradient(135deg, var(--rh-indigo-300), var(--rh-indigo-500)); box-shadow: 0 0 24px rgb(124 110 255 / 0.5); }
     .auth-panneau {
-      width: min(440px, 100%);
+      width: min(460px, 100%);
       padding: 36px;
       border: 1px solid var(--rh-line);
       border-radius: var(--rh-radius-lg);
@@ -66,15 +66,15 @@ import { ThemeService } from '../core/theme/theme.service';
     .auth-mention { font-size: var(--rh-text-md); color: var(--rh-muted); }
 
     /* Forms rendered inside the panel (connexion, mot de passe oublié, liens de compte) */
-    .auth-titre { font: 600 28px/1.2 var(--rh-font); letter-spacing: -0.02em; }
+    .auth-titre { font: 600 30px/1.2 var(--rh-font); letter-spacing: -0.02em; }
     .auth-sous-titre { margin-top: 6px; color: var(--rh-muted); }
     .auth-form { display: grid; gap: 18px; margin-top: 28px; }
-    /* Login reads at 15px: larger than the dense app (13px), it is a first impression */
+    /* Login reads at 16px: larger than the dense app (13px), it is a first impression */
     .auth .champ { gap: 8px; }
-    .auth .champ > label { font-size: 14px; }
-    .auth .champ :is(.aide, .err) { font-size: 13px; }
-    .auth :is(.p-inputtext, .p-password-input) { height: 42px; font-size: 15px; padding-inline: 12px; }
-    .auth .auth-form .p-button { height: 42px; font-size: 15px; }
+    .auth .champ > label { font-size: 15px; }
+    .auth .champ :is(.aide, .err) { font-size: 14px; }
+    .auth :is(.p-inputtext, .p-password-input) { height: 46px; font-size: 16px; padding-inline: 14px; }
+    .auth .auth-form .p-button { height: 46px; font-size: 16px; }
     .auth-form .p-button { width: 100%; justify-content: center; }
     .auth .auth-form .p-button:not(.p-button-secondary):not(.p-button-outlined):not(.p-button-text):not(.p-button-danger) {
       background: var(--rh-ink);
@@ -85,10 +85,10 @@ import { ThemeService } from '../core/theme/theme.service';
       background: var(--rh-ink-2);
       border-color: var(--rh-ink-2);
     }
-    .auth-liens { display: flex; justify-content: flex-end; gap: var(--rh-space-3); font-size: 14px; }
+    .auth-liens { display: flex; justify-content: flex-end; gap: var(--rh-space-3); font-size: 15px; }
     .auth-liens a { font-weight: 500; text-decoration: none; }
     .auth-liens a:hover { text-decoration: underline; }
-    .auth-pied { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--rh-line); font-size: 13px; line-height: 1.8; color: var(--rh-muted); }
+    .auth-pied { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--rh-line); font-size: 14px; line-height: 1.8; color: var(--rh-muted); }
     .auth-pied code { color: var(--rh-ink-2); background: var(--rh-surface-2); border: 1px solid var(--rh-line); border-radius: 4px; padding: 1px 5px; margin-right: 4px; white-space: nowrap; }
 
     @media (max-width: 600px) {
