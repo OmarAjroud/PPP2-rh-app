@@ -78,14 +78,14 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; d: DepartementDetail } | 
     }
   `,
   styles: `
-    .page { display: grid; gap: var(--rh-space-6); max-width: 900px; }
-    .intro { margin-top: var(--rh-space-2); color: var(--rh-ink-2); max-width: 65ch; }
+    .page { display: grid; gap: var(--rh-space-4); max-width: 900px; }
+    .intro { flex-basis: 100%; color: var(--rh-ink-2); max-width: 65ch; }
     .card-h h2 { font-size: inherit; font-weight: inherit; }
     .personne { display: flex; align-items: center; gap: var(--rh-space-3); color: var(--rh-ink); text-decoration: none; }
-    .personne b { font-weight: 600; }
-    a.personne:hover b { color: var(--rh-accent); }
-    .avatar { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--rh-accent-soft); color: var(--rh-accent); font-size: 12px; font-weight: 700; }
-    .vide { padding: var(--rh-space-5) var(--rh-space-6); }
+    .personne b { font-weight: 500; }
+    a.personne:hover b { text-decoration: underline; text-underline-offset: 3px; }
+    .avatar { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--rh-surface-3); color: var(--rh-ink-2); font-size: var(--rh-text-xs); font-weight: 600; }
+    .vide { padding: var(--rh-space-4); }
     @media (max-width: 560px) { .ligne { flex-wrap: wrap; } }
   `,
 })

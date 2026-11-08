@@ -28,7 +28,7 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; liste: Departement[] } | 
             @for (d of $any(etat()).liste; track d.id) {
               <a class="ligne dept" [routerLink]="['/departments', d.id]">
                 <span class="nom"><b>{{ d.nom }}</b>@if (d.description) { <small>{{ d.description }}</small> }</span>
-                <span class="effectif"><span class="chiffre" [rhCompteur]="d.nombreEmployes"></span><small>{{ d.nombreEmployes > 1 ? 'employés' : 'employé' }}</small></span>
+                <span class="effectif"><span class="lecture" [rhCompteur]="d.nombreEmployes"></span><small>{{ d.nombreEmployes > 1 ? 'employés' : 'employé' }}</small></span>
               </a>
             } @empty {
               <div class="vide"><p><strong>Aucun département pour l'instant.</strong></p></div>
@@ -39,17 +39,15 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; liste: Departement[] } | 
     </div>
   `,
   styles: `
-    .page { display: grid; gap: var(--rh-space-6); max-width: 900px; }
+    .page { display: grid; gap: var(--rh-space-4); max-width: 900px; }
     .dept { color: var(--rh-ink); text-decoration: none; transition: background var(--rh-fast) var(--rh-ease); }
-    .dept:hover { background: var(--rh-surface-3); }
-    .dept:hover b { color: var(--rh-accent); }
-    .dept:first-child { border-radius: var(--rh-radius-lg) var(--rh-radius-lg) 0 0; }
-    .dept:last-child { border-radius: 0 0 var(--rh-radius-lg) var(--rh-radius-lg); }
+    .dept:hover { background: var(--rh-surface-2); }
+    .dept:hover b { text-decoration: underline; text-underline-offset: 3px; }
     .nom { min-width: 0; }
-    .nom b { font-weight: 600; font-size: var(--rh-text-lg); }
+    .nom b { font-weight: 500; }
     .effectif { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; }
-    .effectif small { display: inline; }
-    .vide { padding: var(--rh-space-8) var(--rh-space-6); }
+    .effectif small { display: inline; color: var(--rh-muted); font-size: var(--rh-text-sm); }
+    .vide { padding: var(--rh-space-8) var(--rh-space-4); }
   `,
 })
 export class DepartementsListe {

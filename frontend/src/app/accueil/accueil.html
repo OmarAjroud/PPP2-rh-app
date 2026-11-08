@@ -1,7 +1,9 @@
 <div class="page" rhApparition>
-  <header>
-    <p class="crumb">{{ aujourdhui | date: 'EEEE d MMMM y' }}</p>
-    <h1 class="page-titre">Bonjour {{ prenom() }}</h1>
+  <header class="entete">
+    <div class="salut">
+      <h1 class="page-titre">Bonjour {{ prenom() }}</h1>
+      <p class="date">{{ aujourdhui | date: 'EEEE d MMMM y' }}</p>
+    </div>
   </header>
 
   <section class="card" aria-labelledby="api-titre">

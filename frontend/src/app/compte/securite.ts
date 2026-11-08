@@ -13,7 +13,7 @@ import { Apparition } from '../core/motion/motion';
   imports: [ReactiveFormsModule, ButtonModule, PasswordModule, Apparition],
   template: `
     <div class="page" rhApparition>
-      <header><p class="crumb">Mon compte</p><h1 class="page-titre">Sécurité</h1></header>
+      <header class="entete"><div><p class="crumb">Mon compte</p><h1 class="page-titre">Sécurité</h1></div></header>
 
       <form class="card" [formGroup]="form" (ngSubmit)="changer()" novalidate aria-labelledby="mdp-titre">
         <h2 id="mdp-titre" class="card-h">Changer de mot de passe</h2>
@@ -68,7 +68,7 @@ import { Apparition } from '../core/motion/motion';
       </section>
     </div>
   `,
-  styles: `.page { display: grid; gap: var(--rh-space-6); max-width: 640px; }`,
+  styles: `.page { display: grid; gap: var(--rh-space-4); max-width: 640px; }`,
 })
 export class Securite {
   private readonly auth = inject(AuthService);

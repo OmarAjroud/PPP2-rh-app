@@ -40,9 +40,11 @@ const CONFIGS: Record<'departement' | 'role', Config> = {
   selector: 'app-nom-description-form',
   imports: [ReactiveFormsModule, RouterLink, ButtonModule, InputTextModule, TextareaModule, Apparition],
   template: `
-    <header>
-      <p class="crumb"><a [routerLink]="c.liste">{{ c.libelleListe }}</a></p>
-      <h1 class="page-titre">{{ id === null ? c.titreAjout : c.titreModif }}</h1>
+    <header class="entete">
+      <div>
+        <p class="crumb"><a [routerLink]="c.liste">{{ c.libelleListe }}</a></p>
+        <h1 class="page-titre">{{ id === null ? c.titreAjout : c.titreModif }}</h1>
+      </div>
     </header>
     @if (chargement()) {
       <p class="hint" aria-busy="true">Chargement…</p>
@@ -74,7 +76,7 @@ const CONFIGS: Record<'departement' | 'role', Config> = {
     }
   `,
   styles: `
-    :host { display: grid; gap: var(--rh-space-6); max-width: 640px; }
+    :host { display: grid; gap: var(--rh-space-4); max-width: 640px; }
   `,
 })
 export class NomDescriptionForm {

@@ -6,6 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { RhApi } from '../core/api/rh-api';
 import { Role } from '../core/api/models';
 import { messageErreur } from '../core/api/erreurs';
+import { libelleRole } from '../core/api/libelles';
 import { AuthService } from '../core/auth/auth.service';
 import { Apparition } from '../core/motion/motion';
 
@@ -25,7 +26,7 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; r: Role } | { statut: 'er
         @let r = role()!;
         <div class="page" rhApparition>
           <header class="entete">
-            <div><p class="crumb"><a routerLink="/roles">Rôles</a></p><h1 class="page-titre">{{ r.nom }}</h1></div>
+            <div><p class="crumb"><a routerLink="/roles">Rôles</a></p><h1 class="page-titre">{{ libelleRole(r.nom) }}</h1></div>
             @if (admin() && !systeme(r)) { <a pButton severity="secondary" [routerLink]="['/roles', r.id, 'edit']">Modifier</a> }
           </header>
           @if (systeme(r)) { <p class="alerte info">Rôle du système : il donne les droits d'accès de l'application et ne peut être ni modifié ni supprimé.</p> }
@@ -45,7 +46,7 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; r: Role } | { statut: 'er
               </div>
               <div class="card-f">
                 @if (confirmer()) {
-                  <span>Supprimer « {{ r.nom }} » ?</span>
+                  <span>Supprimer « {{ libelleRole(r.nom) }} » ?</span>
                   <div class="actions">
                     <p-button label="Annuler" severity="secondary" (onClick)="confirmer.set(false)" />
                     <p-button label="Supprimer" severity="danger" [loading]="occupe()" (onClick)="supprimer(r.id)" />
@@ -60,12 +61,13 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; r: Role } | { statut: 'er
       }
     }
   `,
-  styles: `.page { display: grid; gap: var(--rh-space-6); max-width: 760px; }`,
+  styles: `.page { display: grid; gap: var(--rh-space-4); max-width: 760px; }`,
 })
 export class RoleDetailPage {
   private readonly api = inject(RhApi);
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
+  protected readonly libelleRole = libelleRole;
   protected readonly admin = computed(() => this.auth.profil()?.role === 'ADMIN');
   protected systeme(r: Role): boolean { return ROLES_SYSTEME.includes(r.nom); }
   protected readonly etat = toSignal(

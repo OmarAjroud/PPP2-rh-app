@@ -8,6 +8,7 @@ import { Role } from '../core/api/models';
 import { messageErreur } from '../core/api/erreurs';
 import { AuthService } from '../core/auth/auth.service';
 import { Apparition } from '../core/motion/motion';
+import { libelleRole } from '../core/api/libelles';
 import { ROLES_SYSTEME } from './role-detail';
 
 type Etat = { statut: 'chargement' } | { statut: 'ok'; liste: Role[] } | { statut: 'erreur'; message: string };
@@ -28,7 +29,7 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; liste: Role[] } | { statu
           @case ('ok') {
             @for (r of $any(etat()).liste; track r.id) {
               <a class="ligne role" [routerLink]="['/roles', r.id]">
-                <span><b class="mono">{{ r.nom }}</b>@if (r.description) { <small>{{ r.description }}</small> }</span>
+                <span><b>{{ libelleRole(r.nom) }}</b>@if (r.description) { <small>{{ r.description }}</small> }</span>
                 @if (systeme(r.nom)) { <span class="tag">Système</span> }
               </a>
             }
@@ -38,17 +39,16 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; liste: Role[] } | { statu
     </div>
   `,
   styles: `
-    .page { display: grid; gap: var(--rh-space-6); max-width: 900px; }
+    .page { display: grid; gap: var(--rh-space-4); max-width: 900px; }
     .role { color: var(--rh-ink); text-decoration: none; transition: background var(--rh-fast) var(--rh-ease); }
-    .role:hover { background: var(--rh-surface-3); }
-    .role:hover b { color: var(--rh-accent); }
-    .role:first-child { border-radius: var(--rh-radius-lg) var(--rh-radius-lg) 0 0; }
-    .role:last-child { border-radius: 0 0 var(--rh-radius-lg) var(--rh-radius-lg); }
+    .role:hover { background: var(--rh-surface-2); }
+    .role:hover b { text-decoration: underline; text-underline-offset: 3px; }
     .role b { font-weight: 500; }
-    .vide { padding: var(--rh-space-8) var(--rh-space-6); }
+    .vide { padding: var(--rh-space-8) var(--rh-space-4); }
   `,
 })
 export class RolesListe {
+  protected readonly libelleRole = libelleRole;
   private readonly auth = inject(AuthService);
   protected readonly admin = computed(() => this.auth.profil()?.role === 'ADMIN');
   protected systeme(nom: string): boolean { return ROLES_SYSTEME.includes(nom); }
