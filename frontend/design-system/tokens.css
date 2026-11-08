@@ -1,160 +1,154 @@
 /*
- * RH App · design tokens
- * Single source of truth for colour, type, spacing, radius and motion.
- * The Angular app imports this file once (styles.scss) and the Angular Material
- * theme (material-theme.scss) maps its system tokens onto these variables.
+ * RH App · design tokens (direction « Linear »)
+ * Single source of truth for colour, type, space, shape and motion, in three layers:
+ *   1. primitives  (raw scales: --rh-gray-*, --rh-indigo-*, …)        never used by screens directly
+ *   2. semantic    (roles: --rh-bg, --rh-surface, --rh-ink, --rh-accent, …)  redefined for dark
+ *   3. component   (--rh-rail-*, --rh-control-height, --rh-row-height, …)
+ * The PrimeNG preset (src/app/core/theme/rh-preset.ts) points at the semantic layer with var().
  *
- * Light is the default. Dark applies when the OS asks for it and the user has not
- * forced light, or when <html data-theme="dark"> is set by the theme toggle.
+ * Light is the default. Dark applies on <html class="rh-dark"> (set by ThemeService from
+ * Système / Clair / Sombre; forced while a login screen is shown).
+ * Contrast is checked by `npm run check:contraste` (design-system/verifier-contraste.mjs).
  */
 
 :root {
-  /* ---- Neutral scale (light) ---- */
-  --rh-bg: #fafaf9;          /* page ground */
-  --rh-surface: #ffffff;     /* panels, tables, fields */
-  --rh-surface-2: #f4f4f2;   /* hover rows, subtle fills, sidebar active */
-  --rh-surface-3: #ececea;   /* pressed, skeletons */
-  --rh-line: #e7e7e5;        /* one-pixel hairlines */
-  --rh-line-strong: #d6d6d3; /* field borders */
-  --rh-ink: #111214;         /* primary text */
-  --rh-ink-2: #3a3d42;       /* secondary text, labels */
-  --rh-muted: #64686f;       /* hints, meta (4.8:1 on bg) */
+  /* ---- 1. Primitives ---- */
+  --rh-gray-0: #ffffff;
+  --rh-gray-25: #f7f7f8;
+  --rh-gray-50: #f4f4f5;
+  --rh-gray-75: #f0f0f2;
+  --rh-gray-100: #ececee;
+  --rh-gray-150: #e6e6e9;
+  --rh-gray-400: #8e8f96;
+  --rh-gray-500: #6b6d73;
+  --rh-gray-600: #4b4d53;
+  --rh-gray-700: #3c3e44;
+  --rh-gray-900: #1b1c1e;
+  --rh-gray-d300: #d0d6e0;
+  --rh-gray-d400: #8a8f98;
+  --rh-gray-d500: #686b73;
+  --rh-gray-d700: #26282c;
+  --rh-gray-d750: #1f2023;
+  --rh-gray-d800: #1c1d1f;
+  --rh-gray-d850: #18191b;
+  --rh-gray-d900: #141516;
+  --rh-gray-d950: #0f1011;
+  --rh-gray-d1000: #08090a;
+  --rh-gray-d0: #f7f8f8;
 
-  /* ---- Accent: only what can be pressed, selected or focused ---- */
-  --rh-accent: #4c4fd8;
-  --rh-accent-hover: #3f42c4;
-  --rh-accent-ink: #ffffff;  /* text on accent */
-  --rh-accent-soft: #eeeffc; /* selected day, selected row */
-  --rh-accent-line: #c9caf4;
+  --rh-indigo-300: #a4abf2;
+  --rh-indigo-400: #8f98ef;
+  --rh-indigo-500: #5e6ad2;
+  --rh-indigo-600: #535fc4;
+  --rh-indigo-700: #4752b3;
 
-  /* ---- Status: dot + word, never colour alone ---- */
-  --rh-ok: #1f7a4d;        --rh-ok-soft: #e8f4ee;      /* Approuvée */
-  --rh-wait: #875a00;      --rh-wait-soft: #fbf3e0;    /* En attente */
-  --rh-danger: #c2362b;    --rh-danger-soft: #fbecea;  /* Refusée, erreurs */
-  --rh-on-danger: #ffffff;  /* text on a filled danger surface */
-  --rh-out: #6b6f76;        /* labels of days outside the requested range (5:1 on surface) */
-  --rh-neutral: #64686f;   --rh-neutral-soft: #f1f1ef; /* Annulée */
-  --rh-escalated: #3a3d42; --rh-escalated-soft: #ececea; /* Transmise aux RH: ink on neutral, the word carries it */
+  --rh-green-600: #19774a;  --rh-green-300: #4cb782;
+  --rh-amber-700: #855c00;  --rh-amber-300: #f2c94c;
+  --rh-red-600: #c22f2f;    --rh-red-300: #eb6f6f;
 
-  /* ---- Non-working days in date strips ---- */
-  --rh-offday: #f4f4f2;
-  --rh-offday-stripe: #ececea;
+  /* ---- 2. Semantic (light) ---- */
+  --rh-bg: var(--rh-gray-25);              /* app frame, rail */
+  --rh-surface: var(--rh-gray-0);          /* work area, panels */
+  --rh-surface-2: var(--rh-gray-50);       /* hover, fields */
+  --rh-surface-3: var(--rh-gray-100);      /* active chip, selected row, avatar */
+  --rh-line: var(--rh-gray-100);
+  --rh-line-row: var(--rh-gray-75);
+  --rh-line-strong: var(--rh-gray-400);    /* field outlines (>= 3:1) */
+  --rh-ink: var(--rh-gray-900);
+  --rh-ink-2: var(--rh-gray-700);
+  --rh-muted: var(--rh-gray-500);
 
-  /* ---- Overlays ---- */
-  --rh-scrim: rgb(17 18 20 / 0.4);
-  --rh-shadow-overlay: 0 12px 32px rgb(17 18 20 / 0.14), 0 2px 6px rgb(17 18 20 / 0.08);
-  --rh-focus: 0 0 0 3px rgb(76 79 216 / 0.35);
+  --rh-accent: var(--rh-indigo-500);
+  --rh-accent-hover: var(--rh-indigo-600);
+  --rh-accent-ink: #ffffff;
+  --rh-accent-text: var(--rh-indigo-700);  /* links and accent words */
+  --rh-accent-soft: rgb(94 106 210 / 0.1);
+  --rh-focus: 0 0 0 2px var(--rh-surface), 0 0 0 4px var(--rh-indigo-500);
+
+  --rh-ok: var(--rh-green-600);
+  --rh-wait: var(--rh-amber-700);
+  --rh-danger: var(--rh-red-600);
+  --rh-neutral: var(--rh-gray-500);
+  --rh-on-danger: #ffffff;
+
+  --rh-offday: var(--rh-gray-50);
+  --rh-offday-stripe: var(--rh-gray-100);
+
+  --rh-shadow-overlay: 0 0 0 1px rgb(0 0 0 / 0.04), 0 12px 32px -8px rgb(0 0 0 / 0.18);
+  --rh-scrim: rgb(0 0 0 / 0.4);
+
+  /* ---- 3. Component ---- */
+  --rh-rail-width: 232px;
+  --rh-rail-bg: var(--rh-bg);
+  --rh-rail-item-hover: var(--rh-gray-75);
+  --rh-rail-item-active: var(--rh-gray-150);
+  --rh-control-height: 32px;
+  --rh-row-height: 40px;
+  --rh-header-height: 44px;
+  --rh-content-max: 1200px;
 
   /* ---- Type ---- */
-  --rh-font: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --rh-weight-regular: 400;
-  --rh-weight-medium: 500;
-  --rh-weight-strong: 600;
-  /* scale (rem, base 16px) */
-  --rh-text-xs: 0.75rem;   /* 12px · table meta, never body */
-  --rh-text-sm: 0.8125rem; /* 13px · labels, captions */
-  --rh-text-md: 0.875rem;  /* 14px · body, table cells, controls */
-  --rh-text-lg: 1rem;      /* 16px · panel titles, long text */
-  --rh-text-xl: 1.25rem;   /* 20px · section titles */
-  --rh-text-2xl: 1.5rem;   /* 24px · page titles */
-  --rh-text-3xl: 1.75rem;  /* 28px · key figures (jours, soldes) */
-  --rh-leading: 1.5;
-  --rh-leading-tight: 1.25;
-  --rh-tracking-title: -0.01em;
+  --rh-font: "Inter", "Segoe UI", system-ui, sans-serif;
+  --rh-font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --rh-text-xs: 11px;
+  --rh-text-sm: 12px;
+  --rh-text-md: 13px;      /* body */
+  --rh-text-lg: 15px;
+  --rh-title: 22px;        /* page titles */
+  --rh-figure: 24px;       /* readings */
 
   /* ---- Space (4px grid) ---- */
-  --rh-space-1: 4px;
-  --rh-space-2: 8px;
-  --rh-space-3: 12px;
-  --rh-space-4: 16px;
-  --rh-space-5: 20px;
-  --rh-space-6: 24px;
-  --rh-space-8: 32px;
-  --rh-space-10: 40px;
-  --rh-space-12: 48px;
+  --rh-space-1: 4px;  --rh-space-2: 8px;  --rh-space-3: 12px; --rh-space-4: 16px;
+  --rh-space-5: 20px; --rh-space-6: 24px; --rh-space-8: 32px; --rh-space-10: 40px;
 
   /* ---- Shape ---- */
-  --rh-radius-sm: 5px;  /* badges, day cells */
-  --rh-radius: 7px;     /* fields, buttons */
-  --rh-radius-lg: 10px; /* panels, dialogs */
-
-  /* ---- Layout ---- */
-  --rh-sidebar: 232px;
-  --rh-content-max: 1240px;
-  --rh-control-h: 36px;  /* buttons, fields (44px touch target on coarse pointers) */
+  --rh-radius-sm: 6px;     /* controls, nav items, chips, tags */
+  --rh-radius: 8px;        /* panels */
+  --rh-radius-lg: 12px;    /* dialogs, login panel */
 
   /* ---- Motion ---- */
-  --rh-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --rh-fast: 150ms;
-  --rh-base: 200ms;
+  --rh-ease: cubic-bezier(0.25, 0.8, 0.25, 1);
+  --rh-fast: 120ms;
+  --rh-base: 160ms;
 
   color-scheme: light;
 }
 
-@media (pointer: coarse) {
-  :root { --rh-control-h: 44px; }
-}
+/* ---- 2. Semantic (dark) ---- */
+:root.rh-dark {
+  --rh-bg: var(--rh-gray-d1000);
+  --rh-surface: var(--rh-gray-d950);
+  --rh-surface-2: var(--rh-gray-d900);
+  --rh-surface-3: var(--rh-gray-d800);
+  --rh-line: var(--rh-gray-d800);
+  --rh-line-row: var(--rh-gray-d850);
+  --rh-line-strong: var(--rh-gray-d500);
+  --rh-ink: var(--rh-gray-d0);
+  --rh-ink-2: var(--rh-gray-d300);
+  --rh-muted: var(--rh-gray-d400);
 
-/* ---- Dark: same scale inverted to graphite, accent lifted ---- */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --rh-bg: #0f1012;
-    --rh-surface: #17181b;
-    --rh-surface-2: #1f2024;
-    --rh-surface-3: #27292d;
-    --rh-line: #2a2c30;
-    --rh-line-strong: #3a3d42;
-    --rh-ink: #ececea;
-    --rh-ink-2: #c4c6ca;
-    --rh-muted: #9a9ea6;
-    --rh-accent: #8b8ef5;
-    --rh-accent-hover: #a2a4f8;
-    --rh-accent-ink: #0f1012;
-    --rh-accent-soft: #23244a;
-    --rh-accent-line: #3d3f86;
-    --rh-ok: #4cc38a;        --rh-ok-soft: #13291f;
-    --rh-wait: #e0a93b;      --rh-wait-soft: #2b2311;
-    --rh-danger: #f07167;    --rh-danger-soft: #2f1716;
-    --rh-on-danger: #0f1012;
-    --rh-out: #8a8e95;
-    --rh-neutral: #9a9ea6;   --rh-neutral-soft: #222327;
-    --rh-escalated: #c4c6ca; --rh-escalated-soft: #27292d;
-    --rh-offday: #1b1c1f;
-    --rh-offday-stripe: #232428;
-    --rh-scrim: rgb(0 0 0 / 0.6);
-    --rh-shadow-overlay: 0 12px 32px rgb(0 0 0 / 0.5), 0 2px 6px rgb(0 0 0 / 0.4);
-    --rh-focus: 0 0 0 3px rgb(139 142 245 / 0.45);
-    color-scheme: dark;
-  }
-}
+  --rh-accent: var(--rh-indigo-500);
+  --rh-accent-hover: var(--rh-indigo-400);
+  --rh-accent-ink: #ffffff;
+  --rh-accent-text: var(--rh-indigo-300);
+  --rh-accent-soft: rgb(94 106 210 / 0.18);
+  --rh-focus: 0 0 0 2px var(--rh-surface), 0 0 0 4px var(--rh-indigo-400);
 
-:root[data-theme="dark"] {
-  --rh-bg: #0f1012;
-  --rh-surface: #17181b;
-  --rh-surface-2: #1f2024;
-  --rh-surface-3: #27292d;
-  --rh-line: #2a2c30;
-  --rh-line-strong: #3a3d42;
-  --rh-ink: #ececea;
-  --rh-ink-2: #c4c6ca;
-  --rh-muted: #9a9ea6;
-  --rh-accent: #8b8ef5;
-  --rh-accent-hover: #a2a4f8;
-  --rh-accent-ink: #0f1012;
-  --rh-accent-soft: #23244a;
-  --rh-accent-line: #3d3f86;
-  --rh-ok: #4cc38a;        --rh-ok-soft: #13291f;
-  --rh-wait: #e0a93b;      --rh-wait-soft: #2b2311;
-  --rh-danger: #f07167;    --rh-danger-soft: #2f1716;
-  --rh-on-danger: #0f1012;
-  --rh-out: #8a8e95;
-  --rh-neutral: #9a9ea6;   --rh-neutral-soft: #222327;
-  --rh-escalated: #c4c6ca; --rh-escalated-soft: #27292d;
-  --rh-offday: #1b1c1f;
-  --rh-offday-stripe: #232428;
+  --rh-ok: var(--rh-green-300);
+  --rh-wait: var(--rh-amber-300);
+  --rh-danger: var(--rh-red-300);
+  --rh-neutral: var(--rh-gray-d400);
+  --rh-on-danger: #0f1011;
+
+  --rh-offday: var(--rh-gray-d900);
+  --rh-offday-stripe: var(--rh-gray-d850);
+
+  --rh-shadow-overlay: 0 0 0 1px rgb(255 255 255 / 0.06), 0 16px 40px -8px rgb(0 0 0 / 0.7);
   --rh-scrim: rgb(0 0 0 / 0.6);
-  --rh-shadow-overlay: 0 12px 32px rgb(0 0 0 / 0.5), 0 2px 6px rgb(0 0 0 / 0.4);
-  --rh-focus: 0 0 0 3px rgb(139 142 245 / 0.45);
+
+  --rh-rail-item-hover: var(--rh-gray-d850);
+  --rh-rail-item-active: var(--rh-gray-d750);
+
   color-scheme: dark;
 }
 
@@ -162,10 +156,8 @@
 ::selection { background: var(--rh-accent-soft); color: var(--rh-ink); }
 html { accent-color: var(--rh-accent); caret-color: var(--rh-accent); scrollbar-color: var(--rh-line-strong) transparent; }
 :focus-visible { outline: none; box-shadow: var(--rh-focus); }
-a { color: var(--rh-accent); text-underline-offset: 3px; }
-.rh-num, td.num, .num { font-variant-numeric: tabular-nums; }
+a { color: var(--rh-accent-text); text-underline-offset: 3px; }
 
 @media (prefers-reduced-motion: reduce) {
   :root { --rh-fast: 0ms; --rh-base: 0ms; }
-  *, *::before, *::after { animation: none !important; }
 }

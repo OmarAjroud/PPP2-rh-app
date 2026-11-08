@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-08T12:00:00Z",
+  "title": "Design System: RH App",
+  "extensions": {
+    "source": [
+      "frontend/design-system/tokens.css",
+      "frontend/design-system/verifier-contraste.mjs",
+      "frontend/src/app/core/theme/rh-preset.ts",
+      "frontend/src/app/core/theme/theme.service.ts",
+      "frontend/src/styles.scss",
+      "frontend/src/app/layout/shell.scss",
+      "frontend/src/app/layout/auth-layout.ts",
+      "frontend/src/app/core/motion/motion.ts"
+    ],
+    "themes": { "default": "systeme", "choices": ["systeme", "clair", "sombre"], "darkClass": "html.rh-dark", "storageKey": "rh.theme", "forcedDark": "auth-layout (login and account links)" },
+    "colorMeta": {
+      "bg": { "role": "neutral", "displayName": "App Frame", "cssVar": "--rh-bg", "dark": "#08090a", "tonalRamp": ["#1b1c1e", "#3c3e44", "#4b4d53", "#6b6d73", "#8e8f96", "#e6e6e9", "#f0f0f2", "#f7f7f8"] },
+      "surface": { "role": "neutral", "displayName": "Work Sheet", "cssVar": "--rh-surface", "dark": "#0f1011", "tonalRamp": ["#08090a", "#0f1011", "#141516", "#18191b", "#1c1d1f", "#26282c", "#686b73", "#ffffff"] },
+      "surface-2": { "role": "neutral", "displayName": "Raised Fill", "cssVar": "--rh-surface-2", "dark": "#141516" },
+      "surface-3": { "role": "neutral", "displayName": "Pressed Fill", "cssVar": "--rh-surface-3", "dark": "#1c1d1f" },
+      "line": { "role": "neutral", "displayName": "Hairline", "cssVar": "--rh-line", "dark": "#1c1d1f" },
+      "line-row": { "role": "neutral", "displayName": "Row Rule", "cssVar": "--rh-line-row", "dark": "#18191b" },
+      "line-strong": { "role": "neutral", "displayName": "Field Edge", "cssVar": "--rh-line-strong", "dark": "#686b73" },
+      "ink": { "role": "neutral", "displayName": "Ink", "cssVar": "--rh-ink", "dark": "#f7f8f8", "tonalRamp": ["#08090a", "#1b1c1e", "#3c3e44", "#6b6d73", "#8a8f98", "#d0d6e0", "#ececee", "#f7f8f8"] },
+      "ink-2": { "role": "neutral", "displayName": "Second Ink", "cssVar": "--rh-ink-2", "dark": "#d0d6e0" },
+      "muted": { "role": "neutral", "displayName": "Muted", "cssVar": "--rh-muted", "dark": "#8a8f98" },
+      "accent": { "role": "primary", "displayName": "Linear Indigo", "cssVar": "--rh-accent", "dark": "#5e6ad2", "tonalRamp": ["#1d2147", "#2f3673", "#3a4391", "#4752b3", "#5e6ad2", "#8f98ef", "#c3c7f2", "#eff0fb"] },
+      "accent-hover": { "role": "primary", "displayName": "Indigo Hover", "cssVar": "--rh-accent-hover", "dark": "#8f98ef" },
+      "accent-ink": { "role": "primary", "displayName": "On Indigo", "cssVar": "--rh-accent-ink", "dark": "#ffffff" },
+      "accent-text": { "role": "primary", "displayName": "Ink Indigo", "cssVar": "--rh-accent-text", "dark": "#a4abf2" },
+      "accent-soft": { "role": "primary", "displayName": "Indigo Wash", "cssVar": "--rh-accent-soft", "dark": "rgb(94 106 210 / 0.18)" },
+      "ok": { "role": "status", "displayName": "Approval Green", "cssVar": "--rh-ok", "dark": "#4cb782" },
+      "wait": { "role": "status", "displayName": "Waiting Amber", "cssVar": "--rh-wait", "dark": "#f2c94c" },
+      "danger": { "role": "status", "displayName": "Refusal Red", "cssVar": "--rh-danger", "dark": "#eb6f6f" },
+      "on-danger": { "role": "status", "displayName": "On Red", "cssVar": "--rh-on-danger", "dark": "#0f1011" },
+      "neutral": { "role": "status", "displayName": "Off Grey", "cssVar": "--rh-neutral", "dark": "#8a8f98" },
+      "rail-item-hover": { "role": "neutral", "displayName": "Rail Hover", "cssVar": "--rh-rail-item-hover", "dark": "#18191b" },
+      "rail-item-active": { "role": "neutral", "displayName": "Rail Active", "cssVar": "--rh-rail-item-active", "dark": "#1f2023" },
+      "scrim": { "role": "neutral", "displayName": "Scrim", "cssVar": "--rh-scrim", "dark": "rgb(0 0 0 / 0.6)" }
+    },
+    "typographyMeta": {
+      "title": { "displayName": "Title", "cssVar": "--rh-title", "purpose": "Page h1 in the header bar and the login title; one per page." },
+      "panel-title": { "displayName": "Panel title", "purpose": "Panel headers; hierarchy by weight and rules, not size." },
+      "body": { "displayName": "Body", "cssVar": "--rh-text-md", "purpose": "Running text, table cells, field values." },
+      "label": { "displayName": "Label", "purpose": "Buttons, nav items, field labels, status words, names in lists." },
+      "small": { "displayName": "Small", "cssVar": "--rh-text-sm", "purpose": "Hints, secondary lines, table headers (500, muted), panel footers." },
+      "micro": { "displayName": "Micro", "cssVar": "--rh-text-xs", "purpose": "Tags, rail group labels, keyboard hints, avatar initials; the 11px floor." },
+      "reading": { "displayName": "Reading", "cssVar": "--rh-font-mono", "purpose": "Computed figures and identifiers, tabular, before and after joined by a muted arrow." }
+    },
+    "contrastPairs": {
+      "command": "npm run check:contraste",
+      "text45": ["ink/surface", "ink/bg", "ink-2/surface", "muted/surface", "muted/bg", "muted/surface-2", "accent-text/surface", "accent-ink/accent", "ok/surface", "wait/surface", "danger/surface", "neutral/surface", "on-danger/danger"],
+      "nonText3": ["line-strong/surface", "accent/surface"]
+    },
+    "shadows": [
+      { "name": "overlay", "cssVar": "--rh-shadow-overlay", "value": "0 0 0 1px rgb(0 0 0 / 0.04), 0 12px 32px -8px rgb(0 0 0 / 0.18)", "dark": "0 0 0 1px rgb(255 255 255 / 0.06), 0 16px 40px -8px rgb(0 0 0 / 0.7)", "purpose": "Select overlays, popovers, dialogs and the mobile drawer only." },
+      { "name": "focus", "cssVar": "--rh-focus", "value": "0 0 0 2px var(--rh-surface), 0 0 0 4px #5e6ad2", "dark": "0 0 0 2px var(--rh-surface), 0 0 0 4px #8f98ef", "purpose": "Every :focus-visible, replacing the outline." },
+      { "name": "login-panel", "value": "inset 0 1px 0 rgb(255 255 255 / 0.05), 0 24px 60px -20px rgb(0 0 0 / 0.8)", "purpose": "The login panel only." }
+    ],
+    "motion": [
+      { "name": "ease", "cssVar": "--rh-ease", "value": "cubic-bezier(0.25, 0.8, 0.25, 1)", "purpose": "All CSS state transitions." },
+      { "name": "fast", "cssVar": "--rh-fast", "value": "120ms", "purpose": "Hover, colour and border changes; also PrimeNG transitionDuration." },
+      { "name": "base", "cssVar": "--rh-base", "value": "160ms", "purpose": "Drawer slide, table loading dim." },
+      { "name": "arrival", "value": "GSAP from y:4, autoAlpha:0, 0.16s, stagger 0.03s, power2.out, once", "purpose": "rhApparition on a page's direct children." },
+      { "name": "counter", "value": "GSAP 0.6s power2.out", "purpose": "rhCompteur on reading figures, first show and changes." },
+      { "name": "reduced-motion", "value": "durations 0ms; GSAP skipped", "purpose": "prefers-reduced-motion: reduce." }
+    ],
+    "breakpoints": [
+      { "name": "fiche-stack", "value": "560px" },
+      { "name": "touch", "value": "600px" },
+      { "name": "drawer", "value": "900px" },
+      { "name": "record-split", "value": "1100px" }
+    ],
+    "layout": { "railWidth": "232px", "controlHeight": "32px", "rowHeight": "40px", "headerHeight": "44px", "contentMax": "1200px", "sheetInset": "8px 8px 8px 0", "sheetPadding": "20px 32px 40px" }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one indigo action per area.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Ajouter un employé</button>",
+      "css": ".ds-btn { height: var(--rh-control-height, 32px); padding: 0 12px; font: 500 13px/1 var(--rh-font, Inter, sans-serif); border-radius: var(--rh-radius-sm, 6px); border: 1px solid transparent; cursor: pointer; transition: background 120ms cubic-bezier(0.25,0.8,0.25,1), border-color 120ms, color 120ms; } .ds-btn-primary { background: var(--rh-accent, #5e6ad2); border-color: var(--rh-accent, #5e6ad2); color: var(--rh-accent-ink, #fff); } .ds-btn-primary:hover { background: var(--rh-accent-hover, #535fc4); border-color: var(--rh-accent-hover, #535fc4); } .ds-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--rh-surface, #fff), 0 0 0 4px #5e6ad2; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Sheet fill, hairline border; the default for every other action.",
+      "html": "<button class=\"ds-btn2\">Réessayer</button>",
+      "css": ".ds-btn2 { height: 32px; padding: 0 12px; font: 500 13px/1 var(--rh-font, Inter, sans-serif); border-radius: 6px; background: var(--rh-surface, #fff); border: 1px solid var(--rh-line, #ececee); color: var(--rh-ink, #1b1c1e); cursor: pointer; transition: background 120ms cubic-bezier(0.25,0.8,0.25,1), border-color 120ms; } .ds-btn2:hover { background: var(--rh-surface-2, #f4f4f5); border-color: var(--rh-line-strong, #8e8f96); } .ds-btn2:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--rh-surface, #fff), 0 0 0 4px #5e6ad2; }"
+    },
+    {
+      "name": "Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Label above a 32px raised-fill control with a 3:1 edge.",
+      "html": "<label class=\"ds-champ\"><span>Prénom</span><input class=\"ds-input\" value=\"Lina\"></label>",
+      "css": ".ds-champ { display: grid; gap: 6px; font: 400 13px/1.5 var(--rh-font, Inter, sans-serif); } .ds-champ > span { font-weight: 500; color: var(--rh-ink-2, #3c3e44); } .ds-input { height: 32px; padding: 7px 10px; font: inherit; color: var(--rh-ink, #1b1c1e); background: var(--rh-surface-2, #f4f4f5); border: 1px solid var(--rh-line-strong, #8e8f96); border-radius: 6px; transition: border-color 120ms; } .ds-input:hover { border-color: var(--rh-muted, #6b6d73); } .ds-input:focus { outline: none; border-color: var(--rh-accent, #5e6ad2); box-shadow: 0 0 0 2px var(--rh-surface, #fff), 0 0 0 4px #5e6ad2; }"
+    },
+    {
+      "name": "Rail Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Items on the app frame; current page is a grey fill, never indigo.",
+      "html": "<nav class=\"ds-rail\"><span class=\"ds-groupe\">Entreprise</span><a class=\"ds-lien ds-actif\" href=\"#\">Employés</a><a class=\"ds-lien\" href=\"#\">Départements</a><a class=\"ds-lien\" href=\"#\">Rôles</a></nav>",
+      "css": ".ds-rail { display: flex; flex-direction: column; gap: 1px; width: 232px; padding: 12px 8px; background: var(--rh-bg, #f7f7f8); font: 500 13px/1.5 var(--rh-font, Inter, sans-serif); } .ds-groupe { padding: 14px 8px 4px; font-size: 11px; color: var(--rh-muted, #6b6d73); } .ds-lien { display: flex; align-items: center; min-height: 30px; padding: 0 8px; border-radius: 6px; color: var(--rh-ink-2, #3c3e44); text-decoration: none; transition: background 120ms, color 120ms; } .ds-lien:hover { background: var(--rh-rail-item-hover, #f0f0f2); color: var(--rh-ink, #1b1c1e); } .ds-actif { background: var(--rh-rail-item-active, #e6e6e9); color: var(--rh-ink, #1b1c1e); } .ds-lien:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--rh-bg, #f7f7f8), 0 0 0 4px #5e6ad2; }"
+    },
+    {
+      "name": "Status",
+      "kind": "chip",
+      "refersTo": "status",
+      "description": "A dot and a word, no tint.",
+      "html": "<span class=\"ds-status ds-ok\">Approuvée</span> <span class=\"ds-status ds-wait\">En attente</span> <span class=\"ds-status ds-no\">Refusée</span>",
+      "css": ".ds-status { display: inline-flex; align-items: center; gap: 6px; margin-right: 12px; font: 500 13px/1.5 var(--rh-font, Inter, sans-serif); color: var(--rh-ink-2, #3c3e44); } .ds-status::before { content: \"\"; width: 7px; height: 7px; border-radius: 50%; background: var(--dot); } .ds-ok { --dot: var(--rh-ok, #19774a); } .ds-wait { --dot: var(--rh-wait, #855c00); } .ds-no { --dot: var(--rh-danger, #c22f2f); }"
+    },
+    {
+      "name": "Tag",
+      "kind": "chip",
+      "refersTo": "tag",
+      "description": "Neutral marker for role, department, seniority.",
+      "html": "<span class=\"ds-tag\">Manager</span> <span class=\"ds-tag\">Informatique</span>",
+      "css": ".ds-tag { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; font: 500 11px/1 var(--rh-font, Inter, sans-serif); color: var(--rh-ink-2, #3c3e44); background: var(--rh-surface-2, #f4f4f5); border: 1px solid var(--rh-line, #ececee); border-radius: 6px; }"
+    },
+    {
+      "name": "Panel with Reading Rows",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Hairline panel, 44px header, 40px rows with mono readings.",
+      "html": "<section class=\"ds-card\"><div class=\"ds-card-h\">Soldes</div><div class=\"ds-ligne\"><span>Congés payés</span><span class=\"ds-lecture\">19<span class=\"ds-fleche\">→</span>15</span></div><div class=\"ds-ligne\"><span>RTT</span><span class=\"ds-lecture\">6</span></div></section>",
+      "css": ".ds-card { width: 340px; background: var(--rh-surface, #fff); border: 1px solid var(--rh-line, #ececee); border-radius: 8px; overflow: hidden; font: 400 13px/1.5 var(--rh-font, Inter, sans-serif); color: var(--rh-ink, #1b1c1e); } .ds-card-h { display: flex; align-items: center; min-height: 44px; padding: 8px 16px; border-bottom: 1px solid var(--rh-line, #ececee); font-weight: 600; } .ds-ligne { display: flex; justify-content: space-between; align-items: center; min-height: 40px; padding: 8px 16px; border-bottom: 1px solid var(--rh-line-row, #f0f0f2); transition: background 120ms; } .ds-ligne:last-child { border-bottom: 0; } .ds-ligne:hover { background: var(--rh-surface-2, #f4f4f5); } .ds-lecture { font: 500 13px var(--rh-font-mono, 'JetBrains Mono', monospace); font-variant-numeric: tabular-nums; } .ds-fleche { color: var(--rh-muted, #6b6d73); margin: 0 4px; }"
+    },
+    {
+      "name": "Page Header",
+      "kind": "custom",
+      "refersTo": "entete",
+      "description": "Full-bleed header bar: breadcrumb inline before the h1, actions right.",
+      "html": "<header class=\"ds-entete\"><div><span class=\"ds-crumb\">Entreprise</span><h1 class=\"ds-titre\">Employés</h1></div><button class=\"ds-act\">Ajouter un employé</button></header>",
+      "css": ".ds-entete { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; min-height: 44px; padding: 12px 32px; border-bottom: 1px solid var(--rh-line, #ececee); background: var(--rh-surface, #fff); font-family: var(--rh-font, Inter, sans-serif); } .ds-entete > div { display: flex; align-items: baseline; gap: 2px 8px; } .ds-crumb { color: var(--rh-muted, #6b6d73); font-size: 13px; } .ds-crumb::after { content: \"›\"; margin-left: 8px; } .ds-titre { margin: 0; font: 600 22px/1.25 var(--rh-font, Inter, sans-serif); letter-spacing: -0.015em; color: var(--rh-ink, #1b1c1e); } .ds-act { height: 32px; padding: 0 12px; font: 500 13px/1 inherit; border-radius: 6px; border: 1px solid var(--rh-accent, #5e6ad2); background: var(--rh-accent, #5e6ad2); color: #fff; cursor: pointer; } .ds-act:hover { background: var(--rh-accent-hover, #535fc4); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Instrument",
+    "overview": "RH App is a working tool shown at a defense, and it earns \"premium\" through restraint rather than effects: 13px Inter at Linear density, hairlines instead of shadows, one indigo that only means \"press here\", and figures set in mono so a balance reads like a measurement. The dark theme is the signature; the light theme is the same structure with the same roles, never a different product. Everything a screen needs comes from `frontend/design-system/tokens.css`, in three layers (primitives `--rh-gray-*` / `--rh-indigo-*`, semantic roles redefined under `:root.rh-dark`, component tokens such as `--rh-rail-*` and `--rh-control-height`). The PrimeNG Aura preset (`src/app/core/theme/rh-preset.ts`) points at the same semantic roles with `var()`, so switching the `rh-dark` class on `<html>` restyles the app and PrimeNG together.\n\nThe frame is two planes: a quiet app frame that holds the rail, and one inset work sheet with an 8px radius and a single hairline. Lists are dense hairline rows directly on that sheet, not grids of cards. Status is a dot and a word. Motion is a 160ms fade with a 4px rise on arrival, once. The login screens are the one exception: always dark, with a soft violet halo and a frosted panel, the only place the system allows glow, blur or glass.\n\nConfirmed rejections: the generic admin dashboard (same-size cards everywhere, loud colours, heavy shadows); in-app effects (halo, glass, gradient text, looping animation); a light theme that looks like another product; muted grey below 4.5:1 for text or control outlines below 3:1.",
+    "keyCharacteristics": [
+      "Two themes, one set of roles: Système / Clair / Sombre, default Système, remembered in `localStorage` (`rh.theme`).",
+      "Density: 13px body, 32px controls, 40px rows, 44px headers.",
+      "One accent (indigo #5e6ad2 in both themes); selection is grey, not indigo.",
+      "Flat work surfaces separated by hairlines; shadow only on floating layers.",
+      "Mono, tabular figures for every computed number.",
+      "Every colour pair gated by `npm run check:contraste`."
+    ],
+    "rules": [
+      { "name": "The One Indigo Rule", "body": "Indigo means \"this can be pressed, followed or is focused\". Selected rows, active nav items, selected options and active toggles use grey fills (`surface-3`, `rail-item-active`), never indigo.", "section": "colors" },
+      { "name": "The Contrast Gate Rule", "body": "A new colour or role is not done until it is added to the pairs in `design-system/verifier-contraste.mjs` and `npm run check:contraste` passes in both themes: 4.5:1 for text (ink, ink-2, muted on surface, bg and surface-2; accent-text; status colours; accent-ink on accent; on-danger on danger), 3:1 for field edges and the accent fill. Semantic tokens must resolve to opaque 6-digit hex for the checker to read them.", "section": "colors" },
+      { "name": "The Same Roles Rule", "body": "Dark redefines values, never roles. A screen that needs `:root.rh-dark`-specific CSS is a sign a semantic token is missing.", "section": "colors" },
+      { "name": "The Mono Is For Reckoning Rule", "body": "JetBrains Mono is reserved for figures the system computed or identifiers (balances, totals, headcounts, `0042`). Names, labels and dates stay in Inter. All table cells use tabular numerals; numeric columns align right.", "section": "typography" },
+      { "name": "The Sentence Case Rule", "body": "No uppercase labels and no tracking-out: column headers, group labels and tags are sentence case at their size.", "section": "typography" },
+      { "name": "The Rows Not Cards Rule", "body": "Collections are hairline rows (40px) on the sheet or inside a panel. Panels group a record's facts; they are not tiles for a dashboard grid.", "section": "layout" },
+      { "name": "The 32 / 44 Rule", "body": "Controls are 32px at desktop density and at least 44px below 600px, including the drawer's links, search, theme buttons and logout.", "section": "layout" },
+      { "name": "The Flat Sheet Rule", "body": "If it sits on the page, it has a hairline and no shadow. If it floats over the page, it gets the overlay shadow.", "section": "elevation" },
+      { "name": "The One Halo Rule", "body": "Glow, blur, frosted glass and the violet halo belong to the login layout only. Inside the app they are defects.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do take every colour, size, radius and duration from `--rh-*` semantic or component tokens; add a token before adding a value.",
+      "Do run `npm run check:contraste` after any colour change and add new pairs to the checker.",
+      "Do keep controls at 32px and rows at 40px on desktop, and 44px targets below 600px.",
+      "Do show lists as hairline rows on the sheet, and group a record's facts in hairline panels.",
+      "Do set computed figures in JetBrains Mono with tabular numerals, before and after joined by a muted \"→\".",
+      "Do write status as a dot plus a French word (\"En attente\", \"Approuvée\").",
+      "Do give each page its own full-bleed header bar with the `h1`, breadcrumb inline before it, actions on the right."
+    ],
+    "donts": [
+      "Don't use indigo for selection or the active nav item; those are grey fills.",
+      "Don't put shadows on panels, rows or the sheet; shadows are for overlays and the drawer.",
+      "Don't use halo, glow, blur, glass or gradient text inside the app; they belong to the login layout only.",
+      "Don't tint status backgrounds or carry status by colour alone.",
+      "Don't uppercase or letter-space labels, or put small labels above titles.",
+      "Don't build dashboard grids of same-size cards or add rail counters and statuses the API does not provide.",
+      "Don't make the light theme its own design: same structure, same roles, only values change.",
+      "Don't loop any animation, or animate when reduced motion is requested."
+    ]
+  }
+}

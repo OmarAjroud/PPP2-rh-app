@@ -1,0 +1,5 @@
+.page { display: grid; gap: var(--rh-space-4); --page-max: 760px; }
+.grille { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--rh-space-4); }
+.grille .large { grid-column: 1 / -1; }
+.card-h.separe { border-top: 1px solid var(--rh-line); }
+@media (max-width: 640px) { .grille { grid-template-columns: minmax(0, 1fr); } }

@@ -1,2 +1,5 @@
-:host { display: grid; gap: var(--rh-space-6); max-width: 720px; }
-.panel-b { justify-items: start; }
+.page { display: grid; gap: var(--rh-space-4); --page-max: 760px; }
+.entete .salut { flex-direction: column; align-items: flex-start; }
+.date { color: var(--rh-muted); }
+.date::first-letter { text-transform: uppercase; }
+.card-h h2 { font-size: inherit; font-weight: inherit; }

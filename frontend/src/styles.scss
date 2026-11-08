@@ -1,41 +1,181 @@
 // Global styles. Tokens come from design-system/tokens.css (loaded first in angular.json);
-// the Angular Material theme maps its system tokens onto them. See DESIGN.md.
-@use 'design-system/material-theme';
+// PrimeNG reads the same values through src/app/core/theme/rh-preset.ts. See DESIGN.md.
 
 * { box-sizing: border-box; }
 html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--rh-surface);
+  color: var(--rh-ink);
+  font: 400 var(--rh-text-md)/1.5 var(--rh-font);
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { margin: 0; text-wrap: balance; font-weight: 600; }
+p { margin: 0; }
 
-// ---- Shared building blocks from the design system (DESIGN.md, Components) ----
-.page-titre { margin: 2px 0 0; font-size: var(--rh-text-2xl); font-weight: var(--rh-weight-strong); letter-spacing: var(--rh-tracking-title); text-wrap: balance; }
-.crumb { margin: 0; color: var(--rh-muted); font-size: var(--rh-text-sm); }
+// ---- Page header: a slim bar, breadcrumb + title left, actions right ----
+.entete {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rh-space-2) var(--rh-space-4);
+  justify-content: space-between;
+  align-items: center;
+  min-height: var(--rh-header-height);
+  padding-bottom: var(--rh-space-3);
+  border-bottom: 1px solid var(--rh-line);
+}
+// The header runs edge to edge across the work area (offsets match .travail padding in shell.scss);
+// page widths apply to what sits below it.
+.page > .entete, app-nom-description-form > .entete { margin: -20px -32px 0; padding: 12px 32px; }
+.page > :not(.entete) { max-width: var(--page-max, var(--rh-content-max)); }
+@media (max-width: 899px) {
+  .page > .entete, app-nom-description-form > .entete { margin: -16px -16px 0; padding: 10px 16px; }
+}
+.entete > div:first-child { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--rh-space-2); min-width: 0; }
+.entete .actions { display: flex; flex-wrap: wrap; gap: var(--rh-space-2); }
+.crumb { color: var(--rh-muted); font-size: var(--rh-text-md); }
+.crumb a { color: var(--rh-muted); text-decoration: none; }
+.crumb a:hover { color: var(--rh-ink); }
+.crumb:not(:empty)::after { content: "›"; margin-left: var(--rh-space-2); color: var(--rh-muted); }
+.page-titre { font: 600 var(--rh-title)/1.25 var(--rh-font); letter-spacing: -0.015em; overflow-wrap: anywhere; }
 
-.panel { background: var(--rh-surface); border: 1px solid var(--rh-line); border-radius: var(--rh-radius-lg); min-width: 0; }
-.panel-h { margin: 0; padding: var(--rh-space-4) var(--rh-space-5); border-bottom: 1px solid var(--rh-line); font-size: var(--rh-text-md); font-weight: var(--rh-weight-strong); }
-.panel-b { padding: var(--rh-space-5); display: grid; gap: var(--rh-space-4); }
-.panel-b > p { margin: 0; }
-.panel-f { padding: var(--rh-space-3) var(--rh-space-5); border-top: 1px solid var(--rh-line); display: flex; flex-wrap: wrap; gap: var(--rh-space-3); justify-content: flex-end; align-items: center; }
+// ---- Panels: flat, hairline, no shadow ----
+.card { background: var(--rh-surface); border: 1px solid var(--rh-line); border-radius: var(--rh-radius); min-width: 0; overflow: hidden; }
+.card-h { display: flex; justify-content: space-between; align-items: center; gap: var(--rh-space-3); min-height: 44px; padding: var(--rh-space-2) var(--rh-space-4); border-bottom: 1px solid var(--rh-line); font-size: var(--rh-text-md); font-weight: 600; }
+.card-h a { font-size: var(--rh-text-sm); font-weight: 500; text-decoration: none; }
+.card-h a:hover { text-decoration: underline; }
+.card-b { padding: var(--rh-space-4); display: grid; gap: var(--rh-space-4); }
+.card-f { display: flex; flex-wrap: wrap; gap: var(--rh-space-3); justify-content: space-between; align-items: center; padding: var(--rh-space-3) var(--rh-space-4); border-top: 1px solid var(--rh-line); color: var(--rh-muted); font-size: var(--rh-text-sm); }
+.card-f .actions { display: flex; flex-wrap: wrap; gap: var(--rh-space-2); margin-left: auto; }
 
+// Rows inside a panel (lists, readings)
+.ligne { display: flex; justify-content: space-between; align-items: center; gap: var(--rh-space-4); min-height: var(--rh-row-height); padding: var(--rh-space-2) var(--rh-space-4); border-bottom: 1px solid var(--rh-line-row); }
+.ligne:last-child { border-bottom: 0; }
+.ligne small { display: block; color: var(--rh-muted); font-size: var(--rh-text-sm); }
+
+// Definition list (record panels)
+.fiche { display: grid; grid-template-columns: 180px minmax(0, 1fr); margin: 0; }
+.fiche dt, .fiche dd { margin: 0; min-height: var(--rh-row-height); padding: 10px var(--rh-space-4); border-bottom: 1px solid var(--rh-line-row); }
+.fiche dt { color: var(--rh-muted); }
+.fiche dd { min-width: 0; overflow-wrap: anywhere; }
+.fiche dt:last-of-type, .fiche dd:last-of-type { border-bottom: 0; }
+@media (max-width: 560px) {
+  .fiche { grid-template-columns: minmax(0, 1fr); }
+  .fiche dt { min-height: 0; border-bottom: 0; padding-bottom: 0; }
+}
+
+// ---- Readings: amounts, balances, calculations (mono, tabular) ----
+.mono { font-family: var(--rh-font-mono); font-variant-numeric: tabular-nums; }
+.lecture { font: 500 var(--rh-text-md) var(--rh-font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lecture .fleche { color: var(--rh-muted); margin: 0 4px; }
+.chiffre { font: 600 var(--rh-figure)/1.1 var(--rh-font-mono); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+td { font-variant-numeric: tabular-nums; }
+td.num, th.num { text-align: right; }
+
+// ---- Text helpers ----
 .hint { color: var(--rh-muted); font-size: var(--rh-text-sm); }
+code { font: 500 var(--rh-text-sm) var(--rh-font-mono); }
 
-// Form-level message (field-level messages use mat-error)
-.alerte { margin: 0; padding: var(--rh-space-3) var(--rh-space-4); border-radius: var(--rh-radius); font-size: var(--rh-text-sm); }
-.alerte.erreur { color: var(--rh-danger); background: var(--rh-danger-soft); }
-.alerte.info { color: var(--rh-ink-2); background: var(--rh-surface-2); }
-.alerte.succes { color: var(--rh-ok); background: var(--rh-ok-soft); }
+// Form-level message (field-level messages sit under each field)
+.alerte { padding: 8px 12px; border: 1px solid currentColor; border-radius: var(--rh-radius-sm); background: var(--rh-surface-2); font-size: var(--rh-text-md); }
+.alerte.erreur { color: var(--rh-danger); }
+.alerte.info { color: var(--rh-ink-2); border-color: var(--rh-line); }
+.alerte.succes { color: var(--rh-ok); }
 
-// Status: dot + word, never colour alone
-.status { display: inline-flex; align-items: center; gap: 6px; font-size: var(--rh-text-sm); font-weight: var(--rh-weight-medium); padding: 2px 8px 2px 7px; border-radius: var(--rh-radius-sm); white-space: nowrap; }
-.status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-.s-ok { color: var(--rh-ok); background: var(--rh-ok-soft); }
-.s-wait { color: var(--rh-wait); background: var(--rh-wait-soft); }
-.s-no { color: var(--rh-danger); background: var(--rh-danger-soft); }
-.s-off { color: var(--rh-neutral); background: var(--rh-neutral-soft); }
-.s-esc { color: var(--rh-escalated); background: var(--rh-escalated-soft); }
+// ---- Status: a dot and a word, no tint ----
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: var(--rh-text-md); font-weight: 500; white-space: nowrap; color: var(--rh-ink-2); }
+.status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--dot, currentColor); }
+.s-ok { --dot: var(--rh-ok); }
+.s-wait { --dot: var(--rh-wait); }
+.s-no { --dot: var(--rh-danger); }
+.s-off, .s-esc { --dot: var(--rh-neutral); }
 
-// Narrow auth forms (login, account links)
-// Routed page hosts are inline by default; in the centred auth layout they must be the 400px column
-app-auth-layout main > :not(router-outlet):not(.brand) { display: block; width: min(400px, 100%); }
-.carte-auth { width: 100%; }
-.carte-auth form { display: grid; gap: var(--rh-space-2); }
-.carte-auth mat-form-field { width: 100%; }
-.carte-auth .liens { display: flex; justify-content: space-between; gap: var(--rh-space-3); font-size: var(--rh-text-sm); }
+// Small neutral tag (role, department, seniority)
+.tag { display: inline-flex; align-items: center; height: 22px; font-size: var(--rh-text-xs); font-weight: 500; padding: 0 8px; border-radius: var(--rh-radius-sm); background: var(--rh-surface-2); border: 1px solid var(--rh-line); color: var(--rh-ink-2); }
+
+// ---- Forms ----
+.champ { display: grid; gap: 6px; min-width: 0; align-content: start; }
+.champ > label { font-size: var(--rh-text-md); font-weight: 500; color: var(--rh-ink-2); }
+.champ .aide { font-size: var(--rh-text-sm); color: var(--rh-muted); }
+.champ .err { font-size: var(--rh-text-sm); color: var(--rh-danger); }
+.champ .p-inputtext, .champ .p-select, .champ .p-datepicker, .champ .p-password, .champ .p-inputnumber, .champ textarea { width: 100%; }
+.champ .p-password-input, .champ .p-inputnumber-input { width: 100%; }
+
+// ---- PrimeNG: buttons ----
+body .p-button {
+  white-space: nowrap;
+  height: var(--rh-control-height);
+  padding: 0 12px;
+  font-size: var(--rh-text-md);
+  font-weight: 500;
+  border-radius: var(--rh-radius-sm);
+  text-decoration: none;
+  box-shadow: none;
+  transition: background var(--rh-fast) var(--rh-ease), border-color var(--rh-fast) var(--rh-ease), color var(--rh-fast) var(--rh-ease);
+}
+a.p-button:hover { text-decoration: none; }
+.p-button.p-button-icon-only { width: var(--rh-control-height); padding: 0; }
+.p-button .p-button-icon { font-size: 13px; }
+.p-button:not(.p-button-secondary):not(.p-button-outlined):not(.p-button-text):not(.p-button-danger) {
+  background: var(--rh-accent);
+  border-color: var(--rh-accent);
+  color: var(--rh-accent-ink);
+}
+.p-button:not(.p-button-secondary):not(.p-button-outlined):not(.p-button-text):not(.p-button-danger):not(:disabled):hover {
+  background: var(--rh-accent-hover);
+  border-color: var(--rh-accent-hover);
+}
+.p-button.p-button-secondary, .p-button.p-button-outlined {
+  background: var(--rh-surface);
+  border: 1px solid var(--rh-line);
+  color: var(--rh-ink);
+}
+.p-button.p-button-secondary:not(:disabled):hover, .p-button.p-button-outlined:not(:disabled):hover { background: var(--rh-surface-2); border-color: var(--rh-line-strong); color: var(--rh-ink); }
+.p-button.p-button-text { background: transparent; border-color: transparent; color: var(--rh-ink-2); }
+.p-button.p-button-text:not(:disabled):hover { background: var(--rh-surface-2); color: var(--rh-ink); }
+.p-button.p-button-danger.p-button-outlined { color: var(--rh-danger); }
+.p-button.p-button-danger.p-button-outlined:not(:disabled):hover { background: var(--rh-surface-2); border-color: var(--rh-danger); color: var(--rh-danger); }
+.p-button.p-button-danger:not(.p-button-outlined) { background: var(--rh-danger); border-color: var(--rh-danger); color: var(--rh-on-danger); }
+
+// ---- PrimeNG: fields at the control height ----
+body :is(.p-inputtext, .p-select-label, .p-datepicker-input, .p-inputnumber-input, .p-password-input) { font-size: var(--rh-text-md); }
+body :is(.p-inputtext:not(textarea), .p-select, .p-datepicker-input, .p-inputnumber-input, .p-password-input) { height: var(--rh-control-height); }
+.p-select { align-items: center; }
+.p-select-label { padding-block: 0; }
+.p-select-overlay, .p-datepicker-panel, .p-popover { border-radius: var(--rh-radius); }
+.p-select-option { font-size: var(--rh-text-md); border-radius: var(--rh-radius-sm); }
+.p-dialog { border-radius: var(--rh-radius-lg); }
+
+// ---- PrimeNG: tables as hairline rows ----
+.p-datatable .p-datatable-thead > tr > th {
+  height: 34px;
+  padding-block: 0;
+  font-size: var(--rh-text-sm);
+  font-weight: 500;
+  color: var(--rh-muted);
+  background: var(--rh-surface);
+  border-color: var(--rh-line);
+}
+.p-datatable .p-datatable-tbody > tr { background: var(--rh-surface); color: var(--rh-ink); transition: background var(--rh-fast) var(--rh-ease); }
+.p-datatable .p-datatable-tbody > tr:hover { background: var(--rh-surface-2); }
+.p-datatable .p-datatable-tbody > tr > td { height: var(--rh-row-height); padding-block: 0; white-space: nowrap; border-color: var(--rh-line-row); }
+.p-datatable .p-datatable-tbody > tr:last-child > td { border-bottom: 0; }
+// Sorted column: the arrow says it, no coloured band
+.p-datatable .p-datatable-thead > tr > th.p-datatable-sortable-column.p-datatable-column-sorted { background: var(--rh-surface); color: var(--rh-ink); }
+.p-datatable .p-datatable-thead > tr > th.p-datatable-sortable-column:not(.p-datatable-column-sorted):hover { background: var(--rh-surface-2); color: var(--rh-ink); }
+.p-datatable .p-datatable-sort-icon { width: 10px; height: 10px; margin-left: 4px; }
+.p-paginator { background: transparent; font-size: var(--rh-text-sm); padding: 6px 12px; }
+.p-paginator .p-paginator-page, .p-paginator .p-paginator-first, .p-paginator .p-paginator-prev, .p-paginator .p-paginator-next, .p-paginator .p-paginator-last { min-width: 28px; height: 28px; border-radius: var(--rh-radius-sm); }
+
+// ---- Touch: controls reach 44px on small screens ----
+@media (max-width: 600px) {
+  .p-button, .p-inputtext:not(textarea), .p-select, .p-datepicker-input, .p-inputnumber-input, .p-password-input { min-height: 44px; }
+}
+
+// ---- Reduced motion: PrimeNG's own overlay animations (scale + fade) are switched off too ----
+@media (prefers-reduced-motion: reduce) {
+  .p-anchored-overlay-enter-active, .p-anchored-overlay-leave-active,
+  .p-overlay-mask-enter-active, .p-overlay-mask-leave-active,
+  .p-connected-overlay-enter-active, .p-connected-overlay-leave-active { animation: none !important; transition: none !important; }
+}

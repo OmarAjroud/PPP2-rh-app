@@ -37,6 +37,6 @@ describe('Routing and guards', () => {
     await harness.navigateByUrl('/security');
     const nav = harness.routeNativeElement?.ownerDocument.querySelector('nav[aria-label="Navigation principale"]');
     expect(nav?.textContent).toContain('Manager');
-    expect(nav?.textContent).toContain('Se déconnecter');
+    expect(nav?.textContent).toContain('Déconnexion');
   });
 });
