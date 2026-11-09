@@ -120,4 +120,10 @@ describe('Access per role', { timeout: 15000 }, () => {
     expect(r.url).toBe('/audit');
     expect(r.nav).toContain('Journal d\'audit');
   });
+  it('opens the HR assistant to every role', async () => {
+    connecter('EMPLOYE');
+    const r = await aller('/assistant');
+    expect(r.url).toBe('/assistant');
+    expect(r.nav).toContain('Assistant');
+  });
 });

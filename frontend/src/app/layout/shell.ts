@@ -20,6 +20,7 @@ function navigation(role: Role): Groupe[] {
       liens: [
         { chemin: '/', libelle: 'Accueil', icone: 'pi-home', exact: true },
         { chemin: '/notifications', libelle: 'Notifications', icone: 'pi-bell' },
+        { chemin: '/assistant', libelle: 'Assistant', icone: 'pi-comments' },
       ],
     },
     {
