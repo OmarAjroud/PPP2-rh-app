@@ -88,4 +88,24 @@ describe('Page des notifications', () => {
     http.expectOne(`${api}/non-lues/nombre`).flush({ nombre: 1 }); // a new one arrived meanwhile: it stays counted
     expect(TestBed.inject(Notifications).nonLues()).toBe(1);
   });
+
+  it('adds a notification that arrives while the page is open', async () => {
+    await harness.navigateByUrl('/notifications');
+    liste(false).flush(page([n()]));
+    harness.detectChanges();
+    TestBed.inject(Notifications).derniere.set(n({ id: 10, titre: 'Nouvelle' }));
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    liste(false).flush(page([n({ id: 10, titre: 'Nouvelle' }), n()]));
+  });
+
+  it('still opens the link when marking it read fails', async () => {
+    await harness.navigateByUrl('/notifications');
+    liste(false).flush(page([n()]));
+    harness.detectChanges();
+    el().querySelector<HTMLButtonElement>('.notif button')!.click();
+    http.expectOne(r => r.method === 'POST' && r.url === `${api}/9/lecture`).flush({ message: 'Erreur' }, { status: 500, statusText: 'Error' });
+    await harness.fixture.whenStable();
+    expect(TestBed.inject(Router).url).toBe('/leave-requests/7');
+  });
 });
