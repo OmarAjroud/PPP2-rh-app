@@ -33,6 +33,8 @@ export class Accueil {
   private readonly moi = inject(Moi);
   protected readonly prenom = computed(() => this.moi.fiche()?.prenom ?? this.auth.profil()?.nomUtilisateur ?? '');
   protected readonly apiUrl = environment.apiUrl;
+  /** Shown when the API does not answer (the production build calls it on the same origin). */
+  protected readonly adresseApi = environment.apiUrl || 'l’API';
   protected readonly etat = signal<EtatApi>('verification');
   protected readonly aujourdhui = new Date();
   protected readonly statutDemande = statutDemande;

@@ -1,7 +1,7 @@
-// Production build. Set apiUrl to the deployed API (Render, Oracle VM…) before building;
-// that origin must also be listed in the backend's CORS_ALLOWED_ORIGINS.
+// Production build (Docker image): the API is reached on the same origin, nginx forwards /api and
+// /actuator to the backend (frontend/nginx.conf). No CORS needed, and the SSE stream goes through as is.
 export const environment = {
-  apiUrl: 'http://localhost:8080',
-  /** Show the demo accounts on the login page (only when the backend seeds them: SEED_TEST_ACCOUNTS=true). */
-  comptesDemo: true,
+  apiUrl: '',
+  /** Never print demo accounts and their password in a production build (the dev server does, see environment.development.ts). */
+  comptesDemo: false,
 };

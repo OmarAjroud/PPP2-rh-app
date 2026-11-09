@@ -1,5 +1,6 @@
 # Intégration continue : à chaque push sur main et à chaque pull request, on compile, on lance tous les tests
-# (unitaires + intégration avec une vraie base MySQL via Testcontainers) et on vérifie que l'image Docker se construit.
+# (back-end : unitaires + intégration avec une vraie base MySQL via Testcontainers ; front-end : Vitest, contraste,
+# build de production) et on vérifie que les images Docker se construisent.
 name: CI
 
 on:
@@ -45,14 +46,46 @@ jobs:
             backend/target/failsafe-reports/
           retention-days: 7
 
+  frontend:
+    name: Front-end – tests et build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      NG_CLI_ANALYTICS: "false"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Dépendances (npm ci)
+        run: npm ci --no-audit --no-fund
+
+      - name: Contraste des couleurs (WCAG AA, deux thèmes)
+        run: npm run check:contraste
+
+      - name: Tests (Vitest)
+        run: npx ng test --watch=false
+
+      - name: Build de production
+        run: npx ng build --configuration production
+
   docker:
-    name: Back-end – image Docker
+    name: Images Docker (back-end, front-end)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Construction de l'image
+      - name: Construction de l'image du back-end
         run: docker build -t rh-backend:ci backend
+      - name: Construction de l'image du front-end
+        run: docker build -t rh-frontend:ci frontend
       - name: Configuration docker compose valide
         run: |
           cp .env.example .env

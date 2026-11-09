@@ -1,9 +1,10 @@
-# Application complète : MySQL + Mailpit + back-end (+ Ollama en option).
+# Application complète : MySQL + Mailpit + back-end + front-end (+ Ollama en option).
 #
 #   cp .env.example .env        # puis renseigner JWT_SECRET (voir le fichier)
 #   docker compose up -d --build
 #
-# Le back-end répond sur http://localhost:8080 (Swagger : /swagger-ui.html si SWAGGER_ENABLED=true),
+# L'application s'ouvre sur http://localhost:4200 (le front-end transmet /api au back-end, même origine).
+# Le back-end répond aussi directement sur http://localhost:8080 (Swagger : /swagger-ui.html si SWAGGER_ENABLED=true),
 # les emails envoyés sont visibles sur http://localhost:8025.
 # Assistant RH : utilise par défaut l'Ollama installé sur la machine ; pour le lancer aussi dans Docker :
 #   docker compose --profile ollama up -d --build   (et OLLAMA_URL=http://ollama:11434 dans .env)
@@ -65,6 +66,15 @@ services:
       - "host.docker.internal:host-gateway"   # sous Linux : accès à l'Ollama installé sur la machine
     ports:
       - "${BACKEND_PORT:-8080}:8080"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-4200}:8080"   # nginx sans privilèges ; /api et /actuator/health vont au back-end
     restart: unless-stopped
 
   # ---------- Optionnel : Ollama dans Docker (docker compose --profile ollama up -d) ----------

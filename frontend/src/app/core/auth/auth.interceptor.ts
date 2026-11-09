@@ -9,6 +9,16 @@ const AUTH = `${environment.apiUrl}/api/auth/`;
 /** Auth endpoints whose 401 means "wrong credentials or token", never "renew and retry". */
 const SANS_RENOUVELLEMENT = ['login', 'refresh', 'logout', 'activation', 'mot-de-passe-oublie', 'reinitialisation'];
 
+/**
+ * Whether a request goes to our API (and so may carry the token). With an absolute API address (dev server)
+ * the origin must match exactly; with the same-origin API (production behind nginx, apiUrl '') only our own
+ * /api and /actuator paths qualify, never another site.
+ */
+export function versApi(url: string, base: string = environment.apiUrl): boolean {
+  if (base) return url === base || url.startsWith(base + '/');
+  return url.startsWith('/api/') || url.startsWith('/actuator/');
+}
+
 function avecJeton(req: HttpRequest<unknown>, jeton: string | null): HttpRequest<unknown> {
   return jeton ? req.clone({ setHeaders: { Authorization: `Bearer ${jeton}` } }) : req;
 }
@@ -18,7 +28,7 @@ function avecJeton(req: HttpRequest<unknown>, jeton: string | null): HttpRequest
  * when renewal fails the user is sent to the login page, back to where they were afterwards.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  if (!req.url.startsWith(environment.apiUrl)) return next(req);
+  if (!versApi(req.url)) return next(req);
   const auth = inject(AuthService);
   const router = inject(Router);
   const renouvelable = !SANS_RENOUVELLEMENT.some(p => req.url === AUTH + p);

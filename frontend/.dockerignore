@@ -1,0 +1,9 @@
+# Only what the build needs is sent to Docker
+node_modules/
+dist/
+.angular/
+.vscode/
+.idea/
+*.log
+Dockerfile
+.dockerignore
