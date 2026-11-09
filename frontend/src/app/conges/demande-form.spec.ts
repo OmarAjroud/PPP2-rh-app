@@ -105,4 +105,31 @@ describe('Nouvelle demande de congé', () => {
     expect(texte()).toMatch(/25s*→s*20/);
     expect(texte()).toContain('2100');
   });
+
+  it('blocks a period without any working day, and says why', async () => {
+    await ouvrir();
+    form.form.setValue({ typeCongeId: 1, dateDebut: new Date(2099, 11, 19), dateFin: new Date(2099, 11, 20), commentaire: '' });
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    http.match(r => r.url === `${api}/conges/soldes/moi`).forEach(r => r.flush([]));
+    http.expectOne(r => r.url === `${api}/conges/demandes/jours-ouvrables`).flush({ dateDebut: '2099-12-19', dateFin: '2099-12-20', joursOuvrables: 0, joursCalendaires: 2 });
+    harness.detectChanges();
+    expect(texte()).toContain('Aucun jour ouvrable');
+    (harness.routeNativeElement!.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+    http.expectNone(r => r.method === 'POST');
+  });
+
+  it('shows the server message under the field it concerns', async () => {
+    await ouvrir();
+    form.form.setValue({ typeCongeId: 1, dateDebut: new Date(2099, 11, 14), dateFin: new Date(2099, 11, 18), commentaire: '' });
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    http.expectOne(r => r.url === `${api}/conges/demandes/jours-ouvrables`).flush({ dateDebut: '2099-12-14', dateFin: '2099-12-18', joursOuvrables: 4, joursCalendaires: 5 });
+    harness.detectChanges();
+    (harness.routeNativeElement!.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+    http.expectOne(r => r.method === 'POST').flush({ message: 'Données invalides', erreursChamps: { commentaire: 'Le commentaire ne doit pas dépasser 500 caractères' } }, { status: 400, statusText: 'Bad Request' });
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+    expect(texte()).toContain('Le commentaire ne doit pas dépasser 500 caractères');
+  });
 });

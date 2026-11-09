@@ -1,7 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { firstValueFrom, Observable } from 'rxjs';
+import { catchError, firstValueFrom, map, Observable, of, switchMap } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
 import { RhApi } from '../core/api/rh-api';
@@ -12,6 +13,7 @@ import { AuthService } from '../core/auth/auth.service';
 import { Apparition } from '../core/motion/motion';
 import { dateIso, peutAnnuler, peutInterrompre } from './regles';
 
+type Chargement = { d?: DemandeConge; erreur?: string };
 type Action = 'annuler' | 'approuver' | 'refuser' | 'interrompre';
 
 /**
@@ -63,7 +65,7 @@ type Action = 'annuler' | 'approuver' | 'refuser' | 'interrompre';
                   <dt>Le</dt><dd>{{ d.dateDecision | date: 'd MMMM y, HH:mm' }}</dd>
                 }
                 @if (d.motifDecision) { <dt>{{ d.statut === 'REFUSEE' ? 'Motif' : 'Commentaire' }}</dt><dd>{{ d.motifDecision }}</dd> }
-                @if (d.dateEscalade) { <dt>Transmise aux RH</dt><dd>{{ d.dateEscalade | date: 'd MMMM y' }}<span class="hint"> · sans décision du manager</span></dd> }
+                @if (d.dateEscalade) { <dt>Transmise aux RH</dt><dd>{{ d.dateEscalade | date: 'd MMMM y' }}</dd> }
                 @if (d.motifInterruption) { <dt>Interrompu</dt><dd>{{ d.motifInterruption }}</dd> }
                 @if (d.statut === 'EN_ATTENTE' && !d.dateEscalade) { <dt>Qui décide</dt><dd>À traiter par le manager<span class="hint"> · transmise aux RH sans réponse sous 3 jours</span></dd> }
               </dl>
@@ -155,14 +157,17 @@ export class DemandeDetail {
   });
 
   constructor() {
-    inject(ActivatedRoute).paramMap.subscribe(p => {
-      this.demande.set(null);
-      this.erreurChargement.set('');
-      this.api.demande(Number(p.get('id'))).subscribe({
-        next: d => this.demande.set(d),
-        error: e => this.erreurChargement.set(messageErreur(e)),
-      });
-    });
+    // switchMap: a slow answer for a previous id can never replace the current request
+    inject(ActivatedRoute).paramMap.pipe(
+      switchMap(p => {
+        this.demande.set(null);
+        this.erreurChargement.set('');
+        const id = Number(p.get('id'));
+        if (!Number.isInteger(id) || id <= 0) return of<Chargement>({ erreur: 'Demande introuvable.' });
+        return this.api.demande(id).pipe(map((d): Chargement => ({ d })), catchError(e => of<Chargement>({ erreur: messageErreur(e) })));
+      }),
+      takeUntilDestroyed(),
+    ).subscribe(r => (r.d ? this.demande.set(r.d) : this.erreurChargement.set(r.erreur ?? '')));
   }
 
   protected async agir(action: Action): Promise<void> {

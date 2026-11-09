@@ -32,9 +32,9 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; page: PageReponse<Demande
 
       <section class="liste">
         <div class="barre">
-          <nav class="onglets" role="tablist" aria-label="Vues">
+          <nav class="onglets" aria-label="Vues">
             @for (o of onglets(); track o.vue) {
-              <a role="tab" [attr.aria-selected]="vue() === o.vue" [routerLink]="[]" [queryParams]="{ vue: o.vue === 'a-decider' ? null : o.vue }">{{ o.libelle }}</a>
+              <a [attr.aria-current]="vue() === o.vue ? 'page' : null" [routerLink]="[]" [queryParams]="{ vue: o.vue === 'a-decider' ? null : o.vue }" (click)="erreurAction.set('')">{{ o.libelle }}</a>
             }
           </nav>
           @if (vue() !== 'a-decider') {
@@ -67,7 +67,7 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; page: PageReponse<Demande
               <div class="vide">
                 @if (vue() === 'a-decider') {
                   <p><strong>Rien à décider pour l'instant.</strong></p>
-                  <p class="hint">Les nouvelles demandes de votre équipe apparaîtront ici.</p>
+                  <p class="hint">Les nouvelles demandes à traiter apparaîtront ici.</p>
                 } @else {
                   <p><strong>Aucune demande{{ statut() ? ' avec ce statut' : '' }}.</strong></p>
                 }
@@ -88,7 +88,7 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; page: PageReponse<Demande
     .onglets { display: flex; gap: var(--rh-space-1); }
     .onglets a { padding: 6px 12px; border-radius: var(--rh-radius-sm); color: var(--rh-muted); font-weight: 500; text-decoration: none; }
     .onglets a:hover { color: var(--rh-ink); background: var(--rh-surface-2); }
-    .onglets a[aria-selected="true"] { color: var(--rh-ink); background: var(--rh-surface-3); }
+    .onglets a[aria-current="page"] { color: var(--rh-ink); background: var(--rh-surface-3); }
     .barre p-select { flex: 0 1 220px; }
     .demande { padding-inline: var(--rh-space-2); }
     .quoi { flex: 1; min-width: 0; color: var(--rh-ink); text-decoration: none; }
@@ -163,7 +163,10 @@ export class ADecider {
     this.erreurAction.set('');
     try {
       await firstValueFrom(this.api.validerDemande(id));
-      this.recharge$.next();
+      // The last request of a later page was decided: go back one page instead of showing an empty one
+      const e = this.etat();
+      if (e.statut === 'ok' && e.page.contenu.length === 1 && this.page() > 0) this.paginer({ page: this.page() - 1 });
+      else this.recharge$.next();
     } catch (e) {
       this.erreurAction.set(messageErreur(e));
     } finally {

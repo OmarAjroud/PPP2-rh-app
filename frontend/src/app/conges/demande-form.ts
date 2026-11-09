@@ -38,25 +38,26 @@ type Calcul = { statut: 'calcul' } | { statut: 'ok'; j: JoursOuvrables } | { sta
             <div class="champ">
               <label for="type">Type de congé</label>
               <p-select inputId="type" formControlName="typeCongeId" [options]="types()" optionLabel="libelle" optionValue="id" placeholder="Choisir" />
-              @if (invalide('typeCongeId')) { <span class="err">Choisissez un type de congé.</span> }
+              @if (invalide('typeCongeId')) { <span class="err">{{ messageChamp('typeCongeId', 'Choisissez un type de congé.') }}</span> }
             </div>
             <div class="dates">
               <div class="champ">
                 <label for="debut">Premier jour</label>
                 <p-datepicker inputId="debut" formControlName="dateDebut" [showIcon]="true" iconDisplay="input" dateFormat="dd/mm/yy" placeholder="jj/mm/aaaa" />
-                @if (invalide('dateDebut')) { <span class="err">Indiquez le premier jour.</span> }
+                @if (invalide('dateDebut')) { <span class="err">{{ messageChamp('dateDebut', 'Indiquez le premier jour.') }}</span> }
               </div>
               <div class="champ">
                 <label for="fin">Dernier jour</label>
                 <p-datepicker inputId="fin" formControlName="dateFin" [showIcon]="true" iconDisplay="input" dateFormat="dd/mm/yy" placeholder="jj/mm/aaaa" />
-                @if (invalide('dateFin')) { <span class="err">Indiquez le dernier jour.</span> }
+                @if (invalide('dateFin')) { <span class="err">{{ messageChamp('dateFin', 'Indiquez le dernier jour.') }}</span> }
               </div>
             </div>
             @if (probleme()) { <p class="alerte erreur" role="alert">{{ probleme() }}</p> }
             <div class="champ">
               <label for="commentaire">Commentaire</label>
               <textarea pTextarea id="commentaire" formControlName="commentaire" rows="3" maxlength="500"></textarea>
-              <span class="aide">Facultatif. Visible de la personne qui décide.</span>
+              @if (invalide('commentaire')) { <span class="err">{{ messageChamp('commentaire', '500 caractères au plus.') }}</span> }
+              @else { <span class="aide">Facultatif. Visible de la personne qui décide.</span> }
             </div>
           </div>
           <div class="card-f">
@@ -78,6 +79,9 @@ type Calcul = { statut: 'calcul' } | { statut: 'ok'; j: JoursOuvrables } | { sta
               <div class="ligne"><span>Jours calendaires</span><span class="lecture">{{ j.joursCalendaires }}</span></div>
               <div class="ligne"><span>Week-ends et jours fériés</span><span class="lecture">− {{ j.joursCalendaires - j.joursOuvrables }}</span></div>
               <div class="ligne total"><span><b>{{ jours(j.joursOuvrables) }} ouvrables</b></span><span class="lecture">{{ j.joursOuvrables }}</span></div>
+              @if (aucunJour()) {
+                <p class="vide alerte erreur" role="alert">Aucun jour ouvrable sur cette période (week-end ou jours fériés) : choisissez d’autres dates.</p>
+              }
               @if (solde(); as s) {
                 <div class="ligne">
                   <span>Solde {{ s.typeCongeLibelle }} {{ s.annee }}<small>disponible → après cette demande</small></span>
@@ -184,6 +188,9 @@ export class DemandeForm {
     { initialValue: null as Calcul | null },
   );
 
+  /** The period has no working day: the API would refuse it. */
+  protected readonly aucunJour = computed(() => { const c = this.calcul(); return c?.statut === 'ok' && c.j.joursOuvrables === 0; });
+
   protected readonly apres = computed(() => {
     const c = this.calcul(), s = this.solde();
     return c?.statut === 'ok' && s ? soldeApres(s, c.j.joursOuvrables) : null;
@@ -198,6 +205,11 @@ export class DemandeForm {
   protected readonly envoi = signal(false);
   protected readonly erreur = signal('');
 
+  /** The server's message for a field (key "serveur", see appliquerErreursChamps), else the default one. */
+  protected messageChamp(champ: keyof typeof this.form.controls, defaut: string): string {
+    return (this.form.controls[champ].errors?.['serveur'] as string | undefined) ?? defaut;
+  }
+
   protected invalide(champ: keyof typeof this.form.controls): boolean {
     const c = this.form.controls[champ];
     return c.invalid && (c.touched || c.dirty);
@@ -205,7 +217,7 @@ export class DemandeForm {
 
   protected async envoyer(): Promise<void> {
     if (this.envoi()) return;
-    if (this.form.invalid || this.probleme()) {
+    if (this.form.invalid || this.probleme() || this.aucunJour()) {
       this.form.markAllAsTouched();
       return;
     }
