@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   Compte, Departement, DepartementDetail, Employe, EmployeDetail, EmployeRequest,
-  DemandeConge, DemandeCongeRequest, JoursOuvrables, NomDescription, Notification, TableauDeBord, AuditEntree, PageReponse, Role, Solde, StatutDemande, TypeConge,
+  DemandeConge, DemandeCongeRequest, JoursOuvrables, NomDescription, Notification, TableauDeBord, AuditEntree, StatutAssistant, ReponseAssistant, PageReponse, Role, Solde, StatutDemande, TypeConge,
 } from './models';
 
 export interface RechercheAudit {
@@ -126,6 +126,13 @@ export class RhApi {
   }
   actionsAudit(): Observable<string[]> { return this.http.get<string[]>(`${this.api}/admin/audit/actions`); }
   entitesAudit(): Observable<string[]> { return this.http.get<string[]>(`${this.api}/admin/audit/entites`); }
+
+  // ---- HR assistant ----
+  statutAssistant(): Observable<StatutAssistant> { return this.http.get<StatutAssistant>(`${this.api}/assistant/statut`); }
+  /** The API keeps no history: the whole conversation is sent, the new question last. */
+  questionAssistant(messages: { role: 'utilisateur' | 'assistant'; contenu: string }[]): Observable<ReponseAssistant> {
+    return this.http.post<ReponseAssistant>(`${this.api}/assistant/chat`, { messages });
+  }
 
   // ---- Roles ----
   roles(): Observable<Role[]> { return this.http.get<Role[]>(`${this.api}/roles`); }

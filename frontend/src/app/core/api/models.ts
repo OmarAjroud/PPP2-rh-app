@@ -179,3 +179,16 @@ export interface AuditEntree {
   details: string | null;
   adresseIp: string | null;
 }
+
+export interface StatutAssistant {
+  moteur: string;
+  modele: string;
+  disponible: boolean;
+  outils: string[];
+}
+
+export interface ReponseAssistant {
+  reponse: string;
+  /** HR tools the assistant called to answer, in order. */
+  outilsUtilises: string[];
+}
