@@ -18,7 +18,7 @@
   @if (etat() === 'DOWN' || etat() === 'injoignable') {
     <div class="alerte erreur serveur" role="alert">
       @if (etat() === 'DOWN') { Le serveur répond mais signale un problème (base de données ?). }
-      @else { Aucune réponse de {{ apiUrl }}. Lancez le back-end (<code>docker compose up -d</code> à la racine du dépôt), puis réessayez. }
+      @else { Aucune réponse de {{ adresseApi }}. Lancez le back-end (<code>docker compose up -d</code> à la racine du dépôt), puis réessayez. }
       <p-button label="Réessayer" severity="secondary" (onClick)="verifier()" />
     </div>
   }
