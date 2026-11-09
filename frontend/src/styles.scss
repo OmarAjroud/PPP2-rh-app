@@ -27,10 +27,13 @@ p { margin: 0; }
 }
 // The header runs edge to edge across the work area (offsets match .travail padding in shell.scss);
 // page widths apply to what sits below it.
-.page > .entete, app-nom-description-form > .entete { margin: -24px -36px 0; padding: 14px 36px; }
+.page > .entete, app-nom-description-form > .entete {
+  margin: calc(-1 * var(--travail-pad-y, 24px)) calc(-1 * var(--travail-pad-x, 36px)) 0;
+  padding: 14px var(--travail-pad-x, 36px);
+}
 .page > :not(.entete) { max-width: var(--page-max, var(--rh-content-max)); }
 @media (max-width: 899px) {
-  .page > .entete, app-nom-description-form > .entete { margin: -16px -16px 0; padding: 10px 16px; }
+  .page > .entete, app-nom-description-form > .entete { padding-block: 10px; }
 }
 .entete > div:first-child { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--rh-space-2); min-width: 0; }
 .entete .actions { display: flex; flex-wrap: wrap; gap: var(--rh-space-2); }
@@ -171,6 +174,7 @@ body :is(.p-inputtext:not(textarea), .p-select, .p-datepicker-input, .p-inputnum
 // ---- Touch: controls reach 44px on small screens ----
 @media (max-width: 600px) {
   .p-button, .p-inputtext:not(textarea), .p-select, .p-datepicker-input, .p-inputnumber-input, .p-password-input { min-height: 44px; }
+  .p-button.p-button-icon-only { min-width: 44px; }
 }
 
 // ---- Reduced motion: PrimeNG's own overlay animations (scale + fade) are switched off too ----

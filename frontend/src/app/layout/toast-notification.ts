@@ -1,4 +1,4 @@
-import { Component, effect, inject, untracked } from '@angular/core';
+import { Component, effect, inject, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import { RhApi } from '../core/api/rh-api';
 import { Notifications } from '../core/notifications/notifications';
@@ -11,7 +11,7 @@ const DUREE = 8_000;
   template: `
     <div class="zone" role="status" aria-live="polite">
       @if (notifs.derniere(); as n) {
-        <div class="toast">
+        <div class="toast" (mouseenter)="survol.set(true)" (mouseleave)="survol.set(false)" (focusin)="survol.set(true)" (focusout)="survol.set(false)">
           <i class="pi pi-bell" aria-hidden="true"></i>
           <div class="texte">
             <b>{{ n.titre }}</b>
@@ -56,12 +56,13 @@ export class ToastNotification {
   protected readonly notifs = inject(Notifications);
   private readonly api = inject(RhApi);
   private readonly router = inject(Router);
+  protected readonly survol = signal(false);
 
   constructor() {
-    // Each new notification restarts the 8-second timer
+    // Each new notification restarts the 8-second timer; it pauses while the pointer or keyboard focus is on the toast
     effect(onCleanup => {
       const n = this.notifs.derniere();
-      if (!n) return;
+      if (!n || this.survol()) return;
       const t = setTimeout(() => untracked(() => { if (this.notifs.derniere() === n) this.notifs.fermerToast(); }), DUREE);
       onCleanup(() => clearTimeout(t));
     });

@@ -77,4 +77,16 @@ describe('Mes congés', () => {
     harness.detectChanges();
     expect([...harness.routeNativeElement!.querySelectorAll('button')].some(b => b.textContent?.trim() === 'Annuler')).toBe(false);
   });
+
+  it('moves focus to « Confirmer » when « Annuler » is pressed, so keyboard users keep their place', async () => {
+    await harness.navigateByUrl('/leave-requests');
+    flushSoldes();
+    http.expectOne(r => r.url === `${api}/demandes/moi`).flush(page([demande({})]));
+    harness.detectChanges();
+    const el = harness.routeNativeElement!;
+    [...el.querySelectorAll('button')].find(b => b.textContent?.trim() === 'Annuler')!.click();
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    expect(document.activeElement?.textContent?.trim()).toBe('Confirmer');
+  });
 });

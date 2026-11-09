@@ -77,4 +77,14 @@ describe('Tableau de bord', () => {
     expect(el().querySelector('[aria-label="Filtrer par département"]')).toBeNull();
     expect(texte()).not.toContain('Masse salariale');
   });
+
+  it('shows a year from the address even when it is not among the three offered, and dates the tiles', async () => {
+    await ouvrir('RH', '/dashboard?annee=2019');
+    http.match(`${api}/departements`).forEach(r => r.flush([]));
+    charger().flush(donnees({ annee: 2019 }));
+    harness.detectChanges();
+    const cmp = harness.routeDebugElement!.componentInstance as { annees(): { value: number }[] };
+    expect(cmp.annees().map(a => a.value)).toContain(2019);
+    expect(texte()).toContain('à ce jour');
+  });
 });

@@ -48,7 +48,7 @@
               <td>
                 <a class="personne" [routerLink]="['/employees', e.id]">
                   <span class="avatar" aria-hidden="true">{{ initiales(e.prenom, e.nom) }}</span>
-                  <span class="qui"><b>{{ e.prenom }} {{ e.nom }}</b><small>{{ e.email }}</small><small class="meta">{{ e.departementNom }} · {{ libelleRole(e.roleNom) }}</small></span>
+                  <span class="qui"><b [title]="e.prenom + ' ' + e.nom">{{ e.prenom }} {{ e.nom }}</b><small [title]="e.email">{{ e.email }}</small><small class="meta">{{ e.departementNom }} · {{ libelleRole(e.roleNom) }}</small></span>
                 </a>
               </td>
               <td class="discret">{{ e.departementNom }}</td>

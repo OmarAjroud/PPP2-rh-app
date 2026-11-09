@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -141,6 +141,16 @@ export class NotificationsPage {
   protected readonly occupe = signal(false);
   protected readonly erreur = signal('');
 
+  constructor() {
+    // A notification pushed while the page is open joins the list (the first run is the current state, skipped)
+    let premiere = true;
+    effect(() => {
+      const n = this.notifs.derniere();
+      if (premiere) { premiere = false; return; }
+      if (n) untracked(() => this.recharge$.next());
+    });
+  }
+
   protected icone(n: Notification): string {
     return ICONES[n.type] ?? 'pi-bell';
   }
@@ -157,8 +167,8 @@ export class NotificationsPage {
         this.luesIci.update(s => new Set(s).add(n.id));
         this.notifs.resynchroniser();
       } catch (e) {
+        // Marking it read failed: say so, but still open what the person asked for
         this.erreur.set(messageErreur(e));
-        return;
       }
     }
     if (n.lien) await this.router.navigateByUrl(n.lien);

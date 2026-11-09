@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, Injector, afterNextRender, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -64,9 +64,9 @@ export const FILTRES_STATUT: { label: string; value: StatutDemande | null }[] = 
                       @if (aConfirmer() === d.id) {
                         <span class="hint">Annuler cette demande ?</span>
                         <p-button label="Non" severity="secondary" (onClick)="aConfirmer.set(null)" />
-                        <p-button label="Confirmer" severity="danger" [loading]="occupe()" (onClick)="annuler(d.id)" />
+                        <p-button label="Confirmer" severity="danger" styleClass="confirmer" [loading]="occupe()" (onClick)="annuler(d.id)" />
                       } @else {
-                        <p-button label="Annuler" severity="secondary" (onClick)="aConfirmer.set(d.id)" />
+                        <p-button label="Annuler" severity="secondary" (onClick)="demanderConfirmation(d.id)" />
                       }
                     }
                   </div>
@@ -120,6 +120,8 @@ export class MesConges {
   private readonly api = inject(RhApi);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly hote = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
   private readonly recharge$ = new BehaviorSubject<void>(undefined);
 
   protected readonly filtres = FILTRES_STATUT;
@@ -160,6 +162,12 @@ export class MesConges {
 
   protected paginer(e: PaginatorState): void {
     void this.router.navigate([], { queryParams: { page: e.page || null }, queryParamsHandling: 'merge' });
+  }
+
+  /** The pressed button disappears: focus goes to « Confirmer » so keyboard users keep their place. */
+  protected demanderConfirmation(id: number): void {
+    this.aConfirmer.set(id);
+    afterNextRender(() => this.hote.nativeElement.querySelector<HTMLButtonElement>('button.confirmer')?.focus(), { injector: this.injector });
   }
 
   protected async annuler(id: number): Promise<void> {

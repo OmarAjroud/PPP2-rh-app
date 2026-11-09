@@ -1,12 +1,12 @@
 import { AfterViewChecked, Component, ElementRef, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { catchError, map, of } from 'rxjs';
+import { BehaviorSubject, catchError, map, of, startWith, switchMap } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
 import { RhApi } from '../core/api/rh-api';
 import { AuthService } from '../core/auth/auth.service';
 import { Apparition } from '../core/motion/motion';
-import { Conversation, LIMITE_CARACTERES } from './conversation';
+import { Conversation, LIMITE_CARACTERES, LIMITE_MESSAGES } from './conversation';
 
 type Statut = 'verification' | 'disponible' | 'indisponible';
 
@@ -42,7 +42,7 @@ const EXEMPLES_DECIDEUR = [
     <div class="page" rhApparition>
       <header class="entete">
         <div><h1 class="page-titre">Assistant RH</h1></div>
-        @if (conv.messages().length) {
+        @if (conv.messages().length && statut() === 'disponible') {
           <p-button label="Nouvelle conversation" severity="secondary" icon="pi pi-plus" [disabled]="conv.enCours()" (onClick)="nouvelle()" />
         }
       </header>
@@ -53,10 +53,13 @@ const EXEMPLES_DECIDEUR = [
           <div class="indisponible">
             <p><strong>L’assistant n’est pas disponible pour le moment.</strong></p>
             <p class="hint">Le moteur de réponses ne répond pas. Réessayez plus tard ; le reste de l’application fonctionne normalement.</p>
+            <p><p-button label="Réessayer" severity="secondary" icon="pi pi-refresh" (onClick)="verifier()" /></p>
           </div>
         }
         @case ('disponible') {
-          <section class="fil" #fil aria-label="Conversation" aria-live="polite">
+          <!-- Only the latest answer is announced (a live region on the whole thread would re-read it all) -->
+          <p class="annonce sr-only" aria-live="polite">{{ annonce() }}</p>
+          <section class="fil" #fil aria-label="Conversation">
             @for (m of conv.messages(); track $index) {
               <article class="message" [class.assistant]="m.role === 'assistant'" [class.utilisateur]="m.role === 'utilisateur'">
                 <span class="auteur">{{ m.role === 'assistant' ? 'Assistant' : 'Vous' }}</span>
@@ -75,14 +78,14 @@ const EXEMPLES_DECIDEUR = [
               </div>
             }
             @if (conv.enCours()) {
-              <div class="attente"><p role="status"><span class="points" aria-hidden="true"></span>L’assistant réfléchit…</p><p-button label="Annuler" severity="secondary" [text]="true" size="small" (onClick)="annuler()" /></div>
+              <div class="attente"><p><span class="points" aria-hidden="true"></span>L’assistant réfléchit…</p><p-button label="Annuler" severity="secondary" [text]="true" size="small" (onClick)="annuler()" /></div>
             }
           </section>
 
           <form class="saisie" (submit)="$event.preventDefault(); envoyer()">
             @if (conv.erreur()) { <p class="alerte erreur" role="alert">{{ conv.erreur() }}</p> }
             @if (conv.pleine()) {
-              <p class="alerte info">La conversation a atteint 20 messages : commencez une nouvelle conversation pour continuer.</p>
+              <p class="alerte info" role="status">La conversation a atteint {{ limiteMessages }} messages : commencez une nouvelle conversation pour continuer.</p>
             }
             <div class="ligne-saisie">
               <textarea pTextarea #champ rows="2" [maxlength]="limite" [value]="question()" (input)="question.set($any($event.target).value)"
@@ -121,6 +124,7 @@ const EXEMPLES_DECIDEUR = [
     .ligne-saisie textarea { flex: 1; resize: none; max-height: 200px; }
     .aide { font-size: var(--rh-text-sm); }
     @media (max-width: 600px) { .message { max-width: 100%; } }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   `,
 })
 export class AssistantPage implements AfterViewChecked {
@@ -132,10 +136,22 @@ export class AssistantPage implements AfterViewChecked {
   private readonly champ = viewChild<ElementRef<HTMLTextAreaElement>>('champ');
   private dernierNombre = -1;
 
+  private readonly verification$ = new BehaviorSubject<void>(undefined);
   protected readonly statut = toSignal(
-    this.api.statutAssistant().pipe(map((s): Statut => (s.disponible ? 'disponible' : 'indisponible')), catchError(() => of<Statut>('indisponible'))),
+    this.verification$.pipe(switchMap(() => this.api.statutAssistant().pipe(
+      map((s): Statut => (s.disponible ? 'disponible' : 'indisponible')),
+      catchError(() => of<Statut>('indisponible')),
+      startWith<Statut>('verification'),
+    ))),
     { initialValue: 'verification' as Statut },
   );
+  protected readonly limiteMessages = LIMITE_MESSAGES;
+  /** Text of the live region: the latest answer, or the waiting state. */
+  protected readonly annonce = computed(() => {
+    if (this.conv.enCours()) return 'L’assistant réfléchit…';
+    const dernier = this.conv.messages().at(-1);
+    return dernier?.role === 'assistant' ? `Réponse de l’assistant : ${dernier.contenu}` : '';
+  });
   protected readonly exemples = computed(() => (this.auth.profil()?.role === 'EMPLOYE' ? EXEMPLES_EMPLOYE : EXEMPLES_DECIDEUR));
   protected readonly question = signal('');
   protected readonly peutEnvoyer = computed(() => !!this.question().trim() && !this.conv.enCours() && !this.conv.pleine());
@@ -158,8 +174,14 @@ export class AssistantPage implements AfterViewChecked {
     const fil = this.fil()?.nativeElement;
     if (fil && n !== this.dernierNombre) {
       this.dernierNombre = n;
-      fil.lastElementChild?.scrollIntoView?.({ block: 'end' });
+      // A new answer is read from its start; a question or the waiting line just needs to be visible
+      const dernier = this.conv.messages().at(-1);
+      fil.lastElementChild?.scrollIntoView?.({ block: dernier?.role === 'assistant' && !this.conv.enCours() ? 'start' : 'end' });
     }
+  }
+
+  protected verifier(): void {
+    this.verification$.next();
   }
 
   protected libelleOutil(nom: string): string {

@@ -50,4 +50,17 @@ describe('Toast de notification', () => {
     expect(service.nonLues()).toBe(2);
     expect(service.derniere()).toBeNull();
   });
+
+  it('stays open while the pointer or keyboard focus is on it', async () => {
+    const el = afficher();
+    const toast = el.querySelector('.toast')!;
+    toast.dispatchEvent(new Event('mouseenter'));
+    fixture.detectChanges(); // effects run after the event, as in the app
+    vi.advanceTimersByTime(20_000);
+    expect(service.derniere()).not.toBeNull();
+    toast.dispatchEvent(new Event('mouseleave'));
+    fixture.detectChanges();
+    vi.advanceTimersByTime(8000);
+    expect(service.derniere()).toBeNull();
+  });
 });

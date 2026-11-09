@@ -88,4 +88,41 @@ describe('Journal d’audit', () => {
     expect(el().querySelector('.detail')!.textContent).toContain('Connexion réussie');
     expect(el().querySelector('.detail table')).toBeNull();
   });
+
+  it('never sends a period that ends before it starts', async () => {
+    await harness.navigateByUrl('/audit?au=2026-11-01');
+    listes();
+    http.expectOne(r => r.url === api).flush(page([]));
+    const cmp = harness.routeDebugElement!.componentInstance as { filtrer(f: Record<string, string | null>): void };
+    cmp.filtrer({ du: '2026-11-05' });
+    await harness.fixture.whenStable();
+    const req = http.expectOne(r => r.url === api);
+    expect(req.request.params.get('du')).toBe('2026-11-05');
+    expect(req.request.params.has('au')).toBe(false);
+  });
+
+  it('keeps the user search box in step with the address (back and forward)', async () => {
+    await harness.navigateByUrl('/audit?utilisateur=rh');
+    listes();
+    http.expectOne(r => r.url === api).flush(page([]));
+    harness.detectChanges();
+    expect(el().querySelector<HTMLInputElement>('input[type="search"]')!.value).toBe('rh');
+    await harness.navigateByUrl('/audit');
+    http.expectOne(r => r.url === api).flush(page([]));
+    harness.detectChanges();
+    expect(el().querySelector<HTMLInputElement>('input[type="search"]')!.value).toBe('');
+  });
+
+  it('offers no blank object in the filter, and labels creations and deletions', async () => {
+    await harness.navigateByUrl('/audit');
+    http.match(`${api}/actions`).forEach(r => r.flush(['CREATION']));
+    http.match(`${api}/entites`).forEach(r => r.flush(['Employe', null, '']));
+    http.expectOne(r => r.url === api).flush(page([entree({ action: 'CREATION', anciennesValeurs: null, nouvellesValeurs: { nom: 'Finance' } })]));
+    const cmp = harness.routeDebugElement!.componentInstance as { optionsEntites(): unknown[] };
+    expect(cmp.optionsEntites()).toHaveLength(1);
+    harness.detectChanges();
+    el().querySelector<HTMLButtonElement>('button.resume')!.click();
+    harness.detectChanges();
+    expect(el().querySelector('.detail caption')!.textContent).toContain('Valeurs enregistrées');
+  });
 });

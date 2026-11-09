@@ -34,6 +34,13 @@ export class Notifications {
       const connecte = this.auth.connecte();
       untracked(() => (connecte ? this.demarrer() : this.arreter()));
     });
+    // Back online: reconnect now instead of waiting up to a minute for the next try
+    window.addEventListener('online', () => {
+      if (!this.actif || this.flux || (this.demandeTicket && !this.demandeTicket.closed)) return;
+      clearTimeout(this.minuteur);
+      this.delai = DELAI_INITIAL;
+      this.ouvrir();
+    });
   }
 
   /**

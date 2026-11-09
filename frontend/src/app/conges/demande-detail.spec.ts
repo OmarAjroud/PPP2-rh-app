@@ -123,4 +123,20 @@ describe('Détail d’une demande de congé', () => {
     bouton('Confirmer l’annulation')!.click();
     http.expectOne(r => r.method === 'POST' && r.url === `${api}/conges/demandes/7/annulation`).flush(demande({ statut: 'ANNULEE' }));
   });
+
+  it('does not call the API for an id that is not a number', async () => {
+    localStorage.setItem('rh.session', JSON.stringify({ accessToken: 'a', refreshToken: 'r', expiresAt: Date.now() + 1e6, profil: { nomUtilisateur: 'employe', role: 'EMPLOYE', employeId: 4, departementId: 1 } }));
+    TestBed.configureTestingModule({ providers: [provideRouter([{ path: 'leave-requests/:id', component: DemandeDetail }]), provideHttpClient(), provideHttpClientTesting()] });
+    http = TestBed.inject(HttpTestingController);
+    harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/leave-requests/abc');
+    http.expectNone(r => r.url.includes('/conges/demandes/'));
+    expect(el().textContent).toContain('Demande introuvable');
+  });
+
+  it('words a request passed to HR without guessing why', async () => {
+    await ouvrir('RH', 2, demande({ dateEscalade: '2099-11-08T10:00:00' }));
+    expect(el().textContent).toContain('Transmise aux RH');
+    expect(el().textContent).not.toContain('sans décision du manager');
+  });
 });

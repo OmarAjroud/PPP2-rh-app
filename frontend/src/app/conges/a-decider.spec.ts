@@ -36,7 +36,7 @@ describe('À décider', () => {
   }
 
   const el = () => harness.routeNativeElement!;
-  const onglets = () => [...el().querySelectorAll('[role="tab"]')].map(t => t.textContent!.trim());
+  const onglets = () => [...el().querySelectorAll('.onglets a')].map(t => t.textContent!.trim());
 
   afterEach(() => localStorage.clear());
 
@@ -63,5 +63,14 @@ describe('À décider', () => {
     http.expectOne(r => r.method === 'POST' && r.url === `${api}/7/validation`).flush(demande({ statut: 'APPROUVEE' }));
     await harness.fixture.whenStable();
     http.expectOne(r => r.url === `${api}/a-decider`).flush(page([]));
+  });
+
+  it('marks the current view with aria-current and says nothing is waiting in words that fit HR', async () => {
+    await ouvrir('RH');
+    http.expectOne(r => r.url === `${api}/a-decider`).flush(page([]));
+    harness.detectChanges();
+    expect(el().querySelector('.onglets a[aria-current="page"]')!.textContent!.trim()).toBe('À décider');
+    expect(el().querySelector('[role="tab"]')).toBeNull();
+    expect(el().textContent).not.toContain('de votre équipe');
   });
 });

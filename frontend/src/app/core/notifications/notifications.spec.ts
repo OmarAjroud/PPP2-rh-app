@@ -120,4 +120,16 @@ describe('Notifications (flux temps réel)', () => {
     expect(req.cancelled).toBe(true);
     expect(FauxFlux.instances).toHaveLength(0);
   });
+
+  it('reconnects at once when the network comes back, instead of waiting for the next try', () => {
+    connecter();
+    demarrer();
+    ticket('t-1');
+    FauxFlux.instances[0].echouer();
+    http.expectNone(`${api}/flux/ticket`);
+    window.dispatchEvent(new Event('online'));
+    ticket('t-2');
+    vi.advanceTimersByTime(60_000);
+    http.expectNone(`${api}/flux/ticket`); // the pending retry was replaced, not added
+  });
 });
