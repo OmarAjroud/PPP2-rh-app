@@ -19,7 +19,7 @@ describe('Page de l’assistant', () => {
       profil: { nomUtilisateur: 'employe', role: 'EMPLOYE', employeId: 4, departementId: 1 },
     }));
     TestBed.configureTestingModule({
-      providers: [provideRouter([{ path: 'assistant', component: AssistantPage }]), provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideRouter([{ path: 'assistant', component: AssistantPage }, { path: 'ailleurs', children: [] }]), provideHttpClient(), provideHttpClientTesting()],
     });
     http = TestBed.inject(HttpTestingController);
     TestBed.inject(Conversation);
@@ -86,5 +86,30 @@ describe('Page de l’assistant', () => {
     harness.detectChanges();
     expect(TestBed.inject(Conversation).messages()).toEqual([]);
     expect(champ().disabled).toBe(false);
+  });
+  it('lets the person cancel a long wait and gives the question back', () => {
+    disponible();
+    ecrire('Question longue');
+    entree();
+    harness.detectChanges();
+    const req = http.expectOne(`${api}/chat`);
+    [...el().querySelectorAll('button')].find(b => b.textContent?.trim() === 'Annuler')!.click();
+    harness.detectChanges();
+    expect(req.cancelled).toBe(true);
+    expect(champ().value).toBe('Question longue');
+    expect(el().textContent).not.toContain('L’assistant réfléchit');
+  });
+
+  it('keeps the question and the error when the answer fails after the page was left', async () => {
+    disponible();
+    ecrire('Partie trop tôt');
+    entree();
+    const req = http.expectOne(`${api}/chat`);
+    await harness.navigateByUrl('/ailleurs');
+    req.flush({ message: 'Le moteur ne répond pas' }, { status: 503, statusText: 'Unavailable' });
+    await harness.navigateByUrl('/assistant');
+    disponible();
+    expect(champ().value).toBe('Partie trop tôt');
+    expect(el().querySelector('[role="alert"]')!.textContent).toContain('Le moteur ne répond pas');
   });
 });

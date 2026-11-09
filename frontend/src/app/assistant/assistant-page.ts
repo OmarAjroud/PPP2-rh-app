@@ -1,10 +1,9 @@
-import { AfterViewChecked, Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, map, of } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
 import { RhApi } from '../core/api/rh-api';
-import { messageErreur } from '../core/api/erreurs';
 import { AuthService } from '../core/auth/auth.service';
 import { Apparition } from '../core/motion/motion';
 import { Conversation, LIMITE_CARACTERES } from './conversation';
@@ -75,11 +74,13 @@ const EXEMPLES_DECIDEUR = [
                 </div>
               </div>
             }
-            @if (conv.enCours()) { <p class="attente" role="status"><span class="points" aria-hidden="true"></span>L’assistant réfléchit…</p> }
+            @if (conv.enCours()) {
+              <div class="attente"><p role="status"><span class="points" aria-hidden="true"></span>L’assistant réfléchit…</p><p-button label="Annuler" severity="secondary" [text]="true" size="small" (onClick)="annuler()" /></div>
+            }
           </section>
 
           <form class="saisie" (submit)="$event.preventDefault(); envoyer()">
-            @if (erreur()) { <p class="alerte erreur" role="alert">{{ erreur() }}</p> }
+            @if (conv.erreur()) { <p class="alerte erreur" role="alert">{{ conv.erreur() }}</p> }
             @if (conv.pleine()) {
               <p class="alerte info">La conversation a atteint 20 messages : commencez une nouvelle conversation pour continuer.</p>
             }
@@ -110,7 +111,8 @@ const EXEMPLES_DECIDEUR = [
       color: var(--rh-ink-2); font: inherit; cursor: pointer; transition: background var(--rh-fast) var(--rh-ease), border-color var(--rh-fast) var(--rh-ease);
     }
     .exemples button:hover { background: var(--rh-surface-2); border-color: var(--rh-line-strong); color: var(--rh-ink); }
-    .attente { display: flex; align-items: center; gap: var(--rh-space-2); color: var(--rh-muted); }
+    .attente { display: flex; align-items: center; gap: var(--rh-space-3); color: var(--rh-muted); }
+    .attente p { display: flex; align-items: center; gap: var(--rh-space-2); margin: 0; }
     .points { width: 8px; height: 8px; border-radius: 50%; background: var(--rh-accent); animation: pulse 1.2s ease-in-out infinite; }
     @keyframes pulse { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
     @media (prefers-reduced-motion: reduce) { .points { animation: none; } }
@@ -136,8 +138,19 @@ export class AssistantPage implements AfterViewChecked {
   );
   protected readonly exemples = computed(() => (this.auth.profil()?.role === 'EMPLOYE' ? EXEMPLES_EMPLOYE : EXEMPLES_DECIDEUR));
   protected readonly question = signal('');
-  protected readonly erreur = signal('');
   protected readonly peutEnvoyer = computed(() => !!this.question().trim() && !this.conv.enCours() && !this.conv.pleine());
+
+  constructor() {
+    // A question the service gave back (failure, cancellation, even while this page was closed) returns to the input
+    effect(() => {
+      const q = this.conv.questionRendue();
+      if (q === null) return;
+      untracked(() => {
+        this.question.set(q);
+        this.conv.questionRendue.set(null);
+      });
+    });
+  }
 
   /** Keeps the latest message in view as the conversation grows. */
   ngAfterViewChecked(): void {
@@ -162,22 +175,19 @@ export class AssistantPage implements AfterViewChecked {
 
   protected nouvelle(): void {
     this.conv.vider();
-    this.erreur.set('');
+    this.champ()?.nativeElement.focus();
+  }
+
+  protected annuler(): void {
+    this.conv.annuler();
     this.champ()?.nativeElement.focus();
   }
 
   protected async envoyer(texte?: string): Promise<void> {
     const q = (texte ?? this.question()).trim();
     if (!q || this.conv.enCours() || this.conv.pleine()) return;
-    this.erreur.set('');
     this.question.set('');
-    try {
-      await this.conv.envoyer(q);
-    } catch (e) {
-      this.question.set(q);
-      this.erreur.set(messageErreur(e));
-    } finally {
-      this.champ()?.nativeElement.focus();
-    }
+    await this.conv.envoyer(q);
+    this.champ()?.nativeElement.focus();
   }
 }

@@ -44,18 +44,38 @@ describe('Conversation avec l’assistant', () => {
     void seconde;
   });
 
-  it('takes the question back out when the API fails, and passes the error on', async () => {
+  it('takes the question back out when the API fails, and keeps it with the error (even if the page was left)', async () => {
     const envoi = conv.envoyer('Bonjour');
     http.expectOne(url).flush({ message: 'Trop de questions' }, { status: 429, statusText: 'Too Many Requests' });
-    await expect(envoi).rejects.toBeTruthy();
+    await envoi;
     expect(conv.messages()).toEqual([]);
     expect(conv.enCours()).toBe(false);
+    expect(conv.erreur()).toContain('Trop de questions');
+    expect(conv.questionRendue()).toBe('Bonjour');
   });
 
-  it('refuses a second question while waiting for an answer', async () => {
+  it('refuses a second question while waiting for an answer', () => {
     void conv.envoyer('Une');
-    await expect(conv.envoyer('Deux')).rejects.toBeTruthy();
+    void conv.envoyer('Deux');
     expect(http.match(url)).toHaveLength(1);
+  });
+
+  it('cancels the question being answered: request dropped, question given back', () => {
+    void conv.envoyer('Longue question');
+    const req = http.expectOne(url);
+    conv.annuler();
+    expect(req.cancelled).toBe(true);
+    expect(conv.messages()).toEqual([]);
+    expect(conv.enCours()).toBe(false);
+    expect(conv.questionRendue()).toBe('Longue question');
+  });
+
+  it('shortens long answers sent back in the history, so later questions stay valid', async () => {
+    conv.messages.set([{ role: 'utilisateur', contenu: 'Liste' }, { role: 'assistant', contenu: 'a'.repeat(5000) }]);
+    void conv.envoyer('Et ensuite ?');
+    const envoyes = http.expectOne(url).request.body.messages as { contenu: string }[];
+    expect(envoyes[1].contenu.length).toBeLessThanOrEqual(4000);
+    expect(conv.messages()[1].contenu).toHaveLength(5000); // still shown in full
   });
 
   it('is full once a new question would exceed the API limit', () => {
@@ -82,4 +102,19 @@ describe('Conversation avec l’assistant', () => {
     TestBed.tick();
     expect(conv.messages()).toHaveLength(1);
   });
+  for (const issue of ['succès', 'erreur'] as const) {
+    it(`never lets a question still pending at logout reach the next person (${issue})`, async () => {
+      const envoi = conv.envoyer('Question de la personne A');
+      const req = http.expectOne(url);
+      void TestBed.inject(AuthService).logout();
+      http.match(r => r.url !== url).forEach(r => r.flush({}));
+      TestBed.tick();
+      expect(req.cancelled).toBe(true);
+      expect(conv.messages()).toEqual([]);
+      expect(conv.enCours()).toBe(false);
+      expect(conv.questionRendue()).toBeNull();
+      await envoi;
+      void issue;
+    });
+  }
 });
