@@ -56,4 +56,18 @@ describe('Employee list', () => {
     expect(ligne.textContent).toContain('Manager');
     expect(ligne.querySelector('td:first-child .meta')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Produit · Manager');
   });
+
+  it('gives truncated names and emails their full text on hover', async () => {
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/employees');
+    http.expectOne(r => r.url === `${environment.apiUrl}/api/employes`).flush({
+      contenu: [{ id: 3, nom: 'Ben Abdallah El Mansouri', prenom: 'Marie-Christine', email: 'marie-christine.benabdallah@rh.com', departementId: 1, departementNom: 'Produit', roleId: 3, roleNom: 'MANAGER' }],
+      numeroPage: 0, taillePage: 10, totalElements: 1, totalPages: 1, dernierePage: true,
+    });
+    http.match(() => true).forEach(r => r.flush([]));
+    harness.detectChanges();
+    const personne = harness.routeNativeElement!.querySelector('.personne')!;
+    expect(personne.querySelector('b')!.getAttribute('title')).toBe('Marie-Christine Ben Abdallah El Mansouri');
+    expect(personne.querySelector('small')!.getAttribute('title')).toBe('marie-christine.benabdallah@rh.com');
+  });
 });

@@ -158,7 +158,9 @@
 .travail {
   min-width: 0;
   margin: 8px 8px 8px 0;
-  padding: 24px 36px 48px;
+  --travail-pad-y: 24px;
+  --travail-pad-x: 36px;
+  padding: var(--travail-pad-y) var(--travail-pad-x) 48px;
   background: var(--rh-surface);
   border: 1px solid var(--rh-line);
   border-radius: var(--rh-radius);
@@ -210,7 +212,7 @@
   .recherche { height: 44px; }
   .themes button { width: 44px; height: 40px; }
   .sortie { min-height: 44px; padding: 0 10px; }
-  .travail { margin: 0; border: 0; border-radius: 0; padding: 16px 16px 32px; }
+  .travail { --travail-pad-y: 16px; --travail-pad-x: 16px; margin: 0; border: 0; border-radius: 0; padding: var(--travail-pad-y) var(--travail-pad-x) 32px; }
 }
 
 // ---- Unread notifications: a count in the rail, a dot on the phone menu button ----

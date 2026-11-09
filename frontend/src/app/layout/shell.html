@@ -36,7 +36,7 @@
       <div class="moi">
         <div class="identite">
           <span class="avatar" aria-hidden="true">{{ initiales() }}</span>
-          <span class="qui"><b>{{ nomComplet() }}</b><span>{{ role() }}@if (departement()) { · {{ departement() }} }</span></span>
+          <span class="qui"><b [title]="nomComplet()">{{ nomComplet() }}</b><span>{{ role() }}@if (departement()) { · {{ departement() }} }</span></span>
         </div>
         <div class="reglages">
           <div class="themes" role="group" aria-label="Thème">

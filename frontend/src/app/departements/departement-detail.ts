@@ -86,6 +86,7 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; d: DepartementDetail } | 
     a.personne:hover b { text-decoration: underline; text-underline-offset: 3px; }
     .avatar { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--rh-surface-3); color: var(--rh-ink-2); font-size: var(--rh-text-sm); font-weight: 600; }
     .vide { padding: var(--rh-space-4); }
+    .ligne .hint { min-width: 0; overflow-wrap: anywhere; }
     @media (max-width: 560px) { .ligne { flex-wrap: wrap; } }
   `,
 })

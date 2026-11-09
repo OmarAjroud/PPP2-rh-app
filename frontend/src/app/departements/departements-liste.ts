@@ -45,7 +45,7 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; liste: Departement[] } | 
     .dept:hover { background: var(--rh-surface-2); }
     .dept:hover b { text-decoration: underline; text-underline-offset: 3px; }
     .nom { min-width: 0; }
-    .nom b { font-weight: 500; }
+    .nom b { font-weight: 500; overflow-wrap: anywhere; }
     .effectif { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; }
     .effectif small { display: inline; color: var(--rh-muted); font-size: var(--rh-text-sm); }
     .vide { padding: var(--rh-space-8) var(--rh-space-4); }
