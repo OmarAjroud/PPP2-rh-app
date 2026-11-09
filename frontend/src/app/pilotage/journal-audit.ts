@@ -49,8 +49,8 @@ function versDate(iso: string | null): Date | null {
           </p-iconfield>
           <p-select [options]="optionsActions()" [ngModel]="filtre('action')" (ngModelChange)="filtrer({ action: $event })" placeholder="Toutes les actions" ariaLabel="Filtrer par action" [showClear]="true" />
           <p-select [options]="optionsEntites()" [ngModel]="filtre('entite')" (ngModelChange)="filtrer({ entite: $event })" placeholder="Tous les objets" ariaLabel="Filtrer par objet" [showClear]="true" />
-          <p-datepicker [ngModel]="date('du')" (ngModelChange)="filtrer({ du: $event ? dateIso($event) : null })" dateFormat="dd/mm/yy" placeholder="Du" ariaLabel="Du" [showClear]="true" />
-          <p-datepicker [ngModel]="date('au')" (ngModelChange)="filtrer({ au: $event ? dateIso($event) : null })" dateFormat="dd/mm/yy" placeholder="Au" ariaLabel="Au" [showClear]="true" />
+          <p-datepicker [ngModel]="dateDu()" (ngModelChange)="filtrer({ du: $event ? dateIso($event) : null })" dateFormat="dd/mm/yy" placeholder="Du" ariaLabel="Du" [showClear]="true" />
+          <p-datepicker [ngModel]="dateAu()" (ngModelChange)="filtrer({ au: $event ? dateIso($event) : null })" dateFormat="dd/mm/yy" placeholder="Au" ariaLabel="Au" [showClear]="true" />
           @if (filtresActifs()) { <p-button label="Effacer les filtres" severity="secondary" [text]="true" (onClick)="effacer()" /> }
           @if (etat().statut === 'ok') {
             @let t = $any(etat()).page.totalElements;
@@ -79,7 +79,7 @@ function versDate(iso: string | null): Date | null {
                     <div class="detail" [id]="'audit-' + e.id">
                       @if (diffs.length) {
                         <table>
-                          <caption class="hint">{{ diffs.length }} {{ diffs.length > 1 ? 'champs modifiés' : 'champ modifié' }}</caption>
+                          <caption class="hint">{{ legende(e, diffs.length) }}</caption>
                           <thead><tr><th scope="col">Champ</th><th scope="col">Avant</th><th scope="col">Après</th></tr></thead>
                           <tbody>
                             @for (d of diffs; track d.champ) {
@@ -176,7 +176,7 @@ export class JournalAudit {
     { initialValue: [] as { label: string; value: string }[] },
   );
   protected readonly optionsEntites = toSignal(
-    this.api.entitesAudit().pipe(map(l => l.map(e => ({ label: e, value: e }))), catchError(() => of([]))),
+    this.api.entitesAudit().pipe(map(l => l.filter(e => !!e).map(e => ({ label: e, value: e }))), catchError(() => of([]))),
     { initialValue: [] as { label: string; value: string }[] },
   );
 
@@ -200,18 +200,26 @@ export class JournalAudit {
     this.utilisateur.valueChanges
       .pipe(debounceTime(300), map(v => v.trim()), distinctUntilChanged(), takeUntilDestroyed(inject(DestroyRef)))
       .subscribe(v => this.filtrer({ utilisateur: v || null }));
+    // Back / forward: the search box follows the address
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(q => {
+      const v = q.get('utilisateur') ?? '';
+      if (this.utilisateur.value.trim() !== v) this.utilisateur.setValue(v, { emitEvent: false });
+    });
   }
 
   protected filtre(cle: 'action' | 'entite'): string | null {
     return this.params().get(cle);
   }
 
-  protected date(cle: 'du' | 'au'): Date | null {
-    return versDate(this.params().get(cle));
-  }
+  /** One Date per address change: a new object on every check would loop change detection (NG0103). */
+  protected readonly dateDu = computed(() => versDate(this.params().get('du')), { equal: (a, b) => a?.getTime() === b?.getTime() });
+  protected readonly dateAu = computed(() => versDate(this.params().get('au')), { equal: (a, b) => a?.getTime() === b?.getTime() });
 
   protected filtrer(f: Record<string, string | null>): void {
     this.ouverte.set(null);
+    // A period never ends before it starts: the other bound is dropped (the API would refuse it)
+    const du = f['du'] ?? this.params().get('du'), au = f['au'] ?? this.params().get('au');
+    if (du && au && du > au) f = { ...f, ...('du' in f ? { au: null } : { du: null }) };
     void this.router.navigate([], { queryParams: { ...f, page: null }, queryParamsHandling: 'merge' });
   }
 
@@ -233,6 +241,12 @@ export class JournalAudit {
   /** The backend records actions without a user as "systeme". */
   protected qui(e: AuditEntree): string {
     return !e.nomUtilisateur || e.nomUtilisateur === 'systeme' ? 'Système' : e.nomUtilisateur;
+  }
+
+  protected legende(e: AuditEntree, n: number): string {
+    if (e.anciennesValeurs == null) return 'Valeurs enregistrées';
+    if (e.nouvellesValeurs == null) return 'Valeurs supprimées';
+    return `${n} ${n > 1 ? 'champs modifiés' : 'champ modifié'}`;
   }
 
   protected changements(e: AuditEntree): Difference[] {

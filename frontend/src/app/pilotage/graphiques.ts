@@ -42,6 +42,7 @@ const STYLES_COMMUNS = `
   .bulle b { color: var(--rh-ink); font-weight: 600; }
   [tabindex="0"]:hover .bulle, [tabindex="0"]:focus-visible .bulle { opacity: 1; }
   [tabindex="0"]:focus-visible { outline: none; box-shadow: var(--rh-focus); border-radius: var(--rh-radius-sm); }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .tableau { margin-top: var(--rh-space-3); font-size: var(--rh-text-sm); }
   .tableau summary { cursor: pointer; color: var(--rh-accent-text); font-weight: 500; width: fit-content; }
   .tableau table { width: 100%; margin-top: var(--rh-space-2); border-collapse: collapse; }
@@ -111,9 +112,10 @@ export class Barres {
       @for (d of donnees(); track d.libelle; let i = $index) {
         <li tabindex="0" [attr.aria-label]="d.libelle + ' : ' + format()(d.valeur)">
           <span class="zone">
-            @if (d.valeur > 0) { <span class="valeur">{{ format()(d.valeur) }}</span> }
+            @if (d.valeur > 0) { <span class="valeur" aria-hidden="true">{{ format()(d.valeur) }}</span> }
             @if (parts()[i] > 0) { <span class="colonne" [style.--p]="parts()[i] / 100"></span> }
           </span>
+          <span class="sr-only">{{ d.libelle }} : {{ format()(d.valeur) }}</span>
           <span class="libelle" aria-hidden="true"><span class="long">{{ d.libelle }}</span><span class="court">{{ d.court ?? d.libelle }}</span></span>
           <span class="bulle" aria-hidden="true"><b>{{ format()(d.valeur) }}</b> · {{ d.libelle }}</span>
         </li>

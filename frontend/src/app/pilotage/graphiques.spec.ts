@@ -57,4 +57,11 @@ describe('Graphiques', () => {
     expect(lignes[0].textContent).toContain('3 employés');
     expect(el.querySelector('app-barres details caption')!.textContent).toContain('Effectif par département');
   });
+
+  it('reads each column as « label : value » to screen readers, the visual value hidden', () => {
+    const el = rendre([{ libelle: 'Mars', valeur: 3 }]);
+    const colonne = el.querySelector('app-colonnes li')!;
+    expect(colonne.querySelector('.sr-only')!.textContent!.trim()).toBe('Mars : 3');
+    expect(colonne.querySelector('.valeur')!.getAttribute('aria-hidden')).toBe('true');
+  });
 });

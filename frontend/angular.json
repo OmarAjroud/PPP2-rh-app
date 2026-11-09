@@ -36,6 +36,7 @@
               "@fontsource/inter/600.css",
               "@fontsource/jetbrains-mono/400.css",
               "@fontsource/jetbrains-mono/500.css",
+              "@fontsource/jetbrains-mono/600.css",
               "primeicons/primeicons.css",
               "design-system/tokens.css",
               "src/styles.scss"

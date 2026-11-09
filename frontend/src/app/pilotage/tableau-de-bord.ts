@@ -34,7 +34,7 @@ const pluriel = (v: number, un: string, plusieurs: string) => `${new Intl.Number
           @if (gestion()) {
             <p-select [options]="optionsDepartements()" [ngModel]="departement()" (ngModelChange)="filtrer('dept', $event)" ariaLabel="Filtrer par département" />
           }
-          <p-select [options]="annees" [ngModel]="annee()" (ngModelChange)="filtrer('annee', $event)" ariaLabel="Année" />
+          <p-select [options]="annees()" [ngModel]="annee()" (ngModelChange)="filtrer('annee', $event)" ariaLabel="Année" />
         </div>
       </header>
 
@@ -44,9 +44,9 @@ const pluriel = (v: number, un: string, plusieurs: string) => `${new Intl.Number
         @case ('ok') {
           @let d = $any(etat()).d;
           <section class="tuiles" aria-label="Indicateurs">
-            <div class="tuile"><span class="etiquette">Effectif</span><span class="chiffre" [rhCompteur]="d.indicateurs.nombreEmployes"></span><span class="note">{{ perimetre(d) }}</span></div>
-            <div class="tuile"><span class="etiquette">Demandes en attente</span><span class="chiffre" [rhCompteur]="d.indicateurs.demandesEnAttente"></span><span class="note">à décider</span></div>
-            <div class="tuile"><span class="etiquette">Absents aujourd'hui</span><span class="chiffre" [rhCompteur]="d.indicateurs.absentsAujourdhui"></span><span class="note">en congé approuvé</span></div>
+            <div class="tuile"><span class="etiquette">Effectif</span><span class="chiffre" [rhCompteur]="d.indicateurs.nombreEmployes"></span><span class="note">{{ perimetre(d) }} · à ce jour</span></div>
+            <div class="tuile"><span class="etiquette">Demandes en attente</span><span class="chiffre" [rhCompteur]="d.indicateurs.demandesEnAttente"></span><span class="note">à décider, à ce jour</span></div>
+            <div class="tuile"><span class="etiquette">Absents aujourd'hui</span><span class="chiffre" [rhCompteur]="d.indicateurs.absentsAujourdhui"></span><span class="note">en congé approuvé, à ce jour</span></div>
             <div class="tuile"><span class="etiquette">Embauches du mois</span><span class="chiffre" [rhCompteur]="d.indicateurs.embauchesDuMois"></span><span class="note">{{ moisCourant }}</span></div>
           </section>
 
@@ -113,7 +113,6 @@ export class TableauDeBord {
   private readonly auth = inject(AuthService);
   private readonly anneeCourante = new Date().getFullYear();
 
-  protected readonly annees = [0, 1, 2].map(i => ({ label: String(this.anneeCourante - i), value: this.anneeCourante - i }));
   protected readonly moisCourant = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(new Date());
   protected readonly gestion = computed(() => ['ADMIN', 'RH'].includes(this.auth.profil()?.role ?? ''));
   protected readonly employes = (v: number) => pluriel(v, 'employé', 'employés');
@@ -121,6 +120,9 @@ export class TableauDeBord {
 
   private readonly params = toSignal(this.route.queryParamMap, { requireSync: true });
   protected readonly annee = computed(() => Number(this.params().get('annee')) || this.anneeCourante);
+  /** The current year and the two before, plus a year asked in the address (so the select never shows empty). */
+  protected readonly annees = computed(() => [...new Set([this.anneeCourante, this.anneeCourante - 1, this.anneeCourante - 2, this.annee()])]
+    .sort((a, b) => b - a).map(a => ({ label: String(a), value: a })));
   protected readonly departement = computed(() => (this.gestion() ? Number(this.params().get('dept')) || null : null));
 
   private readonly departements = toSignal(
