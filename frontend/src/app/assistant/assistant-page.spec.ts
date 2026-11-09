@@ -112,4 +112,45 @@ describe('Page de l’assistant', () => {
     expect(champ().value).toBe('Partie trop tôt');
     expect(el().querySelector('[role="alert"]')!.textContent).toContain('Le moteur ne répond pas');
   });
+
+  it('announces only the new answer to screen readers, not the whole thread', async () => {
+    disponible();
+    expect(el().querySelector('.fil')!.hasAttribute('aria-live')).toBe(false);
+    ecrire('Bonjour');
+    entree();
+    http.expectOne(`${api}/chat`).flush({ reponse: 'Bonjour, que puis-je faire ?', outilsUtilises: [] });
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+    const annonce = el().querySelector('[aria-live="polite"].annonce')!;
+    expect(annonce.textContent).toContain('Bonjour, que puis-je faire ?');
+  });
+
+  it('scrolls a new answer into view from its start', async () => {
+    const scroll = vi.fn();
+    Element.prototype.scrollIntoView = scroll;
+    disponible();
+    ecrire('Liste');
+    entree();
+    http.expectOne(`${api}/chat`).flush({ reponse: 'Longue réponse', outilsUtilises: [] });
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+    expect(scroll).toHaveBeenLastCalledWith({ block: 'start' });
+  });
+
+  it('offers to try again when the availability check fails, and hides « Nouvelle conversation » meanwhile', () => {
+    TestBed.inject(Conversation).messages.set([{ role: 'utilisateur', contenu: 'x' }]);
+    http.expectOne(`${api}/statut`).error(new ProgressEvent('error'));
+    harness.detectChanges();
+    expect([...el().querySelectorAll('button')].some(b => b.textContent?.trim() === 'Nouvelle conversation')).toBe(false);
+    [...el().querySelectorAll('button')].find(b => b.textContent?.trim() === 'Réessayer')!.click();
+    disponible();
+    expect(el().querySelector('textarea')).not.toBeNull();
+  });
+
+  it('announces why the input stopped when the conversation is full', () => {
+    disponible();
+    TestBed.inject(Conversation).messages.set(Array.from({ length: LIMITE_MESSAGES }, (_, i) => ({ role: i % 2 ? 'assistant' : 'utilisateur', contenu: 'x' })));
+    harness.detectChanges();
+    expect(el().querySelector('.alerte.info[role="status"]')!.textContent).toContain(`${LIMITE_MESSAGES} messages`);
+  });
 });
