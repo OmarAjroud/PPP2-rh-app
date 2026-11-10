@@ -15,15 +15,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JourFerieService {
 
+    static final int ANNEE_MIN = 2000;
+    static final int ANNEE_MAX = 2100;
+
     private final JourFerieRepository repository;
     private final Clock clock;
 
     @Transactional(readOnly = true)
     public List<JourFerieResponse> findByYear(Integer annee) {
         int anneeCible = annee != null ? annee : LocalDate.now(clock).getYear();
-        if (anneeCible < 2000 || anneeCible > 2100) {
-            throw new RequeteInvalideException("Année invalide : " + anneeCible);
-        }
+        verifierAnnee(anneeCible);
         return repository.findByDateFerieBetweenOrderByDateFerie(
                         LocalDate.of(anneeCible, 1, 1), LocalDate.of(anneeCible, 12, 31))
                 .stream().map(this::toResponse).toList();
@@ -31,6 +32,7 @@ public class JourFerieService {
 
     @Transactional
     public JourFerieResponse create(JourFerieRequest requete) {
+        verifierAnnee(requete.date().getYear());
         if (repository.existsByDateFerie(requete.date())) {
             throw new ConflitException("Un jour férié existe déjà à cette date");
         }
@@ -45,6 +47,13 @@ public class JourFerieService {
         JourFerie jour = repository.findById(id)
                 .orElseThrow(() -> new RessourceIntrouvableException("Jour férié introuvable (id=" + id + ")"));
         repository.delete(jour);
+    }
+
+    /** Same range for reading and writing: a holiday saved outside it could never be listed nor deleted. */
+    private static void verifierAnnee(int annee) {
+        if (annee < ANNEE_MIN || annee > ANNEE_MAX) {
+            throw new RequeteInvalideException("Année invalide : " + annee + " (entre " + ANNEE_MIN + " et " + ANNEE_MAX + ")");
+        }
     }
 
     private JourFerieResponse toResponse(JourFerie jour) {

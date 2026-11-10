@@ -16,6 +16,8 @@ export const routes: Routes = [
       { path: 'audit', title: 'Journal d’audit · RH App', canActivate: [roleGuard('ADMIN')], loadComponent: () => import('./pilotage/journal-audit').then(m => m.JournalAudit) },
       { path: 'assistant', title: 'Assistant RH · RH App', loadComponent: () => import('./assistant/assistant-page').then(m => m.AssistantPage) },
       { path: 'notifications', title: 'Notifications · RH App', loadComponent: () => import('./notifications/notifications-page').then(m => m.NotificationsPage) },
+      { path: 'calendar', title: 'Calendrier des absences · RH App', canActivate: [roleGuard('MANAGER', 'RH', 'ADMIN')], loadComponent: () => import('./conges/calendrier').then(m => m.Calendrier) },
+      { path: 'holidays', title: 'Jours fériés · RH App', loadComponent: () => import('./conges/jours-feries').then(m => m.JoursFeries) },
       { path: 'leave-requests', title: 'Mes congés · RH App', loadComponent: () => import('./conges/mes-conges').then(m => m.MesConges) },
       { path: 'leave-requests/new', title: 'Nouvelle demande · RH App', loadComponent: () => import('./conges/demande-form').then(m => m.DemandeForm) },
       { path: 'leave-requests/:id', title: 'Demande de congé · RH App', loadComponent: () => import('./conges/demande-detail').then(m => m.DemandeDetail) },

@@ -208,3 +208,9 @@ export interface MouvementSolde {
   commentaire: string | null;
   creeParNomComplet: string | null;
 }
+
+export interface JourFerie {
+  id: number;
+  date: string; // yyyy-MM-dd
+  libelle: string;
+}

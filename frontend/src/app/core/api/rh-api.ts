@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   Compte, Departement, DepartementDetail, Employe, EmployeDetail, EmployeRequest,
-  DemandeConge, DemandeCongeRequest, JoursOuvrables, NomDescription, Notification, TableauDeBord, AuditEntree, StatutAssistant, ReponseAssistant, MouvementSolde, PageReponse, Role, Solde, StatutDemande, TypeConge,
+  DemandeConge, DemandeCongeRequest, JoursOuvrables, NomDescription, Notification, TableauDeBord, AuditEntree, StatutAssistant, ReponseAssistant, MouvementSolde, JourFerie, PageReponse, Role, Solde, StatutDemande, TypeConge,
 } from './models';
 
 export interface RechercheAudit {
@@ -144,6 +144,22 @@ export class RhApi {
   ajusterSolde(employeId: number, a: { typeCongeId: number; annee: number; jours: number; commentaire: string }): Observable<MouvementSolde> {
     return this.http.post<MouvementSolde>(`${this.api}/conges/soldes/${employeId}/ajustements`, a);
   }
+
+  /** ADMIN, RH: requests overlapping a period (100 per page, the API maximum). */
+  demandesPeriode(r: { du: string; au: string; departementId: number | null; page: number }): Observable<PageReponse<DemandeConge>> {
+    const params: Record<string, string | number> = { du: r.du, au: r.au, page: r.page, size: 100 };
+    if (r.departementId) params['departementId'] = r.departementId;
+    return this.http.get<PageReponse<DemandeConge>>(`${this.api}/conges/demandes`, { params });
+  }
+  /** Manager (also ADMIN, RH): their team's requests starting in a year. */
+  demandesEquipeAnnee(annee: number, page: number): Observable<PageReponse<DemandeConge>> {
+    return this.http.get<PageReponse<DemandeConge>>(`${this.api}/conges/demandes/equipe`, { params: { annee, page, size: 100 } });
+  }
+
+  // ---- Public holidays (read: everyone; write: ADMIN, RH) ----
+  joursFeries(annee: number): Observable<JourFerie[]> { return this.http.get<JourFerie[]>(`${this.api}/jours-feries`, { params: { annee } }); }
+  ajouterJourFerie(j: { date: string; libelle: string }): Observable<JourFerie> { return this.http.post<JourFerie>(`${this.api}/jours-feries`, j); }
+  supprimerJourFerie(id: number): Observable<void> { return this.http.delete<void>(`${this.api}/jours-feries/${id}`); }
 
   // ---- Roles ----
   roles(): Observable<Role[]> { return this.http.get<Role[]>(`${this.api}/roles`); }
