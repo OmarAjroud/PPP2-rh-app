@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   Compte, Departement, DepartementDetail, Employe, EmployeDetail, EmployeRequest,
-  DemandeConge, DemandeCongeRequest, JoursOuvrables, NomDescription, Notification, TableauDeBord, AuditEntree, StatutAssistant, ReponseAssistant, PageReponse, Role, Solde, StatutDemande, TypeConge,
+  DemandeConge, DemandeCongeRequest, JoursOuvrables, NomDescription, Notification, TableauDeBord, AuditEntree, StatutAssistant, ReponseAssistant, MouvementSolde, PageReponse, Role, Solde, StatutDemande, TypeConge,
 } from './models';
 
 export interface RechercheAudit {
@@ -132,6 +132,17 @@ export class RhApi {
   /** The API keeps no history: the whole conversation is sent, the new question last. */
   questionAssistant(messages: { role: 'utilisateur' | 'assistant'; contenu: string }[]): Observable<ReponseAssistant> {
     return this.http.post<ReponseAssistant>(`${this.api}/assistant/chat`, { messages });
+  }
+
+  // ---- Balance history and adjustments ----
+  /** History of a balance for a year: mine (employeId null) or an employee's (API checks the right to see it). */
+  mouvementsSolde(employeId: number | null, annee: number): Observable<MouvementSolde[]> {
+    const chemin = employeId === null ? 'moi' : String(employeId);
+    return this.http.get<MouvementSolde[]>(`${this.api}/conges/soldes/${chemin}/mouvements`, { params: { annee } });
+  }
+  /** ADMIN, RH: add (positive) or remove (negative) days, with a reason. */
+  ajusterSolde(employeId: number, a: { typeCongeId: number; annee: number; jours: number; commentaire: string }): Observable<MouvementSolde> {
+    return this.http.post<MouvementSolde>(`${this.api}/conges/soldes/${employeId}/ajustements`, a);
   }
 
   // ---- Roles ----

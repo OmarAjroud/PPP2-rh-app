@@ -127,6 +127,8 @@
             </section>
           }
 
+          <app-historique-soldes [employeId]="moi ? null : e.id" [ajustable]="gestion() && !moi && e.id !== monId()" (modifie)="rechargerSoldes()" />
+
           @if (demandes(); as liste) {
             <section class="card" aria-labelledby="demandes">
               <h2 id="demandes" class="card-h">Dernières demandes</h2>
