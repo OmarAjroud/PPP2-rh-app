@@ -28,6 +28,7 @@ function navigation(role: Role): Groupe[] {
       liens: [
         { chemin: '/leave-requests', libelle: 'Mes congés', icone: 'pi-calendar' },
         ...(role === 'EMPLOYE' ? [] : [{ chemin: '/approvals', libelle: 'À décider', icone: 'pi-check-square' }]),
+        { chemin: '/holidays', libelle: 'Jours fériés', icone: 'pi-sun' },
       ],
     },
     ...(role === 'EMPLOYE' ? [] : [{

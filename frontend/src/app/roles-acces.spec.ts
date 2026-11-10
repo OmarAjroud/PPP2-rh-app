@@ -126,4 +126,10 @@ describe('Access per role', { timeout: 15000 }, () => {
     expect(r.url).toBe('/assistant');
     expect(r.nav).toContain('Assistant');
   });
+  it('opens the public holidays to everyone', async () => {
+    connecter('EMPLOYE');
+    const r = await aller('/holidays');
+    expect(r.url).toBe('/holidays');
+    expect(r.nav).toContain('Jours fériés');
+  });
 });

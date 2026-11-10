@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   Compte, Departement, DepartementDetail, Employe, EmployeDetail, EmployeRequest,
-  DemandeConge, DemandeCongeRequest, JoursOuvrables, NomDescription, Notification, TableauDeBord, AuditEntree, StatutAssistant, ReponseAssistant, MouvementSolde, PageReponse, Role, Solde, StatutDemande, TypeConge,
+  DemandeConge, DemandeCongeRequest, JoursOuvrables, NomDescription, Notification, TableauDeBord, AuditEntree, StatutAssistant, ReponseAssistant, MouvementSolde, JourFerie, PageReponse, Role, Solde, StatutDemande, TypeConge,
 } from './models';
 
 export interface RechercheAudit {
@@ -144,6 +144,11 @@ export class RhApi {
   ajusterSolde(employeId: number, a: { typeCongeId: number; annee: number; jours: number; commentaire: string }): Observable<MouvementSolde> {
     return this.http.post<MouvementSolde>(`${this.api}/conges/soldes/${employeId}/ajustements`, a);
   }
+
+  // ---- Public holidays (read: everyone; write: ADMIN, RH) ----
+  joursFeries(annee: number): Observable<JourFerie[]> { return this.http.get<JourFerie[]>(`${this.api}/jours-feries`, { params: { annee } }); }
+  ajouterJourFerie(j: { date: string; libelle: string }): Observable<JourFerie> { return this.http.post<JourFerie>(`${this.api}/jours-feries`, j); }
+  supprimerJourFerie(id: number): Observable<void> { return this.http.delete<void>(`${this.api}/jours-feries/${id}`); }
 
   // ---- Roles ----
   roles(): Observable<Role[]> { return this.http.get<Role[]>(`${this.api}/roles`); }
