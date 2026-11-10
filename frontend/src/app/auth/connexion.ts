@@ -17,6 +17,7 @@ import { messageErreur } from '../core/api/erreurs';
     <p class="auth-sous-titre">Accédez à votre espace RH.</p>
     <form class="auth-form" [formGroup]="form" (ngSubmit)="valider()" novalidate>
       @if (expiree) { <p class="alerte info">Votre session a expiré. Reconnectez-vous pour continuer.</p> }
+      @if (inactif) { <p class="alerte info">Vous avez été déconnecté après 15 minutes d’inactivité. Reconnectez-vous pour continuer.</p> }
       @if (erreur()) { <p class="alerte erreur" role="alert">{{ erreur() }}</p> }
       <div class="champ">
         <label for="nom">Nom d'utilisateur</label>
@@ -43,6 +44,7 @@ export class Connexion {
 
   protected readonly comptesDemo = environment.comptesDemo;
   protected readonly expiree = this.params.has('expired');
+  protected readonly inactif = this.params.has('idle');
   protected readonly erreur = signal('');
   protected readonly envoi = signal(false);
   protected readonly form = new FormGroup({

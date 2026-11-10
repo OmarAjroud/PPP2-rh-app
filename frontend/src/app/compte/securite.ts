@@ -1,4 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { RhApi } from '../core/api/rh-api';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { PasswordModule } from 'primeng/password';
@@ -66,12 +68,31 @@ import { Apparition } from '../core/motion/motion';
           }
         </div>
       </section>
+
+      @if (admin()) {
+        <section class="card envoi-mail" aria-labelledby="mail-titre">
+          <h2 id="mail-titre" class="card-h">Envoi des emails</h2>
+          <div class="card-b">
+            <p>Vérifiez que l’application peut envoyer des emails (activation des comptes, mot de passe oublié, notifications) : un email de test part vers votre adresse.</p>
+            @if (mailEnvoye()) { <p class="alerte succes" role="status">{{ mailEnvoye() }}. S’il n’arrive pas dans quelques minutes, vérifiez la configuration du serveur d’envoi (MAIL_HOST).</p> }
+            @if (erreurMail()) { <p class="alerte erreur" role="alert">{{ erreurMail() }}</p> }
+          </div>
+          <div class="card-f">
+            <div class="actions"><p-button label="Envoyer un email de test" icon="pi pi-envelope" severity="secondary" [loading]="envoiMail()" (onClick)="envoyerTest()" /></div>
+          </div>
+        </section>
+      }
     </div>
   `,
   styles: `.page { display: grid; gap: var(--rh-space-4); --page-max: 640px; }`,
 })
 export class Securite {
   private readonly auth = inject(AuthService);
+  private readonly api = inject(RhApi);
+  protected readonly admin = computed(() => this.auth.profil()?.role === 'ADMIN');
+  protected readonly envoiMail = signal(false);
+  protected readonly mailEnvoye = signal('');
+  protected readonly erreurMail = signal('');
   protected readonly regle = MESSAGE_MOT_DE_PASSE;
   protected readonly form = new FormGroup({
     motDePasseActuel: new FormControl('', { nonNullable: true, validators: Validators.required }),
@@ -97,6 +118,21 @@ export class Securite {
       if (!appliquerErreursChamps(this.form, e)) this.erreur.set(messageErreur(e));
     } finally {
       this.envoi.set(false);
+    }
+  }
+
+  protected async envoyerTest(): Promise<void> {
+    if (this.envoiMail()) return;
+    this.envoiMail.set(true);
+    this.mailEnvoye.set('');
+    this.erreurMail.set('');
+    try {
+      const r = await firstValueFrom(this.api.envoyerEmailTest());
+      this.mailEnvoye.set(r.message);
+    } catch (e) {
+      this.erreurMail.set(messageErreur(e));
+    } finally {
+      this.envoiMail.set(false);
     }
   }
 
