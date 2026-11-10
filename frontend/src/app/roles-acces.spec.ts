@@ -132,4 +132,15 @@ describe('Access per role', { timeout: 15000 }, () => {
     expect(r.url).toBe('/holidays');
     expect(r.nav).toContain('Jours fériés');
   });
+  it('opens the leave calendar to managers, not to employees', async () => {
+    connecter('EMPLOYE');
+    expect((await aller('/calendar')).url).toBe('/');
+  });
+
+  it('lists the leave calendar for managers', async () => {
+    connecter('MANAGER');
+    const r = await aller('/calendar');
+    expect(r.url).toBe('/calendar');
+    expect(r.nav).toContain('Calendrier');
+  });
 });

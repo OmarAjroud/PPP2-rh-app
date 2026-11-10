@@ -145,6 +145,17 @@ export class RhApi {
     return this.http.post<MouvementSolde>(`${this.api}/conges/soldes/${employeId}/ajustements`, a);
   }
 
+  /** ADMIN, RH: requests overlapping a period (100 per page, the API maximum). */
+  demandesPeriode(r: { du: string; au: string; departementId: number | null; page: number }): Observable<PageReponse<DemandeConge>> {
+    const params: Record<string, string | number> = { du: r.du, au: r.au, page: r.page, size: 100 };
+    if (r.departementId) params['departementId'] = r.departementId;
+    return this.http.get<PageReponse<DemandeConge>>(`${this.api}/conges/demandes`, { params });
+  }
+  /** Manager (also ADMIN, RH): their team's requests starting in a year. */
+  demandesEquipeAnnee(annee: number, page: number): Observable<PageReponse<DemandeConge>> {
+    return this.http.get<PageReponse<DemandeConge>>(`${this.api}/conges/demandes/equipe`, { params: { annee, page, size: 100 } });
+  }
+
   // ---- Public holidays (read: everyone; write: ADMIN, RH) ----
   joursFeries(annee: number): Observable<JourFerie[]> { return this.http.get<JourFerie[]>(`${this.api}/jours-feries`, { params: { annee } }); }
   ajouterJourFerie(j: { date: string; libelle: string }): Observable<JourFerie> { return this.http.post<JourFerie>(`${this.api}/jours-feries`, j); }
