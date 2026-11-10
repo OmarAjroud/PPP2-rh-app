@@ -27,6 +27,8 @@ export interface LigneCalendrier {
   employeId: number;
   nom: string;
   departement: string;
+  /** The reader's own row (shown first). */
+  moi: boolean;
   barres: Barre[];
 }
 
@@ -47,7 +49,7 @@ const deux = (n: number) => String(n).padStart(2, '0');
  * person with leave that month, each leave as a bar cut to the month. Refused and cancelled requests are left out.
  * mois: 1 (January) to 12. Dates are compared as yyyy-MM-dd strings (no time zone involved).
  */
-export function construireMois(demandes: DemandeConge[], annee: number, mois: number, feries: string[]): Mois {
+export function construireMois(demandes: DemandeConge[], annee: number, mois: number, feries: string[], moiId: number | null = null): Mois {
   const nbJours = new Date(annee, mois, 0).getDate();
   const premier = `${annee}-${deux(mois)}-01`;
   const dernier = `${annee}-${deux(mois)}-${deux(nbJours)}`;
@@ -60,7 +62,9 @@ export function construireMois(demandes: DemandeConge[], annee: number, mois: nu
   });
 
   const parPersonne = new Map<number, LigneCalendrier>();
+  const vues = new Set<number>();
   const retenues = demandes
+    .filter(d => !vues.has(d.id) && (vues.add(d.id), true)) // the same request from two sources counts once
     .filter(d => VISIBLES.includes(d.statut) && d.dateDebut <= dernier && d.dateFin >= premier)
     .sort((a, b) => a.dateDebut.localeCompare(b.dateDebut) || a.id - b.id);
 
@@ -80,7 +84,7 @@ export function construireMois(demandes: DemandeConge[], annee: number, mois: nu
     };
     let ligne = parPersonne.get(d.employeId);
     if (!ligne) {
-      ligne = { employeId: d.employeId, nom: d.employeNomComplet, departement: d.employeDepartementNom, barres: [] };
+      ligne = { employeId: d.employeId, nom: d.employeNomComplet, departement: d.employeDepartementNom, moi: d.employeId === moiId, barres: [] };
       parPersonne.set(d.employeId, ligne);
     }
     ligne.barres.push(barre);
@@ -93,6 +97,6 @@ export function construireMois(demandes: DemandeConge[], annee: number, mois: nu
     for (const j of vus) jours[j - 1].absents++;
   }
 
-  const lignes = [...parPersonne.values()].sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+  const lignes = [...parPersonne.values()].sort((a, b) => Number(b.moi) - Number(a.moi) || a.nom.localeCompare(b.nom, 'fr'));
   return { annee, mois, jours, lignes };
 }

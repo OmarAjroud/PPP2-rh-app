@@ -60,6 +60,7 @@ describe('Calendrier des congés', () => {
     const req = http.expectOne(r => r.url === `${api}/conges/demandes/equipe`);
     expect(req.request.params.get('annee')).toBe('2026');
     req.flush(page([d({})]));
+    http.expectOne(r => r.url === `${api}/conges/demandes/moi`).flush(page([]));
     harness.detectChanges();
     expect(el().querySelector('[aria-label="Filtrer par département"]')).toBeNull();
     expect([...el().querySelectorAll('.personne')].map(p => p.textContent!.trim())).toEqual(['Lina Gharbi']);
@@ -107,5 +108,26 @@ describe('Calendrier des congés', () => {
     const req = http.expectOne(r => r.url === `${api}/conges/demandes/equipe`);
     expect(req.request.params.get('annee')).toBe('2027');
     req.flush(page([]));
+    http.expectOne(r => r.url === `${api}/conges/demandes/moi`).flush(page([]));
+  });
+
+  it('shows the manager\'s own leave first, marked as theirs', async () => {
+    await ouvrir('MANAGER');
+    http.expectOne(r => r.url === `${api}/conges/demandes/equipe`).flush(page([d({})]));
+    const mien = http.expectOne(r => r.url === `${api}/conges/demandes/moi`);
+    expect(mien.request.params.get('annee')).toBe('2026');
+    expect(mien.request.params.get('size')).toBe('100');
+    mien.flush(page([d({ id: 5, employeId: 3, employeNomComplet: 'Sami Haddad', dateDebut: '2026-12-21', dateFin: '2026-12-23' })]));
+    harness.detectChanges();
+    const lignes = [...el().querySelectorAll('.cellule-nom')].slice(1, 3).map(c => c.textContent!.replace(/\s+/g, ' ').trim());
+    expect(lignes).toEqual(['Sami Haddad (vous)', 'Lina Gharbi']);
+  });
+
+  it('still shows the team when the manager\'s own requests cannot be read', async () => {
+    await ouvrir('MANAGER');
+    http.expectOne(r => r.url === `${api}/conges/demandes/equipe`).flush(page([d({})]));
+    http.expectOne(r => r.url === `${api}/conges/demandes/moi`).flush({}, { status: 500, statusText: 'Erreur' });
+    harness.detectChanges();
+    expect([...el().querySelectorAll('.personne')].map(p => p.textContent!.trim())).toEqual(['Lina Gharbi']);
   });
 });
