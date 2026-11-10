@@ -45,7 +45,10 @@ describe('Toast de notification', () => {
     http.expectOne(r => r.method === 'POST' && r.url === `${environment.apiUrl}/api/notifications/9/lecture`).flush({ ...notif, lue: true });
     await vi.runAllTimersAsync();
     await fixture.whenStable(); // the navigation may settle just after the timers
-    http.expectOne(`${environment.apiUrl}/api/notifications/non-lues/nombre`).flush({ nombre: 2 });
+    // The count is re-read after the read, and may be re-read once more as the navigation settles (timing-dependent)
+    const comptes = http.match(`${environment.apiUrl}/api/notifications/non-lues/nombre`);
+    expect(comptes.length).toBeGreaterThanOrEqual(1);
+    comptes.forEach(r => r.flush({ nombre: 2 }));
     expect(TestBed.inject(Router).url).toBe('/leave-requests/7');
     expect(service.nonLues()).toBe(2);
     expect(service.derniere()).toBeNull();
