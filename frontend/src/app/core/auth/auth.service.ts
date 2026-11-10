@@ -48,14 +48,18 @@ export class AuthService {
     this.enregistrer(r);
   }
 
-  /** Revokes the refresh token server-side (best effort) and forgets the session locally. */
-  async logout(): Promise<void> {
+  /**
+   * Revokes the refresh token server-side (best effort) and forgets the session locally.
+   * 'inactivite': the login page then explains why (logged out after 15 minutes without activity).
+   */
+  async logout(raison?: 'inactivite'): Promise<void> {
     const refreshToken = this.etat()?.refreshToken;
     this.oublier();
     if (refreshToken) {
       try { await firstValueFrom(this.http.post(`${this.api}/logout`, { refreshToken })); } catch { /* already gone */ }
     }
-    await this.router.navigateByUrl('/login');
+    if (raison) await this.router.navigate(['/login'], { queryParams: { idle: 1 } });
+    else await this.router.navigateByUrl('/login');
   }
 
   /** Closes every session of this account, on every device. */

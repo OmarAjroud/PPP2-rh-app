@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { filter } from 'rxjs';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
@@ -7,6 +7,8 @@ import { Moi } from '../core/auth/moi';
 import { ChoixTheme, ThemeService } from '../core/theme/theme.service';
 import { Notifications } from '../core/notifications/notifications';
 import { ToastNotification } from './toast-notification';
+import { AvertissementInactivite } from './avertissement-inactivite';
+import { Inactivite } from '../core/auth/inactivite';
 
 interface Lien { chemin: string; libelle: string; icone: string; exact?: boolean }
 interface Groupe { titre: string | null; liens: Lien[] }
@@ -62,7 +64,7 @@ function navigation(role: Role): Groupe[] {
 /** Application shell: Linear-style rail + routed work area; under 900px the rail is a drawer (DESIGN.md, Layout). */
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastNotification],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastNotification, AvertissementInactivite],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
 })
@@ -73,6 +75,7 @@ export class Shell {
   protected readonly notifs = inject(Notifications);
   private readonly router = inject(Router);
   private readonly moi = inject(Moi);
+  private readonly inactivite = inject(Inactivite);
   private readonly champRecherche = viewChild<ElementRef<HTMLInputElement>>('recherche');
 
   protected readonly role = computed(() => {
@@ -111,6 +114,9 @@ export class Shell {
   private readonly injector = inject(Injector);
 
   constructor() {
+    // Logged out after 15 minutes without activity, while the signed-in shell is shown
+    this.inactivite.demarrer();
+    inject(DestroyRef).onDestroy(() => this.inactivite.arreter());
     this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe(() => this.fermerMenu());
   }
 

@@ -33,7 +33,7 @@ describe('Shell: navigation drawer on small screens', { timeout: 15000 }, () => 
     bouton().click();
     harness.detectChanges();
     expect(rail().classList).not.toContain('ouvert');
-  });
+  }, 15_000); // heavy screen: passes in ~2 s alone, can pass 5 s when every file runs in parallel
 
   it('closes the drawer after a navigation', async () => {
     bouton().click();

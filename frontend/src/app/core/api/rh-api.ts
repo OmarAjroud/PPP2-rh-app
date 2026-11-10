@@ -160,6 +160,11 @@ export class RhApi {
     return this.http.get<PageReponse<DemandeConge>>(`${this.api}/conges/demandes/equipe`, { params: { annee, page, size: 100 } });
   }
 
+  /** ADMIN: sends a test email to the administrator's own address (202, sent in the background). */
+  envoyerEmailTest(): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.api}/admin/mail/test`, {});
+  }
+
   // ---- Public holidays (read: everyone; write: ADMIN, RH) ----
   joursFeries(annee: number): Observable<JourFerie[]> { return this.http.get<JourFerie[]>(`${this.api}/jours-feries`, { params: { annee } }); }
   ajouterJourFerie(j: { date: string; libelle: string }): Observable<JourFerie> { return this.http.post<JourFerie>(`${this.api}/jours-feries`, j); }
