@@ -11,6 +11,7 @@ import { messageErreur } from '../core/api/erreurs';
 import { initiales, jours, libelleRole, periode, statutDemande } from '../core/api/libelles';
 import { AuthService } from '../core/auth/auth.service';
 import { Apparition, Compteur } from '../core/motion/motion';
+import { HistoriqueSoldes } from '../conges/historique-soldes';
 
 type Etat = { statut: 'chargement' } | { statut: 'ok'; e: EmployeDetail } | { statut: 'erreur'; message: string };
 /** undefined: loading or not allowed to see it, null: no account yet. */
@@ -25,7 +26,7 @@ const STATUTS_COMPTE: Record<Compte['statut'], { libelle: string; classe: string
 /** /employees/:id, and /profile (route data "moi") for the signed-in user's own record. */
 @Component({
   selector: 'app-employe-detail',
-  imports: [CurrencyPipe, DatePipe, RouterLink, ButtonModule, Apparition, Compteur],
+  imports: [CurrencyPipe, DatePipe, RouterLink, ButtonModule, Apparition, Compteur, HistoriqueSoldes],
   templateUrl: './employe-detail.html',
   styleUrl: './employe-detail.scss',
 })
@@ -43,6 +44,8 @@ export class EmployeDetailPage {
   protected readonly periode = periode;
   protected readonly jours = jours;
   protected readonly libelleRole = libelleRole;
+  /** One's own record opened from a link (not /profile): HR may not adjust their own balance. */
+  protected readonly monId = computed(() => this.auth.profil()?.employeId);
 
   protected readonly etat = toSignal(
     this.route.paramMap.pipe(
@@ -100,6 +103,13 @@ export class EmployeDetailPage {
         )),
       ).subscribe(c => this.compte.set(c));
     }
+  }
+
+  /** After an HR adjustment: the balances shown above the history are read again. */
+  protected rechargerSoldes(): void {
+    const e = this.employe();
+    if (!e) return;
+    (this.moi ? this.api.mesSoldes() : this.api.soldes(e.id)).pipe(catchError(() => of(undefined))).subscribe(s => this.soldes.set(s));
   }
 
   /** "19 → 15" while requests are pending (before → after), else the available days. */

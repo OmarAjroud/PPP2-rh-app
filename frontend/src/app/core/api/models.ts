@@ -192,3 +192,19 @@ export interface ReponseAssistant {
   /** HR tools the assistant called to answer, in order. */
   outilsUtilises: string[];
 }
+
+export type TypeMouvement = 'ALLOCATION' | 'DEDUCTION' | 'REMBOURSEMENT' | 'AJUSTEMENT';
+
+/** One line of a balance history: the movement (signed: deductions are negative) and the balance right after. */
+export interface MouvementSolde {
+  id: number;
+  dateMouvement: string;
+  typeCongeCode: string;
+  annee: number;
+  typeMouvement: TypeMouvement;
+  jours: number;
+  soldeApres: number;
+  demandeId: number | null;
+  commentaire: string | null;
+  creeParNomComplet: string | null;
+}

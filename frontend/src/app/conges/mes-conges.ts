@@ -12,6 +12,7 @@ import { messageErreur } from '../core/api/erreurs';
 import { jours, periode, statutDemande } from '../core/api/libelles';
 import { Apparition } from '../core/motion/motion';
 import { SoldesPanel } from './soldes-panel';
+import { HistoriqueSoldes } from './historique-soldes';
 import { dateIso, peutAnnuler } from './regles';
 
 type Etat = { statut: 'chargement' } | { statut: 'ok'; page: PageReponse<DemandeConge> } | { statut: 'erreur'; message: string };
@@ -27,7 +28,7 @@ export const FILTRES_STATUT: { label: string; value: StatutDemande | null }[] = 
 /** My leave: balances of the year and my requests (filter and page live in the URL). */
 @Component({
   selector: 'app-mes-conges',
-  imports: [RouterLink, FormsModule, ButtonModule, PaginatorModule, SelectModule, Apparition, SoldesPanel],
+  imports: [RouterLink, FormsModule, ButtonModule, PaginatorModule, SelectModule, Apparition, SoldesPanel, HistoriqueSoldes],
   template: `
     <div class="page" rhApparition>
       <header class="entete">
@@ -88,7 +89,7 @@ export const FILTRES_STATUT: { label: string; value: StatutDemande | null }[] = 
           }
         </section>
 
-        <aside><app-soldes [soldes]="soldes() ?? []" /></aside>
+        <aside class="cote"><app-soldes [soldes]="soldes() ?? []" /><app-historique-soldes /></aside>
       </div>
     </div>
   `,
@@ -96,6 +97,7 @@ export const FILTRES_STATUT: { label: string; value: StatutDemande | null }[] = 
     .page { display: grid; gap: var(--rh-space-4); --page-max: var(--rh-content-max); }
     .grille { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--rh-space-6); align-items: start; }
     .liste { min-width: 0; }
+    .cote { display: grid; gap: var(--rh-space-4); align-content: start; }
     .filtres { display: flex; flex-wrap: wrap; align-items: center; gap: var(--rh-space-2); padding-bottom: var(--rh-space-3); border-bottom: 1px solid var(--rh-line); }
     .filtres p-select { flex: 0 1 220px; }
     .total { margin-left: auto; }

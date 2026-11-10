@@ -89,4 +89,12 @@ describe('Mes congés', () => {
     await harness.fixture.whenStable();
     expect(document.activeElement?.textContent?.trim()).toBe('Confirmer');
   });
+  it('shows the history of my balance', async () => {
+    await harness.navigateByUrl('/leave-requests');
+    flushSoldes();
+    http.expectOne(r => r.url === `${api}/demandes/moi`).flush(page([]));
+    http.expectOne(r => r.url === `${api}/soldes/moi/mouvements`).flush([]);
+    harness.detectChanges();
+    expect(harness.routeNativeElement!.textContent).toContain('Historique du solde');
+  });
 });
