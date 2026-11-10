@@ -7,6 +7,9 @@ import { environment } from '../../environments/environment';
 import { Role } from '../core/auth/auth.models';
 import { DemandeConge } from '../core/api/models';
 import { ADecider } from './a-decider';
+import { By } from '@angular/platform-browser';
+import { ExportListe } from '../shared/export-liste';
+const exportDe = (h: RouterTestingHarness) => h.routeDebugElement!.query(By.directive(ExportListe))?.componentInstance as ExportListe | undefined;
 
 const api = `${environment.apiUrl}/api/conges/demandes`;
 const demande = (d: Partial<DemandeConge> = {}): DemandeConge => ({
@@ -72,5 +75,21 @@ describe('À décider', () => {
     expect(el().querySelector('.onglets a[aria-current="page"]')!.textContent!.trim()).toBe('À décider');
     expect(el().querySelector('[role="tab"]')).toBeNull();
     expect(el().textContent).not.toContain('de votre équipe');
+  });
+
+  it('lets HR export every request with the status filter, only from the « Toutes » tab', async () => {
+    await ouvrir('RH', '/approvals?vue=toutes&statut=APPROUVEE');
+    http.expectOne(r => r.url === api).flush(page([]));
+    harness.detectChanges();
+    const e = exportDe(harness)!;
+    expect(e.liste()).toBe('demandes');
+    expect(e.filtres()).toEqual({ statut: 'APPROUVEE' });
+  });
+
+  it('offers no export on the to-decide view', async () => {
+    await ouvrir('RH');
+    http.expectOne(r => r.url === `${api}/a-decider`).flush(page([]));
+    harness.detectChanges();
+    expect(exportDe(harness)).toBeUndefined();
   });
 });

@@ -5,6 +5,9 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { environment } from '../../environments/environment';
 import { EmployesListe } from './employes-liste';
+import { By } from '@angular/platform-browser';
+import { ExportListe } from '../shared/export-liste';
+const exportDe = (h: RouterTestingHarness) => h.routeDebugElement!.query(By.directive(ExportListe))?.componentInstance as ExportListe | undefined;
 
 describe('Employee list', () => {
   let http: HttpTestingController;
@@ -69,5 +72,16 @@ describe('Employee list', () => {
     const personne = harness.routeNativeElement!.querySelector('.personne')!;
     expect(personne.querySelector('b')!.getAttribute('title')).toBe('Marie-Christine Ben Abdallah El Mansouri');
     expect(personne.querySelector('small')!.getAttribute('title')).toBe('marie-christine.benabdallah@rh.com');
+  });
+
+  it('exports the list with the search and filters on screen', async () => {
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/employees?q=lina&dept=1&role=3&page=2');
+    http.expectOne(r => r.url === `${environment.apiUrl}/api/employes`).flush({ contenu: [], numeroPage: 0, taillePage: 10, totalElements: 0, totalPages: 0, dernierePage: true });
+    http.match(() => true).forEach(r => r.flush([]));
+    harness.detectChanges();
+    const e = exportDe(harness)!;
+    expect(e.liste()).toBe('employes');
+    expect(e.filtres()).toEqual({ recherche: 'lina', departementId: 1, roleId: 3 });
   });
 });

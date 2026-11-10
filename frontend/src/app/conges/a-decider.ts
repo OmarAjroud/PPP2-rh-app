@@ -13,6 +13,7 @@ import { jours, periode, statutDemande } from '../core/api/libelles';
 import { AuthService } from '../core/auth/auth.service';
 import { Apparition } from '../core/motion/motion';
 import { FILTRES_STATUT } from './mes-conges';
+import { ExportListe } from '../shared/export-liste';
 
 type Vue = 'a-decider' | 'equipe' | 'toutes';
 type Etat = { statut: 'chargement' } | { statut: 'ok'; page: PageReponse<DemandeConge> } | { statut: 'erreur'; message: string };
@@ -23,11 +24,12 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; page: PageReponse<Demande
  */
 @Component({
   selector: 'app-a-decider',
-  imports: [RouterLink, FormsModule, ButtonModule, PaginatorModule, SelectModule, Apparition],
+  imports: [ExportListe, RouterLink, FormsModule, ButtonModule, PaginatorModule, SelectModule, Apparition],
   template: `
     <div class="page" rhApparition>
       <header class="entete">
         <div><p class="crumb">Congés</p><h1 class="page-titre">À décider</h1></div>
+        @if (vue() === 'toutes') { <app-export-liste liste="demandes" [filtres]="{ statut: statut() }" /> }
       </header>
 
       <section class="liste">

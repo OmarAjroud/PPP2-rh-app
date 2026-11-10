@@ -64,6 +64,24 @@ public final class Api {
         return requete.exchange((req, rep) -> new Reponse(rep.getStatusCode().value(), parse(rep.bodyTo(String.class))));
     }
 
+    /** Fichier téléchargé : statut, type de contenu, Content-Disposition et octets. */
+    public record Fichier(int statut, String type, String disposition, byte[] corps) {}
+
+    /** GET d'un fichier (export Excel ou PDF). */
+    public Fichier telecharger(String chemin, String jeton) {
+        RestClient.RequestHeadersSpec<?> requete = http.get().uri(chemin);
+        if (jeton != null) {
+            requete.header("Authorization", "Bearer " + jeton);
+        }
+        return requete.exchange((req, rep) -> {
+            byte[] corps = rep.bodyTo(byte[].class);
+            return new Fichier(rep.getStatusCode().value(),
+                    String.valueOf(rep.getHeaders().getContentType()),
+                    String.valueOf(rep.getHeaders().getFirst("Content-Disposition")),
+                    corps == null ? new byte[0] : corps);
+        });
+    }
+
     /** Requête quelconque : méthode et type de contenu au choix (pour tester les erreurs de protocole). */
     public Reponse call(HttpMethod methode, String chemin, String jeton, Object corps, MediaType type) {
         RestClient.RequestBodySpec requete = http.method(methode).uri(chemin).accept(MediaType.APPLICATION_JSON);

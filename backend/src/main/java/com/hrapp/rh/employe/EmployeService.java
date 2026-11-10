@@ -13,12 +13,15 @@ import com.hrapp.rh.securite.UtilisateurConnecte;
 import com.hrapp.rh.utilisateur.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -45,6 +48,25 @@ public class EmployeService {
             }
         });
 
+        return PageReponse.from(repository.findAll(filtreVisible(utilisateur, recherche, departementId, roleId), pageable)
+                .map(mapper::toResponse));
+    }
+
+    /**
+     * Mêmes critères et mêmes droits que {@link #search}, sans pagination (exports) :
+     * au plus {@code limite} employés, triés par nom.
+     */
+    @Transactional(readOnly = true)
+    public List<EmployeResponse> searchAll(UtilisateurConnecte utilisateur, String recherche,
+                                           Long departementId, Long roleId, int limite) {
+        return repository.findAll(filtreVisible(utilisateur, recherche, departementId, roleId),
+                        PageRequest.of(0, limite, Sort.by("nom", "prenom", "id")))
+                .map(mapper::toResponse).getContent();
+    }
+
+    /** Les critères de recherche, restreints à ce que l'utilisateur a le droit de voir. */
+    private Specification<Employe> filtreVisible(UtilisateurConnecte utilisateur, String recherche,
+                                                 Long departementId, Long roleId) {
         Specification<Employe> filtre = EmployeSpecification.search(recherche)
                 .and(EmployeSpecification.inDepartement(departementId))
                 .and(EmployeSpecification.hasRole(roleId));
@@ -57,8 +79,7 @@ public class EmployeService {
         } else if (!utilisateur.isAdminOrRh()) {
             filtre = filtre.and(EmployeSpecification.hasId(utilisateur.getEmployeId()));
         }
-
-        return PageReponse.from(repository.findAll(filtre, pageable).map(mapper::toResponse));
+        return filtre;
     }
 
     @Transactional(readOnly = true)

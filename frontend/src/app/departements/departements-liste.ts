@@ -8,17 +8,21 @@ import { Departement } from '../core/api/models';
 import { messageErreur } from '../core/api/erreurs';
 import { AuthService } from '../core/auth/auth.service';
 import { Apparition, Compteur } from '../core/motion/motion';
+import { ExportListe } from '../shared/export-liste';
 
 type Etat = { statut: 'chargement' } | { statut: 'ok'; liste: Departement[] } | { statut: 'erreur'; message: string };
 
 @Component({
   selector: 'app-departements-liste',
-  imports: [RouterLink, ButtonModule, Apparition, Compteur],
+  imports: [ExportListe, RouterLink, ButtonModule, Apparition, Compteur],
   template: `
     <div class="page" rhApparition>
       <header class="entete">
         <div><p class="crumb">Entreprise</p><h1 class="page-titre">Départements</h1></div>
-        @if (gestion()) { <a pButton routerLink="/departments/new" icon="pi pi-plus">Ajouter un département</a> }
+        <div class="actions">
+          <app-export-liste liste="departements" />
+          @if (gestion()) { <a pButton routerLink="/departments/new" icon="pi pi-plus">Ajouter un département</a> }
+        </div>
       </header>
       <section class="liste">
         @switch (etat().statut) {

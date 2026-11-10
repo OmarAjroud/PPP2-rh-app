@@ -88,6 +88,23 @@
 			<artifactId>mcp-json-jackson3</artifactId>
 			<version>${mcp.version}</version>
 		</dependency>
+		<!-- Exports des listes : Excel (fastexcel, Apache 2.0) et PDF (OpenPDF, LGPL/MPL) -->
+		<dependency>
+			<groupId>org.dhatim</groupId>
+			<artifactId>fastexcel</artifactId>
+			<version>0.19.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.librepdf</groupId>
+			<artifactId>openpdf</artifactId>
+			<version>2.2.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.dhatim</groupId>
+			<artifactId>fastexcel-reader</artifactId>
+			<version>0.19.0</version>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct</artifactId>

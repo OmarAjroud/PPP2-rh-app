@@ -4,7 +4,10 @@
       <p class="crumb">Entreprise</p>
       <h1 class="page-titre">{{ titre() }}</h1>
     </div>
-    @if (gestion()) { <a pButton routerLink="/employees/new" icon="pi pi-plus">Ajouter un employé</a> }
+    <div class="actions">
+      <app-export-liste liste="employes" [filtres]="filtresExport()" />
+      @if (gestion()) { <a pButton routerLink="/employees/new" icon="pi pi-plus">Ajouter un employé</a> }
+    </div>
   </header>
 
   <section class="liste">
