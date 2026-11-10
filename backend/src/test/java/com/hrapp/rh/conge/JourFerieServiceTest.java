@@ -50,6 +50,18 @@ class JourFerieServiceTest {
     }
 
     @Test
+    @DisplayName("Création : refusée hors 2000-2100, sinon le jour ne pourrait plus être consulté ni supprimé")
+    void create_shouldRejectYearOutsideReadableRange() {
+        assertThatThrownBy(() -> service.create(new JourFerieRequest(LocalDate.of(2206, 5, 20), "Faute de frappe")))
+                .isInstanceOf(com.hrapp.rh.common.exception.RequeteInvalideException.class)
+                .hasMessageContaining("2000");
+        assertThatThrownBy(() -> service.create(new JourFerieRequest(LocalDate.of(1999, 1, 1), "Trop ancien")))
+                .isInstanceOf(com.hrapp.rh.common.exception.RequeteInvalideException.class);
+
+        verify(repository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("Création : enregistre le jour férié quand la date est libre")
     void create_shouldSaveHoliday_whenDateIsFree() {
         given(repository.existsByDateFerie(LocalDate.of(2026, 12, 24))).willReturn(false);

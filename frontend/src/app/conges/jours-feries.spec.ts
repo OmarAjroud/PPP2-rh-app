@@ -34,7 +34,7 @@ describe('Jours fériés', () => {
     harness = await RouterTestingHarness.create();
     await harness.navigateByUrl(url);
   }
-  afterEach(() => localStorage.clear());
+  afterEach(() => { http.verify(); localStorage.clear(); });
 
   const el = () => harness.routeNativeElement!;
   const texte = () => el().textContent!.replace(/\s+/g, ' ');
@@ -49,7 +49,6 @@ describe('Jours fériés', () => {
     expect(lignes[0]).toContain('Jour de l’An');
     expect(lignes[1]).toContain('Fête du Travail');
     expect(lignes[1]).toContain('1er mai'); // French: the first of the month is written « 1er »
-    expect(lignes[1]).toContain('Fête du Travail');
     expect(el().querySelector('form.ajout')).toBeNull();
     expect(bouton('Supprimer')).toBeUndefined();
   });
@@ -74,7 +73,10 @@ describe('Jours fériés', () => {
     expect(req.request.body).toEqual({ date: `${annee}-07-25`, libelle: 'Fête de la République' });
     req.flush({ id: 3, date: `${annee}-07-25`, libelle: 'Fête de la République' });
     await harness.fixture.whenStable();
-    liste().flush(feries);
+    liste().flush([...feries, { id: 3, date: `${annee}-07-25`, libelle: 'Fête de la République' }]);
+    harness.detectChanges();
+    expect(texte()).toContain('Fête de la République');
+    expect(el().querySelector('.annonce')!.textContent).toContain('Jour férié ajouté');
   });
 
   it('shows the API message when the date is already taken', async () => {
@@ -100,6 +102,67 @@ describe('Jours fériés', () => {
     http.expectNone(r => r.method === 'DELETE');
     bouton('Confirmer')!.click();
     http.expectOne(r => r.method === 'DELETE' && r.url === `${api}/1`).flush(null);
+    await harness.fixture.whenStable();
+    liste().flush([feries[0]]);
+    harness.detectChanges();
+    expect(texte()).not.toContain('Jour de l’An');
+    expect(el().querySelector('.annonce')!.textContent).toContain('Jour férié supprimé');
+  });
+
+  it('tells HR that requests already filed keep their day count', async () => {
+    await ouvrir('RH');
+    liste().flush(feries);
+    harness.detectChanges();
+    expect(texte()).toContain('ne sont pas recalculées');
+  });
+
+  it('falls back to the current year when the address holds an unreadable year', async () => {
+    for (const bad of ['1999', '1e3', '-5', '2026.5', 'abc']) {
+      TestBed.resetTestingModule();
+      await ouvrir('EMPLOYE', `/holidays?annee=${bad}`);
+      liste().flush([]);
+    }
+  });
+
+  it('keeps the keyboard where the person is when confirming or cancelling a delete', async () => {
+    await ouvrir('ADMIN');
+    liste().flush(feries);
+    harness.detectChanges();
+    document.body.appendChild(el());
+    bouton('Supprimer')!.click();
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    expect(document.activeElement?.textContent?.trim()).toBe('Non');
+    bouton('Non')!.click();
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    expect(document.activeElement?.textContent?.trim()).toBe('Supprimer');
+    el().remove();
+  });
+
+  it('keeps the list on screen while it reloads', async () => {
+    await ouvrir('ADMIN');
+    liste().flush(feries);
+    harness.detectChanges();
+    bouton('Supprimer')!.click();
+    harness.detectChanges();
+    bouton('Confirmer')!.click();
+    http.expectOne(r => r.method === 'DELETE').flush(null);
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+    expect(texte()).not.toContain('Chargement');
+    expect(el().querySelectorAll('.ferie').length).toBe(2);
+    liste().flush([feries[0]]);
+  });
+
+  it('reloads when the holiday was already deleted by someone else', async () => {
+    await ouvrir('ADMIN');
+    liste().flush(feries);
+    harness.detectChanges();
+    bouton('Supprimer')!.click();
+    harness.detectChanges();
+    bouton('Confirmer')!.click();
+    http.expectOne(r => r.method === 'DELETE').flush({ message: 'Jour férié introuvable' }, { status: 404, statusText: 'Not Found' });
     await harness.fixture.whenStable();
     liste().flush([feries[0]]);
   });
