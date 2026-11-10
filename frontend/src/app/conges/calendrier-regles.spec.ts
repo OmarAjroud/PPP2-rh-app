@@ -49,4 +49,11 @@ describe('construireMois', () => {
     expect(m.jours[14].absents).toBe(2);   // 15 December
     expect(m.jours[13].absents).toBe(1);
   });
+
+  it('puts the reader\'s own row first, marked as theirs, and never counts a request twice', () => {
+    const m = construireMois([d({}), d({ id: 2, employeId: 9, employeNomComplet: 'Zied Manager', dateDebut: '2026-12-01', dateFin: '2026-12-02' }), d({})], 2026, 12, [], 9);
+    expect(m.lignes.map(l => [l.nom, l.moi])).toEqual([['Zied Manager', true], ['Lina Gharbi', false]]);
+    expect(m.lignes[1].barres).toHaveLength(1);
+    expect(m.jours[13].absents).toBe(1);
+  });
 });

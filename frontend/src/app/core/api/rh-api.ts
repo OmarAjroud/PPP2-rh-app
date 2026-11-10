@@ -151,6 +151,10 @@ export class RhApi {
     if (r.departementId) params['departementId'] = r.departementId;
     return this.http.get<PageReponse<DemandeConge>>(`${this.api}/conges/demandes`, { params });
   }
+  /** My own requests starting in a year (100 per page). */
+  mesDemandesAnnee(annee: number, page: number): Observable<PageReponse<DemandeConge>> {
+    return this.http.get<PageReponse<DemandeConge>>(`${this.api}/conges/demandes/moi`, { params: { annee, page, size: 100 } });
+  }
   /** Manager (also ADMIN, RH): their team's requests starting in a year. */
   demandesEquipeAnnee(annee: number, page: number): Observable<PageReponse<DemandeConge>> {
     return this.http.get<PageReponse<DemandeConge>>(`${this.api}/conges/demandes/equipe`, { params: { annee, page, size: 100 } });

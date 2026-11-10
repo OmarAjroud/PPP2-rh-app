@@ -109,7 +109,7 @@ function toutesLesPages(page: (n: number) => Observable<PageReponse<DemandeConge
                 </div>
                 @for (l of m.lignes; track l.employeId) {
                   <div class="rangee">
-                    <span class="cellule-nom"><span class="personne">{{ l.nom }}</span>@if (gestion()) {<small class="dept">{{ l.departement }}</small>}</span>
+                    <span class="cellule-nom" [class.moi]="l.moi"><span class="nom-ligne"><span class="personne">{{ l.nom }}</span>@if (l.moi) {<span class="vous"> (vous)</span>}</span>@if (gestion()) {<small class="dept">{{ l.departement }}</small>}</span>
                     @for (j of m.jours; track j.jour) {
                       <span class="fond" aria-hidden="true" [style.grid-column]="j.jour + 1" [class.repos]="j.weekend || j.ferie" [class.aujourdhui]="j.iso === aujourdhuiIso"></span>
                     }
@@ -137,7 +137,7 @@ function toutesLesPages(page: (n: number) => Observable<PageReponse<DemandeConge
               @for (a of absences(); track a.barre.id) {
                 <li>
                   <a [routerLink]="['/leave-requests', a.barre.id]">
-                    <span class="qui"><b>{{ a.ligne.nom }}</b>@if (gestion()) {<small>{{ a.ligne.departement }}</small>}</span>
+                    <span class="qui"><b>{{ a.ligne.nom }}@if (a.ligne.moi) { (vous)}</b>@if (gestion()) {<small>{{ a.ligne.departement }}</small>}</span>
                     <span class="quand">{{ courte(a.barre.dateDebut, a.barre.dateFin) }}</span>
                     <span class="quoi">{{ a.barre.type }}</span>
                     <span class="status" [class.s-ok]="a.barre.statut === 'APPROUVEE'" [class.s-wait]="a.barre.statut === 'EN_ATTENTE'">{{ a.barre.statut === 'APPROUVEE' ? 'Approuvé' : 'En attente' }}</span>
@@ -166,7 +166,9 @@ function toutesLesPages(page: (n: number) => Observable<PageReponse<DemandeConge
     .rangee { display: grid; grid-template-columns: var(--nom) repeat(var(--jours), minmax(24px, 1fr)); align-items: center; min-height: 44px; border-bottom: 1px solid var(--rh-line-row); }
     .rangee > * { grid-row: 1; }
     .cellule-nom { grid-column: 1; position: sticky; left: 0; z-index: 2; display: grid; align-self: stretch; align-content: center; padding: 6px var(--rh-space-4); background: var(--rh-surface); border-right: 1px solid var(--rh-line); min-width: 0; }
+    .nom-ligne { display: flex; min-width: 0; }
     .personne { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+    .vous { flex: none; white-space: pre; color: var(--rh-muted); }
     .dept { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--rh-muted); font-size: var(--rh-text-xs, 12px); }
     .tete { min-height: 48px; }
     .tete .jour { display: grid; justify-items: center; align-self: stretch; align-content: center; font-size: var(--rh-text-sm); font-variant-numeric: tabular-nums; }
@@ -244,7 +246,7 @@ export class Calendrier {
         this.demandes(annee, mois, departementId),
         this.api.joursFeries(annee).pipe(catchError(() => of([]))),
       ]).pipe(
-        map(([demandes, feries]): Etat => ({ statut: 'ok', mois: construireMois(demandes, annee, mois, feries.map(f => f.date)) })),
+        map(([demandes, feries]): Etat => ({ statut: 'ok', mois: construireMois(demandes, annee, mois, feries.map(f => f.date), this.auth.profil()?.employeId ?? null) })),
         catchError(e => of<Etat>({ statut: 'erreur', message: messageErreur(e) })),
         startWith<Etat>({ statut: 'chargement' }),
       )),
@@ -262,7 +264,8 @@ export class Calendrier {
 
   /**
    * ADMIN, RH: every request overlapping the month (optionally one department).
-   * Manager: their team's requests starting that year (the API refuses a request spanning two years, so none is missed).
+   * Manager: their team's requests starting that year (the API refuses a request spanning two years, so none is missed),
+   * plus their own (the team list leaves the manager out); if their own cannot be read, the team still shows.
    */
   private demandes(annee: number, mois: number, departementId: number | null): Observable<DemandeConge[]> {
     if (this.gestion()) {
@@ -270,7 +273,10 @@ export class Calendrier {
       const au = `${annee}-${deux(mois)}-${deux(new Date(annee, mois, 0).getDate())}`;
       return toutesLesPages(page => this.api.demandesPeriode({ du, au, departementId, page }));
     }
-    return toutesLesPages(page => this.api.demandesEquipeAnnee(annee, page));
+    return forkJoin([
+      toutesLesPages(page => this.api.demandesEquipeAnnee(annee, page)),
+      toutesLesPages(page => this.api.mesDemandesAnnee(annee, page)).pipe(catchError(() => of<DemandeConge[]>([]))),
+    ]).pipe(map(([equipe, miennes]) => [...miennes, ...equipe]));
   }
 
   protected lettre(iso: string): string {
