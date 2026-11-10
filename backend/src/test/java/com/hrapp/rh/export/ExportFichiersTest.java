@@ -114,4 +114,28 @@ class ExportFichiersTest {
             lecteur.close();
         }
     }
+
+    @Test
+    @DisplayName("PDF : un long tableau écrit par blocs garde toutes ses lignes et son en-tête sur chaque page")
+    void pdf_shouldWriteLongTablesInBlocks() throws Exception {
+        int lignes = ExportPdf.BLOC * 2 + 37;   // crosses two block boundaries
+        ByteArrayOutputStream sortie = new ByteArrayOutputStream();
+        ExportPdf.ecrire(tableau(lignes), "rh", GENERE_LE, sortie);
+        PdfReader lecteur = new PdfReader(sortie.toByteArray());
+        try {
+            PdfTextExtractor extracteur = new PdfTextExtractor(lecteur);
+            StringBuilder tout = new StringBuilder();
+            for (int p = 1; p <= lecteur.getNumberOfPages(); p++) {
+                String page = extracteur.getTextFromPage(p);
+                assertThat(page).as("page %d", p).contains("Employé", "Commentaire");
+                tout.append(page).append('\n');
+            }
+            for (int i : new int[] { 0, ExportPdf.BLOC - 3, ExportPdf.BLOC - 2, ExportPdf.BLOC * 2 - 2, lignes - 1 }) {
+                assertThat(tout.toString()).contains("Personne " + i + "01/01/2026");
+            }
+        } finally {
+            lecteur.close();
+        }
+    }
+
 }

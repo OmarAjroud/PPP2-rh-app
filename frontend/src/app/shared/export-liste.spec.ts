@@ -45,6 +45,21 @@ describe('Export buttons', () => {
     req.flush(new Blob(['x']), { headers: { 'Content-Disposition': 'attachment; filename="employes-2026-11-11.xlsx"' } });
     await f.whenStable();
     expect(telecharge).toEqual(['employes-2026-11-11.xlsx']);
+    f.detectChanges();
+    expect(f.nativeElement.querySelector('[aria-live="polite"]').textContent).toContain('Fichier téléchargé : employes-2026-11-11.xlsx');
+    // the link stays valid while the browser starts the download
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+  });
+
+  it('says so instead of saving an empty file', async () => {
+    const f = rendre();
+    bouton(f.nativeElement, 'Exporter en Excel').click();
+    http.expectOne(r => r.url === `${api}/employes`).flush(null);
+    await vi.waitFor(() => {
+      f.detectChanges();
+      expect(f.nativeElement.querySelector('[role="alert"]')?.textContent).toContain('fichier reçu est vide');
+    });
+    expect(telecharge).toEqual([]);
   });
 
   it('shows the server message when the export is refused', async () => {

@@ -36,6 +36,15 @@ class ExportsIT extends IntegrationTest {
         assertThat(lignes.get(0).getCell(0).asString()).isEqualTo("ID");
         // roles in French, as on screen
         assertThat(lignes.stream().skip(1).map(l -> l.getCell(5).asString())).contains("Administrateur", "Ressources humaines", "Manager", "Employé");
+        // never a salary: no such column, and no salary value of the seed data anywhere in the file
+        assertThat(lignes.get(0).stream().map(c -> c.getText())).noneMatch(t -> t.toLowerCase().contains("salaire"));
+        String texte = lignes.stream().flatMap(Row::stream).map(c -> c == null ? "" : c.getText()).reduce("", String::concat);
+        for (var e : api.get("/api/employes?size=100", rh).get("contenu")) {
+            var salaire = api.get("/api/employes/" + e.get("id").asLong(), rh).get("salaire");
+            if (!salaire.isMissingNode() && !salaire.isNull()) {
+                assertThat(texte).doesNotContain(salaire.asString().replaceAll("\\.0+$", ""));
+            }
+        }
     }
 
     @Test
@@ -46,7 +55,14 @@ class ExportsIT extends IntegrationTest {
         assertThat(lignes(api.telecharger("/api/exports/employes?format=xlsx", manager).corps())).hasSize((int) visibles + 1);
 
         String employe = api.login("employe");
-        assertThat(lignes(api.telecharger("/api/exports/employes?format=xlsx", employe).corps())).hasSize(2);
+        List<Row> siens = lignes(api.telecharger("/api/exports/employes?format=xlsx", employe).corps());
+        assertThat(siens).hasSize(2);
+        assertThat(siens.get(1).getCell(3).asString()).isEqualTo(api.get("/api/employes/me", employe).get("email").asString());
+
+        // another department in the filter never widens what a manager sees
+        long autre = api.get("/api/departements", manager).json().valueStream()
+                .filter(d -> !"Informatique".equals(d.get("nom").asString())).findFirst().orElseThrow().get("id").asLong();
+        assertThat(lignes(api.telecharger("/api/exports/employes?format=xlsx&departementId=" + autre, manager).corps())).hasSize(1);
     }
 
     @Test

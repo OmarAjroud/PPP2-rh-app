@@ -48,11 +48,15 @@ public final class ExportPdf {
     private static final Font TETE = new Font(Font.HELVETICA, 8, Font.BOLD);
     private static final Font CELLULE = new Font(Font.HELVETICA, 8, Font.NORMAL);
 
+    /** Rows written per block: a long table is sent to the file as it goes instead of being held in memory whole. */
+    static final int BLOC = 200;
+
     private ExportPdf() {
     }
 
     public static void ecrire(Tableau tableau, String auteur, LocalDateTime genereLe, OutputStream sortie) throws IOException {
         Document document = new Document(PageSize.A4.rotate(), 36, 36, 36, 40);
+        boolean termine = false;
         try {
             PdfWriter writer = PdfWriter.getInstance(document, sortie);
             writer.setPageEvent(new NumerosDePage());
@@ -73,36 +77,64 @@ public final class ExportPdf {
                 boolean filtre = tableau.filtres() != null && !tableau.filtres().isBlank();
                 document.add(new Paragraph(filtre ? "Aucune ligne ne correspond à ces critères." : "Aucune ligne à exporter.", CELLULE));
             } else {
-                document.add(table(tableau));
+                ecrireTable(document, tableau);
             }
+            termine = true;
         } catch (DocumentException e) {
             throw new IOException("Génération du PDF impossible", e);
         } finally {
-            if (document.isOpen()) {
-                document.close();
-            }
+            fermer(document, termine);
         }
     }
 
-    private static PdfPTable table(Tableau tableau) {
+    /**
+     * Closing writes the end of the file: after a success, a failure there is a real error.
+     * After an earlier failure, closing the half-written document may fail too, and must not hide the first error.
+     */
+    private static void fermer(Document document, boolean termine) {
+        if (!document.isOpen()) {
+            return;
+        }
+        if (termine) {
+            document.close();
+            return;
+        }
+        try {
+            document.close();
+        } catch (RuntimeException ignoree) {
+            // the exception already propagating is the one worth reporting
+        }
+    }
+
+    /**
+     * The table is written in blocks of {@link #BLOC} rows ("incomplete" table): rows already written are released,
+     * so a 5,000-row export never holds tens of thousands of cells in memory at once.
+     */
+    private static void ecrireTable(Document document, Tableau tableau) throws DocumentException {
         List<Colonne> colonnes = tableau.colonnes();
         PdfPTable table = new PdfPTable(colonnes.size());
         table.setWidthPercentage(100);
         table.setWidths(colonnes.stream().mapToInt(Colonne::largeur).toArray());
         table.setHeaderRows(1);   // repeated on every page
+        table.setComplete(false);
 
         for (Colonne c : colonnes) {
             PdfPCell cellule = cellule(c.libelle(), TETE, c.type());
             cellule.setBackgroundColor(ENTETE);
             table.addCell(cellule);
         }
+        int ecrites = 0;
         for (List<Object> ligne : tableau.lignes()) {
             for (int i = 0; i < colonnes.size(); i++) {
                 Colonne c = colonnes.get(i);
                 table.addCell(cellule(texte(i < ligne.size() ? ligne.get(i) : null), CELLULE, c.type()));
             }
+            if (++ecrites % BLOC == 0) {
+                document.add(table);
+            }
         }
-        return table;
+        table.setComplete(true);
+        document.add(table);
     }
 
     private static PdfPCell cellule(String texte, Font police, Colonne.Type type) {

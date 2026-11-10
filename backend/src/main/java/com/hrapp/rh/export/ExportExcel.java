@@ -37,28 +37,34 @@ public final class ExportExcel {
         int r = 1;
         for (List<Object> ligne : tableau.lignes()) {
             for (int c = 0; c < colonnes.size(); c++) {
-                ecrireCellule(feuille, r, c, colonnes.get(c).type(), c < ligne.size() ? ligne.get(c) : null);
+                ecrireCellule(feuille, r, c, c < ligne.size() ? ligne.get(c) : null);
             }
             r++;
         }
-        if (!tableau.lignes().isEmpty()) {
+        int derniere = tableau.lignes().size();
+        if (derniere > 0) {
+            // one date format per column, rather than one style call per cell
+            for (int c = 0; c < colonnes.size(); c++) {
+                String format = switch (colonnes.get(c).type()) {
+                    case DATE -> "dd/mm/yyyy";
+                    case DATE_HEURE -> "dd/mm/yyyy hh:mm";
+                    default -> null;
+                };
+                if (format != null) {
+                    feuille.range(1, c, derniere, c).style().format(format).set();
+                }
+            }
             feuille.setAutoFilter(0, 0, colonnes.size() - 1);
         }
         classeur.finish();
     }
 
-    private static void ecrireCellule(Worksheet feuille, int r, int c, Colonne.Type type, Object valeur) {
+    private static void ecrireCellule(Worksheet feuille, int r, int c, Object valeur) {
         switch (valeur) {
             case null -> { }
             case Number n -> feuille.value(r, c, n);
-            case LocalDate d -> {
-                feuille.value(r, c, d);
-                feuille.style(r, c).format("dd/mm/yyyy").set();
-            }
-            case LocalDateTime d -> {
-                feuille.value(r, c, d);
-                feuille.style(r, c).format("dd/mm/yyyy hh:mm").set();
-            }
+            case LocalDate d -> feuille.value(r, c, d);
+            case LocalDateTime d -> feuille.value(r, c, d);
             default -> feuille.value(r, c, valeur.toString());
         }
     }

@@ -29,7 +29,8 @@ function enregistrer(blob: Blob, nom: string): void {
   document.body.appendChild(lien);
   lien.click();
   lien.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
+  // released later: some browsers still read the link just after the click
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
 /** An error body comes back as a Blob (the request asked for a file): read it to show the server's message. */
@@ -58,11 +59,13 @@ async function lireErreur(e: unknown): Promise<string> {
       <p-button label="PDF" icon="pi pi-file-pdf" severity="secondary" size="small" ariaLabel="Exporter en PDF"
                 [loading]="enCours() === 'pdf'" [disabled]="!!enCours() && enCours() !== 'pdf'" (onClick)="exporter('pdf')" />
       @if (erreur()) { <p class="alerte erreur" role="alert">{{ erreur() }}</p> }
+      <p class="annonce" aria-live="polite">{{ annonce() }}</p>
     </div>
   `,
   styles: `
     .export { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--rh-space-2); }
     .libelle { color: var(--rh-muted); font-size: var(--rh-text-sm); }
+    .annonce { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: 0; }
     .alerte { flex-basis: 100%; margin: 0; max-width: 42ch; margin-left: auto; }
   `,
 })
@@ -75,15 +78,25 @@ export class ExportListe {
 
   protected readonly enCours = signal<FormatExport | null>(null);
   protected readonly erreur = signal('');
+  /** Read out to screen readers once the file is saved. */
+  protected readonly annonce = signal('');
 
   protected async exporter(format: FormatExport): Promise<void> {
     if (this.enCours()) return;
     this.enCours.set(format);
     this.erreur.set('');
+    this.annonce.set('');
     try {
       const reponse = await firstValueFrom(this.api.exporter(this.liste(), format, this.filtres()));
-      const jour = new Date().toISOString().slice(0, 10);
-      enregistrer(reponse.body ?? new Blob(), nomFichier(reponse.headers.get('Content-Disposition'), `${this.liste()}-${jour}.${format}`));
+      if (!reponse.body || reponse.body.size === 0) {
+        this.erreur.set('Le fichier reçu est vide. Réessayez dans un instant.');
+        return;
+      }
+      const n = new Date();
+      const jour = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`; // local date, not UTC
+      const nom = nomFichier(reponse.headers.get('Content-Disposition'), `${this.liste()}-${jour}.${format}`);
+      enregistrer(reponse.body, nom);
+      this.annonce.set(`Fichier téléchargé : ${nom}`);
     } catch (e) {
       this.erreur.set(await lireErreur(e));
     } finally {
