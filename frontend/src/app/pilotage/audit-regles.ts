@@ -19,6 +19,7 @@ const ACTIONS: Record<string, string> = {
   APPEL_ASSISTANT: 'Appel de l’assistant',
   DESACTIVATION_COMPTE: 'Désactivation de compte',
   REACTIVATION_COMPTE: 'Réactivation de compte',
+  EXPORT: 'Export',
 };
 
 /** Whether the action has its own French label (used to check every backend action is covered). */

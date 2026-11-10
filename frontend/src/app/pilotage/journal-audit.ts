@@ -17,6 +17,7 @@ import { messageErreur } from '../core/api/erreurs';
 import { Apparition } from '../core/motion/motion';
 import { dateIso } from '../conges/regles';
 import { Difference, differences, libelleAction } from './audit-regles';
+import { ExportListe } from '../shared/export-liste';
 
 type Etat = { statut: 'chargement' } | { statut: 'ok'; page: PageReponse<AuditEntree> } | { statut: 'erreur'; message: string };
 const TAILLE = 20;
@@ -34,11 +35,12 @@ function versDate(iso: string | null): Date | null {
  */
 @Component({
   selector: 'app-journal-audit',
-  imports: [DatePipe, FormsModule, ReactiveFormsModule, ButtonModule, DatePickerModule, IconFieldModule, InputIconModule, InputTextModule, PaginatorModule, SelectModule, Apparition],
+  imports: [ExportListe, DatePipe, FormsModule, ReactiveFormsModule, ButtonModule, DatePickerModule, IconFieldModule, InputIconModule, InputTextModule, PaginatorModule, SelectModule, Apparition],
   template: `
     <div class="page" rhApparition>
       <header class="entete">
         <div><p class="crumb">Pilotage</p><h1 class="page-titre">Journal d'audit</h1></div>
+        <app-export-liste liste="audit" [filtres]="filtresExport()" />
       </header>
 
       <section class="liste">
@@ -167,6 +169,11 @@ export class JournalAudit {
 
   private readonly params = toSignal(this.route.queryParamMap, { requireSync: true });
   protected readonly page = computed(() => Math.max(0, Number(this.params().get('page') ?? 0) || 0));
+  /** The export follows the filters on screen, with the API's parameter names. */
+  protected readonly filtresExport = computed(() => {
+    const p = this.params();
+    return { nomUtilisateur: p.get('utilisateur'), action: p.get('action'), entite: p.get('entite'), du: p.get('du'), au: p.get('au') };
+  });
   protected readonly filtresActifs = computed(() => ['utilisateur', 'action', 'entite', 'du', 'au'].some(c => !!this.params().get(c)));
 
   protected readonly utilisateur = new FormControl(this.params().get('utilisateur') ?? '', { nonNullable: true });

@@ -125,14 +125,28 @@ public class DemandeCongeService {
     @Transactional(readOnly = true)
     public PageReponse<DemandeCongeResponse> listAll(StatutDemandeConge statut, Long employeId, Long departementId,
                                                      LocalDate du, LocalDate au, int page, int taille) {
+        return PageReponse.from(repository.findAll(filtreGlobal(statut, employeId, departementId, du, au), pageRequest(page, taille))
+                .map(mapper::toResponse));
+    }
+
+    /** Mêmes critères que {@link #listAll}, sans pagination (exports) : au plus {@code limite} demandes, les plus récentes d'abord. */
+    @Transactional(readOnly = true)
+    public List<DemandeCongeResponse> listAllUnpaged(StatutDemandeConge statut, Long employeId, Long departementId,
+                                                     LocalDate du, LocalDate au, int limite) {
+        return repository.findAll(filtreGlobal(statut, employeId, departementId, du, au),
+                        PageRequest.of(0, limite, Sort.by(Sort.Direction.DESC, "dateDebut", "id")))
+                .map(mapper::toResponse).getContent();
+    }
+
+    private Specification<DemandeConge> filtreGlobal(StatutDemandeConge statut, Long employeId, Long departementId,
+                                                     LocalDate du, LocalDate au) {
         if (du != null && au != null && du.isAfter(au)) {
             throw new RequeteInvalideException("La date de début doit précéder la date de fin");
         }
-        Specification<DemandeConge> filtre = DemandeCongeSpecification.employe(employeId)
+        return DemandeCongeSpecification.employe(employeId)
                 .and(DemandeCongeSpecification.departement(departementId))
                 .and(DemandeCongeSpecification.statut(statut))
                 .and(DemandeCongeSpecification.chevauche(du, au));
-        return PageReponse.from(repository.findAll(filtre, pageRequest(page, taille)).map(mapper::toResponse));
     }
 
     /** Détail : visible par le demandeur, son manager d'équipe, ADMIN et RH (sinon 404). */

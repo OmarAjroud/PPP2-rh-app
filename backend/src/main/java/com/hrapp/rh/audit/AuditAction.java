@@ -14,5 +14,6 @@ public enum AuditAction {
     APPEL_ASSISTANT,             // un outil de l'assistant RH a été exécuté (chat ou MCP)
     DESACTIVATION_COMPTE,
     REACTIVATION_COMPTE,
-    DECONNEXION
+    DECONNEXION,
+    EXPORT                       // une liste exportée en Excel ou en PDF (détails : format, nombre de lignes, filtres)
 }

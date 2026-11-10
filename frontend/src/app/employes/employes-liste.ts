@@ -17,6 +17,7 @@ import { messageErreur } from '../core/api/erreurs';
 import { initiales, libelleRole, optionsRoles } from '../core/api/libelles';
 import { AuthService } from '../core/auth/auth.service';
 import { Apparition } from '../core/motion/motion';
+import { ExportListe } from '../shared/export-liste';
 
 type Etat = { statut: 'chargement' } | { statut: 'ok'; page: PageReponse<Employe> } | { statut: 'erreur'; message: string };
 
@@ -29,7 +30,7 @@ const TRIS: Record<string, string> = { id: 'id', nom: 'nom', email: 'email', dep
  */
 @Component({
   selector: 'app-employes-liste',
-  imports: [FormsModule, ReactiveFormsModule, RouterLink, ButtonModule, IconFieldModule, InputIconModule, InputTextModule, PaginatorModule, SelectModule, TableModule, Apparition],
+  imports: [ExportListe, FormsModule, ReactiveFormsModule, RouterLink, ButtonModule, IconFieldModule, InputIconModule, InputTextModule, PaginatorModule, SelectModule, TableModule, Apparition],
   templateUrl: './employes-liste.html',
   styleUrl: './employes-liste.scss',
 })
@@ -52,6 +53,8 @@ export class EmployesListe {
   protected readonly tri = computed(() => (this.params()['sort'] as string) ?? 'nom');
   protected readonly sens = computed(() => (this.params()['dir'] === 'desc' ? -1 : 1));
   protected readonly page = computed(() => numero(this.params()['page']) ?? 0);
+  /** The export follows the search and filters on screen (not the page or the sort). */
+  protected readonly filtresExport = computed(() => ({ recherche: this.q() || null, departementId: this.dept(), roleId: this.roleFiltre() }));
   protected readonly taille = computed(() => numero(this.params()['size']) ?? 10);
 
   protected readonly etat = toSignal(

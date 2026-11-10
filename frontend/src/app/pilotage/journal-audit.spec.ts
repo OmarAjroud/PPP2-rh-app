@@ -6,6 +6,9 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { environment } from '../../environments/environment';
 import { AuditEntree } from '../core/api/models';
 import { JournalAudit } from './journal-audit';
+import { By } from '@angular/platform-browser';
+import { ExportListe } from '../shared/export-liste';
+const exportDe = (h: RouterTestingHarness) => h.routeDebugElement!.query(By.directive(ExportListe))?.componentInstance as ExportListe | undefined;
 
 const api = `${environment.apiUrl}/api/admin/audit`;
 const entree = (o: Partial<AuditEntree> = {}): AuditEntree => ({
@@ -124,5 +127,15 @@ describe('Journal d’audit', () => {
     el().querySelector<HTMLButtonElement>('button.resume')!.click();
     harness.detectChanges();
     expect(el().querySelector('.detail caption')!.textContent).toContain('Valeurs enregistrées');
+  });
+
+  it('exports the journal with the filters on screen', async () => {
+    await harness.navigateByUrl('/audit?utilisateur=rh&action=CONNEXION&du=2026-11-01&page=3');
+    listes();
+    http.expectOne(r => r.url === api).flush(page([]));
+    harness.detectChanges();
+    const e = exportDe(harness)!;
+    expect(e.liste()).toBe('audit');
+    expect(e.filtres()).toEqual({ nomUtilisateur: 'rh', action: 'CONNEXION', entite: null, du: '2026-11-01', au: null });
   });
 });

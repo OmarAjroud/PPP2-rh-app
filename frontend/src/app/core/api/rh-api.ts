@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
@@ -163,6 +163,18 @@ export class RhApi {
   /** ADMIN: sends a test email to the administrator's own address (202, sent in the background). */
   envoyerEmailTest(): Observable<{ message: string }> {
     return this.http.post<{ message: string }>(`${this.api}/admin/mail/test`, {});
+  }
+
+  /**
+   * A list as an Excel or PDF file, built by the server with the same rights and filters as the list.
+   * Empty filters are left out. The whole response is returned to read the file name (Content-Disposition).
+   */
+  exporter(liste: string, format: 'xlsx' | 'pdf', filtres: Record<string, string | number | null | undefined>): Observable<HttpResponse<Blob>> {
+    let params = new HttpParams().set('format', format);
+    for (const [cle, valeur] of Object.entries(filtres)) {
+      if (valeur !== null && valeur !== undefined && valeur !== '') params = params.set(cle, valeur);
+    }
+    return this.http.get(`${this.api}/exports/${liste}`, { params, observe: 'response', responseType: 'blob' });
   }
 
   // ---- Public holidays (read: everyone; write: ADMIN, RH) ----

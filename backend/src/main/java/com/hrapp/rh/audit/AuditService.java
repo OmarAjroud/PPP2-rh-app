@@ -49,11 +49,21 @@ public class AuditService {
     }
 
     public PageReponse<AuditEntryResponse> search(AuditFilter filtre, int page, int taille) {
+        verifierPeriode(filtre);
+        PageRequest pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(taille, 1), 100));
+        return PageReponse.from(repository.search(filtre, pageable));
+    }
+
+    /** Mêmes critères que {@link #search}, sans pagination (exports) : au plus {@code limite} entrées. */
+    public List<AuditEntryResponse> searchAll(AuditFilter filtre, int limite) {
+        verifierPeriode(filtre);
+        return repository.search(filtre, PageRequest.of(0, limite)).getContent();
+    }
+
+    private static void verifierPeriode(AuditFilter filtre) {
         if (filtre.du() != null && filtre.au() != null && filtre.du().isAfter(filtre.au())) {
             throw new RequeteInvalideException("La date de début doit précéder la date de fin");
         }
-        PageRequest pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(taille, 1), 100));
-        return PageReponse.from(repository.search(filtre, pageable));
     }
 
     public List<String> listEntities() {
