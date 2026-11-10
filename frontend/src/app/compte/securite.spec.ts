@@ -40,10 +40,10 @@ describe('Security page: test email', () => {
     const f = rendre('ADMIN');
     const el = f.nativeElement as HTMLElement;
     bouton(el)!.click();
-    http.expectOne(url).flush({ message: 'Aucune adresse email pour ce compte' }, { status: 400, statusText: 'Bad Request' });
+    http.expectOne(url).flush({ message: 'Employé introuvable' }, { status: 404, statusText: 'Not Found' });
     await f.whenStable();
     f.detectChanges();
-    expect(el.querySelector('.envoi-mail [role="alert"]')!.textContent).toContain('Aucune adresse email');
+    expect(el.querySelector('.envoi-mail [role="alert"]')!.textContent).toContain('Employé introuvable');
   });
 
   it('is offered to administrators only', () => {

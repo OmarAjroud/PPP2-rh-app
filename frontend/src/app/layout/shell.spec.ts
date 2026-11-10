@@ -21,7 +21,7 @@ describe('Shell: navigation drawer on small screens', { timeout: 15000 }, () => 
     TestBed.configureTestingModule({ providers: [provideRouter(routes), provideHttpClient()] });
     harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/security');
-  }, 15_000); // hooks have their own limit (10 s), not the describe timeout
+  });
 
   it('opens and closes the drawer with the menu button', () => {
     expect(bouton().getAttribute('aria-expanded')).toBe('false');

@@ -53,7 +53,7 @@ describe('Nouvelle demande de congé', () => {
     expect(texte()).toContain('4 jours ouvrables');
     expect(texte()).toMatch(/22\s*→\s*18/);
     expect(texte()).toContain('Karim Mansour');
-  }, 15_000); // heavy screen: passes in ~2 s alone, can pass 5 s when every file runs in parallel
+  });
 
   it('does not ask for a count when the end is before the start, and says why', async () => {
     await ouvrir();

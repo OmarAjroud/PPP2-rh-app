@@ -7,6 +7,8 @@ import { AuthResponse, Session } from './auth.models';
 
 const CLE = 'rh.session';
 const VERROU = 'rh-refresh';
+/** Why the session ended, for the tabs that only see it disappear (e.g. 'inactivite'). */
+const RAISON = 'rh.raison';
 
 /**
  * Session handling.
@@ -28,6 +30,8 @@ export class AuthService {
   readonly connecte = computed(() => this.etat() !== null);
 
   private refreshEnCours: Promise<string> | null = null;
+  /** Changes at every logout: a renewal that started before must not bring the session back. */
+  private generation = 0;
 
   constructor() {
     // Another tab logged in, refreshed or logged out
@@ -35,7 +39,12 @@ export class AuthService {
       if (e.key !== CLE) return;
       const avant = this.etat();
       this.etat.set(lire());
-      if (avant && !this.etat()) void this.router.navigateByUrl('/login');
+      if (avant && !this.etat()) {
+        let raison: string | null = null;
+        try { raison = localStorage.getItem(RAISON); } catch { /* storage unavailable */ }
+        if (raison === 'inactivite') void this.router.navigate(['/login'], { queryParams: { idle: 1 } });
+        else void this.router.navigateByUrl('/login');
+      }
     });
   }
 
@@ -54,6 +63,8 @@ export class AuthService {
    */
   async logout(raison?: 'inactivite'): Promise<void> {
     const refreshToken = this.etat()?.refreshToken;
+    // Left before the session goes, so the other tabs can explain it too
+    if (raison) { try { localStorage.setItem(RAISON, raison); } catch { /* storage unavailable */ } }
     this.oublier();
     if (refreshToken) {
       try { await firstValueFrom(this.http.post(`${this.api}/logout`, { refreshToken })); } catch { /* already gone */ }
@@ -86,6 +97,7 @@ export class AuthService {
 
   /** Forgets the session in this browser (all tabs). */
   oublier(): void {
+    this.generation++;
     try { localStorage.removeItem(CLE); } catch { /* storage unavailable */ }
     this.etat.set(null);
   }
@@ -100,14 +112,22 @@ export class AuthService {
         this.etat.set(actuelle);
         return actuelle.accessToken;
       }
+      const generation = this.generation;
+      let r: AuthResponse;
       try {
-        const r = await firstValueFrom(this.http.post<AuthResponse>(`${this.api}/refresh`, { refreshToken: utilise }));
-        this.enregistrer(r);
-        return r.accessToken;
+        r = await firstValueFrom(this.http.post<AuthResponse>(`${this.api}/refresh`, { refreshToken: utilise }));
       } catch (e) {
         this.oublier();
         throw e;
       }
+      // Logged out while the renewal was on its way (here or in another tab): keep it that way,
+      // and revoke the new refresh token instead of leaving it valid on the server
+      if (generation !== this.generation || !this.etat()) {
+        this.http.post(`${this.api}/logout`, { refreshToken: r.refreshToken }).subscribe({ error: () => undefined });
+        throw new Error('Session fermée pendant le renouvellement');
+      }
+      this.enregistrer(r);
+      return r.accessToken;
     };
     const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
     return locks ? locks.request(VERROU, tache) : tache();
@@ -120,7 +140,10 @@ export class AuthService {
       expiresAt: Date.now() + r.expiresIn * 1000,
       profil: r.profil,
     };
-    try { localStorage.setItem(CLE, JSON.stringify(s)); } catch { /* storage unavailable: session lasts for this tab */ }
+    try {
+      localStorage.setItem(CLE, JSON.stringify(s));
+      localStorage.removeItem(RAISON);
+    } catch { /* storage unavailable: session lasts for this tab */ }
     this.etat.set(s);
   }
 }

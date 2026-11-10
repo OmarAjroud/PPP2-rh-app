@@ -56,4 +56,22 @@ describe('Inactivity warning', () => {
     expect(f.nativeElement.querySelector('[role="alertdialog"]')).toBeNull();
     f.nativeElement.remove();
   });
+
+  it('gives the keyboard back to where it was when the warning closes', async () => {
+    const avant = document.createElement('button');
+    avant.textContent = 'Enregistrer';
+    document.body.appendChild(avant);
+    avant.focus();
+    const f = rendre();
+    restant.set(20);
+    f.detectChanges();
+    await f.whenStable();
+    expect(document.activeElement?.textContent?.trim()).toBe('Rester connecté');
+    restant.set(null); // activity in another tab, or "Rester connecté"
+    f.detectChanges();
+    await f.whenStable();
+    expect(document.activeElement).toBe(avant);
+    avant.remove();
+    f.nativeElement.remove();
+  });
 });

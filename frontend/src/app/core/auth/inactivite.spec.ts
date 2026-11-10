@@ -20,7 +20,7 @@ describe('Logout after inactivity', () => {
       accessToken: 'a', refreshToken: 'r', expiresAt: Date.now() + 1e7,
       profil: { nomUtilisateur: 'employe', role: 'EMPLOYE', employeId: 4, departementId: 1 },
     }));
-    TestBed.configureTestingModule({ providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({ providers: [provideRouter([{ path: 'login', children: [] }]), provideHttpClient(), provideHttpClientTesting()] });
     http = TestBed.inject(HttpTestingController);
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     service = TestBed.inject(Inactivite);
@@ -51,12 +51,15 @@ describe('Logout after inactivity', () => {
     expect(service.restant()).toBeNull();
   });
 
-  it('starts over after a key press, a click, a scroll or a touch', () => {
+  it('starts over after a key press, a click or a scroll', () => {
     vi.advanceTimersByTime(10 * MINUTE);
     document.dispatchEvent(new KeyboardEvent('keydown'));
     vi.advanceTimersByTime(13 * MINUTE);
     expect(service.restant()).toBeNull();
     document.dispatchEvent(new Event('pointerdown'));
+    vi.advanceTimersByTime(13 * MINUTE);
+    expect(service.restant()).toBeNull();
+    document.dispatchEvent(new Event('wheel'));
     vi.advanceTimersByTime(13 * MINUTE);
     expect(service.restant()).toBeNull();
     http.expectNone(`${environment.apiUrl}/api/auth/logout`);
@@ -84,5 +87,31 @@ describe('Logout after inactivity', () => {
     vi.advanceTimersByTime(20 * MINUTE);
     expect(service.restant()).toBeNull();
     http.expectNone(`${environment.apiUrl}/api/auth/logout`);
+  });
+
+  it('logs out instead of starting over when the activity comes after the 15 minutes (laptop waking up)', async () => {
+    vi.setSystemTime(Date.now() + 20 * MINUTE); // asleep: no timer ran
+    document.dispatchEvent(new Event('pointerdown'));
+    await vi.waitFor(() => http.expectOne(`${environment.apiUrl}/api/auth/logout`).flush({}));
+    await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith(['/login'], { queryParams: { idle: 1 } }));
+  });
+
+  it('does not log out a second time when another tab already did', () => {
+    vi.advanceTimersByTime(14 * MINUTE + 59_000);
+    localStorage.removeItem('rh.session'); // the other tab logged out; its storage event has not arrived yet
+    vi.advanceTimersByTime(2000);
+    http.expectNone(`${environment.apiUrl}/api/auth/logout`);
+  });
+
+  it('ignores a last activity dated in the future (a clock set back)', async () => {
+    localStorage.setItem(CLE_ACTIVITE, String(Date.now() + 10 * 60 * MINUTE));
+    vi.advanceTimersByTime(15 * MINUTE);
+    await vi.waitFor(() => http.expectOne(`${environment.apiUrl}/api/auth/logout`).flush({}));
+  });
+
+  it('logs out on request from the warning, without the inactivity notice', async () => {
+    service.deconnecter();
+    await vi.waitFor(() => http.expectOne(`${environment.apiUrl}/api/auth/logout`).flush({}));
+    expect(navigate).not.toHaveBeenCalledWith(['/login'], { queryParams: { idle: 1 } });
   });
 });

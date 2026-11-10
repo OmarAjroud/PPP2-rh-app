@@ -1,4 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
 
 /** Logged out after this long without a key press, click, scroll or touch, in any tab. */
@@ -21,6 +22,7 @@ const ECRITURE_MIN = 5_000;
 @Injectable({ providedIn: 'root' })
 export class Inactivite {
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
   /** Seconds left while the warning shows, otherwise null. */
   readonly restant = signal<number | null>(null);
@@ -59,6 +61,11 @@ export class Inactivite {
   }
 
   private noter(forcer: boolean): void {
+    // Back after the deadline (laptop waking up, frozen tab): the first click must not save the session
+    if (!forcer && this.depasse()) {
+      this.expirer();
+      return;
+    }
     const maintenant = Date.now();
     this.derniere = maintenant;
     if (!forcer && maintenant - this.ecrite < ECRITURE_MIN) return;
@@ -66,18 +73,41 @@ export class Inactivite {
     try { localStorage.setItem(CLE_ACTIVITE, String(maintenant)); } catch { /* storage unavailable: this tab only */ }
   }
 
+  /** Last activity in any tab. A date in the future (clock set back) is ignored, or nobody would ever be logged out. */
+  private derniereActivite(): number {
+    let autreOnglet = 0;
+    try { autreOnglet = Number(localStorage.getItem(CLE_ACTIVITE)) || 0; } catch { /* storage unavailable */ }
+    return Math.max(this.derniere, autreOnglet > Date.now() ? 0 : autreOnglet);
+  }
+
+  private depasse(): boolean {
+    return this.auth.connecte() && !this.enCours && Date.now() - this.derniereActivite() >= DELAI_INACTIVITE;
+  }
+
+  private expirer(): void {
+    if (this.enCours) return;
+    this.enCours = true;
+    this.arreter();
+    // Another tab may have logged out a moment ago (its storage event is on its way): the refresh token is already revoked
+    let encoreLa = true;
+    try { encoreLa = localStorage.getItem('rh.session') !== null; } catch { /* storage unavailable */ }
+    if (encoreLa) {
+      void this.auth.logout('inactivite');
+    } else {
+      // Already revoked by the other tab (or the session only lived in this tab's memory): just close it here
+      this.auth.oublier();
+      void this.router.navigate(['/login'], { queryParams: { idle: 1 } });
+    }
+  }
+
   private verifier(): void {
     if (!this.auth.connecte() || this.enCours) {
       this.restant.set(null);
       return;
     }
-    let autreOnglet = 0;
-    try { autreOnglet = Number(localStorage.getItem(CLE_ACTIVITE)) || 0; } catch { /* storage unavailable */ }
-    const reste = Math.max(this.derniere, autreOnglet) + DELAI_INACTIVITE - Date.now();
+    const reste = this.derniereActivite() + DELAI_INACTIVITE - Date.now();
     if (reste <= 0) {
-      this.enCours = true;
-      this.arreter();
-      void this.auth.logout('inactivite');
+      this.expirer();
     } else {
       this.restant.set(reste <= PREAVIS ? Math.ceil(reste / 1000) : null);
     }

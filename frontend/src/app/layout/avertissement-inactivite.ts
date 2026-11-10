@@ -22,7 +22,7 @@ import { Inactivite } from '../core/auth/inactivite';
     }
   `,
   styles: `
-    .voile { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: var(--rh-space-4); background: color-mix(in srgb, #000 45%, transparent); }
+    .voile { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; padding: var(--rh-space-4); background: color-mix(in srgb, #000 45%, transparent); }
     .dialogue { width: min(420px, 100%); display: grid; gap: var(--rh-space-3); padding: var(--rh-space-5); border: 1px solid var(--rh-line); border-radius: var(--rh-radius-lg, 12px); background: var(--rh-surface); color: var(--rh-ink); box-shadow: var(--rh-shadow-lg, 0 20px 50px rgb(0 0 0 / .3)); }
     h2 { margin: 0; font-size: var(--rh-text-lg); font-weight: 600; }
     p { margin: 0; color: var(--rh-ink-2); }
@@ -39,12 +39,23 @@ export class AvertissementInactivite {
   private readonly injector = inject(Injector);
   private readonly bouton = viewChild<ElementRef<HTMLButtonElement>>('rester');
   protected readonly visible = computed(() => this.inactivite.restant() !== null);
+  /** Where the keyboard was before the warning: it goes back there when the warning closes. */
+  private avant: HTMLElement | null = null;
 
   constructor() {
     // Focus once when the warning appears (not on every second of the countdown)
     effect(() => {
-      if (!this.visible()) return;
-      untracked(() => afterNextRender(() => this.bouton()?.nativeElement.focus(), { injector: this.injector }));
+      const visible = this.visible();
+      untracked(() => {
+        if (visible) {
+          this.avant = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
+          afterNextRender(() => this.bouton()?.nativeElement.focus(), { injector: this.injector });
+        } else if (this.avant) {
+          const cible = this.avant;
+          this.avant = null;
+          afterNextRender(() => { if (cible.isConnected) cible.focus(); }, { injector: this.injector });
+        }
+      });
     });
   }
 }

@@ -106,4 +106,36 @@ describe('Session and token renewal', () => {
     http.expectNone(`${API}/api/auth/refresh`);
     expect(auth.connecte()).toBe(false);
   });
+
+  it('never brings back a session logged out while a renewal was on its way', async () => {
+    await seConnecter();
+    const enCours = auth.refresh().catch(e => e);
+    await attendre();
+    const req = http.expectOne(`${API}/api/auth/refresh`);
+    auth.oublier(); // the idle logout happens meanwhile
+    req.flush(reponse(2));
+    await enCours;
+    expect(auth.connecte()).toBe(false);
+    expect(localStorage.getItem('rh.session')).toBeNull();
+    // the new refresh token is revoked rather than left valid on the server
+    expect(http.expectOne(`${API}/api/auth/logout`).request.body).toEqual({ refreshToken: 'refresh-2' });
+  });
+
+  it('tells every tab why when the session ended for inactivity', async () => {
+    await seConnecter();
+    const navigate = TestBed.inject(Router).navigate as unknown as ReturnType<typeof vi.fn>;
+    // Another tab logs out for inactivity: it leaves the reason, then removes the session
+    localStorage.setItem('rh.raison', 'inactivite');
+    localStorage.removeItem('rh.session');
+    window.dispatchEvent(new StorageEvent('storage', { key: 'rh.session', newValue: null }));
+    await attendre();
+    expect(auth.connecte()).toBe(false);
+    expect(navigate).toHaveBeenCalledWith(['/login'], { queryParams: { idle: 1 } });
+  });
+
+  it('forgets an old logout reason at the next login', async () => {
+    localStorage.setItem('rh.raison', 'inactivite');
+    await seConnecter();
+    expect(localStorage.getItem('rh.raison')).toBeNull();
+  });
 });

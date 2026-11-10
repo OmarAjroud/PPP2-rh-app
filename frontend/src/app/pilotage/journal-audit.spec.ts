@@ -49,7 +49,7 @@ describe('Journal d’audit', () => {
     expect(req.request.params.get('au')).toBe('2026-11-08');
     expect(req.request.params.get('page')).toBe('2');
     expect(req.request.params.get('size')).toBe('20');
-  }, 15_000); // heavy screen: passes in ~2 s alone, can pass 5 s when every file runs in parallel
+  });
 
   it('opens a row to show what changed, before → after, and where from', async () => {
     await harness.navigateByUrl('/audit');
