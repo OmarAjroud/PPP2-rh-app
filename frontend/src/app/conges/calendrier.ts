@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { EMPTY, Observable, catchError, combineLatest, expand, forkJoin, map, of, reduce, startWith, switchMap } from 'rxjs';
+import { EMPTY, Observable, catchError, distinctUntilChanged, expand, forkJoin, map, of, reduce, startWith, switchMap } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { RhApi } from '../core/api/rh-api';
@@ -17,7 +17,8 @@ type Etat = { statut: 'chargement' } | { statut: 'ok'; mois: Mois } | { statut: 
 const deux = (n: number) => String(n).padStart(2, '0');
 const moisLong = new Intl.DateTimeFormat('fr-FR', { month: 'long' });
 const moisCourt = new Intl.DateTimeFormat('fr-FR', { month: 'short' });
-const jourLettre = new Intl.DateTimeFormat('fr-FR', { weekday: 'narrow' });
+/** Two letters: "M" alone would not tell mardi from mercredi. */
+const JOURS = ['di', 'lu', 'ma', 'me', 'je', 've', 'sa'];
 const versDate = (iso: string) => new Date(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10));
 
 /** "2026-12" from the address; anything else means the current month. */
@@ -80,7 +81,7 @@ function toutesLesPages(page: (n: number) => Observable<PageReponse<DemandeConge
           <p-button icon="pi pi-chevron-left" severity="secondary" [text]="true" ariaLabel="Mois précédent" (onClick)="decaler(-1)" />
           <h2 class="titre-mois" aria-live="polite">{{ titreMois() }}</h2>
           <p-button icon="pi pi-chevron-right" severity="secondary" [text]="true" ariaLabel="Mois suivant" (onClick)="decaler(1)" />
-          @if (!estMoisCourant()) { <p-button label="Aujourd’hui" severity="secondary" size="small" (onClick)="allerAujourdhui()" /> }
+          <p-button label="Aujourd’hui" severity="secondary" size="small" [disabled]="estMoisCourant()" (onClick)="allerAujourdhui()" />
         </div>
         <div class="vues" role="group" aria-label="Affichage">
           <button type="button" class="vue-grille" [attr.aria-pressed]="vue() === 'grille'" (click)="vue.set('grille')"><i class="pi pi-th-large" aria-hidden="true"></i> Grille</button>
@@ -169,13 +170,14 @@ function toutesLesPages(page: (n: number) => Observable<PageReponse<DemandeConge
     .dept { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--rh-muted); font-size: var(--rh-text-xs, 12px); }
     .tete { min-height: 48px; }
     .tete .jour { display: grid; justify-items: center; align-self: stretch; align-content: center; font-size: var(--rh-text-sm); font-variant-numeric: tabular-nums; }
-    .tete .jour small { color: var(--rh-muted); font-size: 11px; text-transform: uppercase; }
+    .tete .jour small { color: var(--rh-muted); font-size: 11px; }
     .tete .jour.ferie { color: var(--rh-muted); }
     .tete .jour.aujourdhui { color: var(--rh-accent); font-weight: 600; }
     .fond { align-self: stretch; }
-    .repos { background: var(--rh-surface-2); }
+    /* Hatched: a flat surface-2 tint barely differs from the surface, in dark mode especially */
+    .repos { background: repeating-linear-gradient(135deg, var(--rh-line-row) 0 1px, transparent 1px 6px), var(--rh-surface-2); }
     .fond.aujourdhui { box-shadow: inset 1px 0 0 var(--rh-accent), inset -1px 0 0 var(--rh-accent); }
-    .barre { z-index: 1; min-width: 0; height: 26px; margin: 0 2px; padding: 0 8px; display: flex; align-items: center; overflow: hidden; white-space: nowrap; border-radius: 6px; background: var(--rh-accent); color: var(--rh-on-accent, #fff); font-size: 12px; font-weight: 500; text-decoration: none; }
+    .barre { z-index: 1; min-width: 0; height: 26px; margin: 0 2px; padding: 0 8px; display: flex; align-items: center; overflow: hidden; white-space: nowrap; border-radius: 6px; background: var(--rh-accent); color: var(--rh-accent-ink); font-size: 12px; font-weight: 500; text-decoration: none; }
     .barre span { overflow: hidden; text-overflow: ellipsis; }
     .barre.en-attente { background: var(--rh-surface); color: var(--rh-ink); box-shadow: inset 0 0 0 1.5px var(--rh-accent); background-image: repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--rh-accent) 14%, transparent) 6px 12px); }
     .barre.coupe-avant { border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: 0; }
@@ -191,7 +193,7 @@ function toutesLesPages(page: (n: number) => Observable<PageReponse<DemandeConge
     .pastille { display: inline-block; width: 16px; height: 10px; border-radius: 3px; }
     .pastille.approuve { background: var(--rh-accent); }
     .pastille.attente { box-shadow: inset 0 0 0 1.5px var(--rh-accent); }
-    .pastille.repos { background: var(--rh-surface-2); box-shadow: inset 0 0 0 1px var(--rh-line); }
+    .pastille.repos { background: repeating-linear-gradient(135deg, var(--rh-line-row) 0 1px, transparent 1px 4px), var(--rh-surface-2); box-shadow: inset 0 0 0 1px var(--rh-line); }
 
     .liste-absences { list-style: none; margin: 0; padding: 0; }
     .liste-absences li + li { border-top: 1px solid var(--rh-line-row); }
@@ -235,8 +237,9 @@ export class Calendrier {
   protected readonly optionsDepartements = computed(() => this.departements().map(d => ({ label: d.nom, value: d.id })));
 
   protected readonly etat = toSignal(
-    combineLatest([this.route.queryParamMap]).pipe(
-      map(([q]) => ({ ...lireMois(q.get('mois')), departementId: Number(q.get('departement')) || null })),
+    this.route.queryParamMap.pipe(
+      map(q => ({ ...lireMois(q.get('mois')), departementId: Number(q.get('departement')) || null })),
+      distinctUntilChanged((a, b) => a.annee === b.annee && a.mois === b.mois && a.departementId === b.departementId),
       switchMap(({ annee, mois, departementId }) => forkJoin([
         this.demandes(annee, mois, departementId),
         this.api.joursFeries(annee).pipe(catchError(() => of([]))),
@@ -259,7 +262,7 @@ export class Calendrier {
 
   /**
    * ADMIN, RH: every request overlapping the month (optionally one department).
-   * Manager: their team's requests by start year; in January also last year's (a leave from late December).
+   * Manager: their team's requests starting that year (the API refuses a request spanning two years, so none is missed).
    */
   private demandes(annee: number, mois: number, departementId: number | null): Observable<DemandeConge[]> {
     if (this.gestion()) {
@@ -267,12 +270,11 @@ export class Calendrier {
       const au = `${annee}-${deux(mois)}-${deux(new Date(annee, mois, 0).getDate())}`;
       return toutesLesPages(page => this.api.demandesPeriode({ du, au, departementId, page }));
     }
-    const annees = mois === 1 ? [annee - 1, annee] : [annee];
-    return forkJoin(annees.map(a => toutesLesPages(page => this.api.demandesEquipeAnnee(a, page)))).pipe(map(l => l.flat()));
+    return toutesLesPages(page => this.api.demandesEquipeAnnee(annee, page));
   }
 
   protected lettre(iso: string): string {
-    return jourLettre.format(versDate(iso));
+    return JOURS[versDate(iso).getDay()];
   }
 
   protected libelleBarre(l: LigneCalendrier, b: Barre): string {

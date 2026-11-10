@@ -36,7 +36,7 @@ describe('Calendrier des congés', () => {
     http.match(r => r.url === `${api}/jours-feries`).forEach(r => r.flush([{ id: 1, date: '2026-12-25', libelle: 'Noël' }]));
     http.match(r => r.url === `${api}/departements`).forEach(r => r.flush([{ id: 1, nom: 'Informatique' }]));
   }
-  afterEach(() => localStorage.clear());
+  afterEach(() => { http.verify(); localStorage.clear(); });
   const el = () => harness.routeNativeElement!;
 
   it('reads every page of the month for HR, then draws one row per person', async () => {
@@ -62,6 +62,7 @@ describe('Calendrier des congés', () => {
     req.flush(page([d({})]));
     harness.detectChanges();
     expect(el().querySelector('[aria-label="Filtrer par département"]')).toBeNull();
+    expect([...el().querySelectorAll('.personne')].map(p => p.textContent!.trim())).toEqual(['Lina Gharbi']);
   });
 
   it('moves to the next month', async () => {
@@ -71,6 +72,10 @@ describe('Calendrier des congés', () => {
     el().querySelector<HTMLButtonElement>('button[aria-label="Mois suivant"]')!.click();
     await harness.fixture.whenStable();
     expect(TestBed.inject(Router).url).toBe('/calendar?mois=2027-01');
+    http.match(r => r.url === `${api}/jours-feries`).forEach(r => r.flush([]));
+    const req = http.expectOne(r => r.url === `${api}/conges/demandes`);
+    expect(req.request.params.get('du')).toBe('2027-01-01');
+    req.flush(page([]));
   });
 
   it('offers the same information as a list', async () => {
@@ -88,5 +93,19 @@ describe('Calendrier des congés', () => {
     http.expectOne(r => r.url === `${api}/conges/demandes`).flush(page([]));
     harness.detectChanges();
     expect(el().textContent).toContain('Personne n’est absent');
+  });
+
+  it('sends the department chosen in the address', async () => {
+    await ouvrir('RH', '/calendar?mois=2027-01&departement=2');
+    const req = http.expectOne(r => r.url === `${api}/conges/demandes`);
+    expect(req.request.params.get('departementId')).toBe('2');
+    req.flush(page([]));
+  });
+
+  it('asks a manager for one year only, even in January (a request never spans two years)', async () => {
+    await ouvrir('MANAGER', '/calendar?mois=2027-01');
+    const req = http.expectOne(r => r.url === `${api}/conges/demandes/equipe`);
+    expect(req.request.params.get('annee')).toBe('2027');
+    req.flush(page([]));
   });
 });
