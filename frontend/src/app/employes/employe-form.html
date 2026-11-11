@@ -29,6 +29,12 @@
             <input pInputText id="email" type="email" formControlName="email" autocomplete="off">
             @if (erreurChamp('email', 'Indiquez une adresse email valide.'); as m) { <span class="err">{{ m }}</span> } @else { <span class="aide">Sert à l'invitation et aux notifications.</span> }
           </div>
+          <div class="champ">
+            <label for="telephone">Téléphone</label>
+            <input pInputText id="telephone" type="tel" formControlName="telephone" autocomplete="off" inputmode="tel" placeholder="+216 22 345 678"
+                   [attr.aria-invalid]="erreurTelephone() ? 'true' : null" [attr.aria-describedby]="erreurTelephone() ? 'telephone-err' : 'telephone-aide'">
+            @if (erreurTelephone(); as m) { <span class="err" id="telephone-err">{{ m }}</span> } @else { <span class="aide" id="telephone-aide">Avec l'indicatif pour un numéro étranger.</span> }
+          </div>
         </div>
       </div>
 
@@ -56,9 +62,9 @@
             @if (erreurChamp('dateEmbauche', 'Indiquez une date valide (jj/mm/aaaa).'); as m) { <span class="err">{{ m }}</span> }
           </div>
           <div class="champ">
-            <label for="salaire">Salaire mensuel</label>
-            <p-inputnumber inputId="salaire" formControlName="salaire" mode="currency" currency="EUR" locale="fr-FR" [min]="0" />
-            @if (erreurChamp('salaire', 'Montant positif, 2 décimales au plus.'); as m) { <span class="err">{{ m }}</span> } @else { <span class="aide">Facultatif. Visible des RH, des administrateurs et de l'intéressé.</span> }
+            <label for="salaire">Salaire mensuel (DT)</label>
+            <p-inputnumber inputId="salaire" formControlName="salaire" mode="decimal" locale="fr-FR" [minFractionDigits]="0" [maxFractionDigits]="3" suffix=" DT" [min]="0" />
+            @if (erreurChamp('salaire', 'Montant positif en dinars, 3 décimales (millimes) au plus.'); as m) { <span class="err">{{ m }}</span> } @else { <span class="aide">Facultatif. Visible des RH, des administrateurs et de l'intéressé.</span> }
           </div>
         </div>
       </div>

@@ -115,4 +115,5 @@ app:
       allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
   seed:
     test-accounts: ${SEED_TEST_ACCOUNTS:true}   # crée les 4 comptes de test au démarrage (false en production)
+    demo-employees: ${SEED_DEMO_EMPLOYEES:true}   # ajoute 15 employés fictifs (hiérarchie, organigramme) ; false en production
     test-password: ${SEED_TEST_PASSWORD:Test1234!}

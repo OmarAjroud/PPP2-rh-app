@@ -8,5 +8,6 @@ public record EmployeResponse(
         Long departementId,
         String departementNom,
         Long roleId,
-        String roleNom
+        String roleNom,
+        String telephone
 ) {}

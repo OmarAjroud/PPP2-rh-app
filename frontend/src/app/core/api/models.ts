@@ -18,11 +18,12 @@ export interface Employe {
   departementNom: string;
   roleId: number;
   roleNom: string;
+  telephone: string | null; // null: an employee recorded before phone numbers were asked
 }
 
 export interface EmployeDetail extends Employe {
   dateEmbauche: string; // yyyy-MM-dd
-  salaire: number | null; // null: not set, or not visible to the current user
+  salaire: number | null; // Tunisian dinars (3 decimals); null: not set, or not visible to the current user
   managerId: number | null;
   managerNomComplet: string | null;
 }
@@ -31,6 +32,7 @@ export interface EmployeRequest {
   nom: string;
   prenom: string;
   email: string;
+  telephone: string;
   dateEmbauche: string;
   salaire: number | null;
   departementId: number;

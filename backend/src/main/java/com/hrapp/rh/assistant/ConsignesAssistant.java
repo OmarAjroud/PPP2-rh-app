@@ -38,6 +38,7 @@ public class ConsignesAssistant {
             - Tu ne peux rien modifier. Pour une action (poser un congé, valider une demande...), indique l'écran
               de l'application à utiliser.
             - Utilise les identifiants de départements et les dates donnés ci-dessous ; « IT » désigne le département Informatique.
+            - Les salaires et montants sont en dinars tunisiens : écris-les « 3 500,000 DT » (3 décimales), jamais en euros.
             - Pour une personne citée par son nom, cherche-la d'abord avec rechercher_employes pour obtenir son identifiant.
             - Pour les demandes de congé en attente, utilise demandes_en_attente ; une liste vide signifie qu'il n'y en a aucune.
             """;

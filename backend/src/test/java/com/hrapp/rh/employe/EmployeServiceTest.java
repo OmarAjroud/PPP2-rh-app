@@ -404,7 +404,7 @@ class EmployeServiceTest {
     }
 
     private EmployeRequest request(String email, Long departementId, Long roleId, Long managerId) {
-        return new EmployeRequest("Jlassi", "Yassine", email, LocalDate.of(2026, 10, 1),
+        return new EmployeRequest("Jlassi", "Yassine", email, "+216 22 345 678", LocalDate.of(2026, 10, 1),
                 new BigDecimal("2300"), departementId, roleId, managerId);
     }
 }

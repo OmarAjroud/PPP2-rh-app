@@ -59,6 +59,7 @@ class ConsignesAssistantTest {
         assertThat(consignes("2026-11-05T10:00:00Z").build(karim))
                 .contains("« manager », rôle MANAGER, employé n°3, département n°1")
                 .contains("Départements : 1 = Informatique, 2 = Ressources Humaines")
+                .contains("dinars tunisiens")   // salaries are never read as euros
                 .contains("lecture seule")
                 .contains("Ne décide jamais toi-même qu'une information est inaccessible");
     }

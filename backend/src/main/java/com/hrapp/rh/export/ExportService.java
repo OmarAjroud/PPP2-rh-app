@@ -56,7 +56,7 @@ public class ExportService {
         List<EmployeResponse> employes = borner(employeService.searchAll(utilisateur, recherche, departementId, roleId, MAX_LIGNES + 1));
         List<List<Object>> lignes = new ArrayList<>();
         for (EmployeResponse e : employes) {
-            lignes.add(Arrays.asList(e.id(), e.nom(), e.prenom(), e.email(), e.departementNom(), libelleRole(e.roleNom())));
+            lignes.add(Arrays.asList(e.id(), e.nom(), e.prenom(), e.email(), e.departementNom(), libelleRole(e.roleNom()), e.telephone()));
         }
         Filtres f = new Filtres()
                 .ajouter("Recherche", recherche)
@@ -68,7 +68,8 @@ public class ExportService {
                 new Colonne("Prénom", TEXTE, 18),
                 new Colonne("Email", TEXTE, 32),
                 new Colonne("Département", TEXTE, 22),
-                new Colonne("Rôle", TEXTE, 18)), lignes);
+                new Colonne("Rôle", TEXTE, 18),
+                new Colonne("Téléphone", TEXTE, 17)), lignes);
     }
 
     public Tableau departements() {

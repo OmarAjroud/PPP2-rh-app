@@ -31,6 +31,7 @@ app:
   frontend-url: ${FRONTEND_URL}
   seed:
     test-accounts: ${SEED_TEST_ACCOUNTS:false}   # jamais de comptes de test en production (sauf démonstration)
+    demo-employees: ${SEED_DEMO_EMPLOYEES:false}   # jamais d'employés fictifs en production (sauf démonstration)
   security:
     jwt:
       secret: ${JWT_SECRET}                      # au moins 32 caractères, aléatoire : openssl rand -base64 48

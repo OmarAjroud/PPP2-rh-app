@@ -30,10 +30,14 @@ public class Employe {
     @Column(nullable = false, unique = true, length = 150)
     private String email;
 
+    @Column(length = 30)
+    private String telephone;
+
     @Column(name = "date_embauche", nullable = false)
     private LocalDate dateEmbauche;
 
-    @Column(precision = 10, scale = 2)
+    /** Salaire mensuel en dinars tunisiens (TND), au millime près. */
+    @Column(precision = 11, scale = 3)
     private BigDecimal salaire;
 
     // LAZY : le département n'est chargé depuis la base que si on l'utilise
