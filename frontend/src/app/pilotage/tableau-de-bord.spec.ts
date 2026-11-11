@@ -57,7 +57,8 @@ describe('Tableau de bord', () => {
     expect(texte()).toContain('Demandes en attente');
     expect(texte()).toContain('Informatique');
     expect(texte()).toContain('Masse salariale');
-    expect(texte()).toMatch(/62\s000,00\s€/);
+    expect(texte()).toMatch(/62\s000\sDT/); // Tunisian dinars; totals without millimes
+    expect(texte()).not.toContain('€');
     expect(el().querySelector('[aria-label="Filtrer par département"]')).not.toBeNull();
   });
 

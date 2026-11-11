@@ -33,7 +33,8 @@ import static org.mockito.BDDMockito.given;
         "spring.flyway.clean-disabled=false",          // autorisé uniquement ici, pour remettre la base à zéro
         "spring.jpa.show-sql=false",
         "app.assistant.ollama.url=http://localhost:9",  // aucun modèle : on teste le comportement « indisponible »
-        "app.notifications.email-enabled=true"
+        "app.notifications.email-enabled=true",
+        "app.seed.demo-employees=false"                // données de départ connues ; le test de la démo l'appelle lui-même
 })
 public abstract class IntegrationTest {
 

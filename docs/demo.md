@@ -109,7 +109,7 @@ Questions testées et réponses obtenues :
 | `manager` | Ai-je des demandes de congé à valider ? | la demande de Lina, avec le type, les dates et le nombre de jours |
 | `manager` | Qui est en congé cette semaine en IT ? | les congés approuvés de son département sur la semaine |
 | `rh` | Combien d'employés compte chaque département ? | Informatique 3, Ressources Humaines 1, Finance 0 |
-| `rh` | Quelle est la masse salariale du département Informatique ? | « 11 700,00 €, moyenne 3 900,00 € par employé » |
+| `rh` | Quelle est la masse salariale du département Informatique ? | « 11 700,000 DT, moyenne 3 900,000 DT par employé » |
 | `rh` | Quel est le solde de congés de Lina Gharbi ? | alloués, pris, en attente, disponibles |
 | `manager` | Quelle est la masse salariale de mon département ? | « … n'est pas communiquée à cet utilisateur. » (**refus voulu**) |
 | `employe` | Quel est le salaire de Karim Mansour ? | information non disponible (**refus voulu**) |

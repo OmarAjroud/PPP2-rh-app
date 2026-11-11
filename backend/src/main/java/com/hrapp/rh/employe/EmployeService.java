@@ -236,6 +236,12 @@ public class EmployeService {
         employe.setDepartement(departement);
         employe.setRole(role);
         employe.setManager(manager);
+        employe.setTelephone(normaliserTelephone(requete.telephone()));
+    }
+
+    /** "  +216 22  345 678 " → "+216 22 345 678" : the number as typed, without stray spaces. */
+    static String normaliserTelephone(String telephone) {
+        return telephone == null ? null : telephone.trim().replaceAll("\\s+", " ");
     }
 
     private Employe findOrThrow(Long id) {

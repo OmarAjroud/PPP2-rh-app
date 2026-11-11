@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
+import { DinarsPipe } from '../core/api/dinar';
 import { HttpErrorResponse } from '@angular/common/http';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -26,7 +27,7 @@ const STATUTS_COMPTE: Record<Compte['statut'], { libelle: string; classe: string
 /** /employees/:id, and /profile (route data "moi") for the signed-in user's own record. */
 @Component({
   selector: 'app-employe-detail',
-  imports: [CurrencyPipe, DatePipe, RouterLink, ButtonModule, Apparition, Compteur, HistoriqueSoldes],
+  imports: [DinarsPipe, DatePipe, RouterLink, ButtonModule, Apparition, Compteur, HistoriqueSoldes],
   templateUrl: './employe-detail.html',
   styleUrl: './employe-detail.scss',
 })
@@ -43,6 +44,10 @@ export class EmployeDetailPage {
   protected readonly statutDemande = statutDemande;
   protected readonly periode = periode;
   protected readonly jours = jours;
+  /** "+216 98 562 114" → "tel:+21698562114" (digits and the leading + only). */
+  protected lienTelephone(t: string): string {
+    return `tel:${t.replace(/[^0-9+]/g, '')}`;
+  }
   protected readonly libelleRole = libelleRole;
   /** One's own record opened from a link (not /profile): HR may not adjust their own balance. */
   protected readonly monId = computed(() => this.auth.profil()?.employeId);

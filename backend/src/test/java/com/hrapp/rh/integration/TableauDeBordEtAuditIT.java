@@ -61,7 +61,7 @@ class TableauDeBordEtAuditIT extends IntegrationTest {
     @DisplayName("Audit : une modification d'employé enregistre l'auteur et seulement les valeurs changées")
     void employeeUpdate_shouldBeAuditedWithOldAndNewValues() {
         String rh = api.login("rh");
-        Map<String, Object> lina = new HashMap<>(Map.of("nom", "Gharbi", "prenom", "Lina", "email", "employe@rh.com",
+        Map<String, Object> lina = new HashMap<>(Map.of("nom", "Gharbi", "prenom", "Lina", "email", "employe@rh.com", "telephone", "+216 71 000 000",
                 "dateEmbauche", "2023-09-01", "salaire", 2600, "departementId", 1, "roleId", 4, "managerId", 3));
 
         assertThat(api.put("/api/employes/4", rh, lina).statut()).isEqualTo(200);
@@ -77,7 +77,7 @@ class TableauDeBordEtAuditIT extends IntegrationTest {
     @Test
     @DisplayName("Employés : un RH ne peut pas promouvoir quelqu'un ADMIN (403), et rien n'est modifié")
     void hr_shouldNotGrantAdminRole() {
-        Map<String, Object> lina = Map.of("nom", "Gharbi", "prenom", "Lina", "email", "employe@rh.com",
+        Map<String, Object> lina = Map.of("nom", "Gharbi", "prenom", "Lina", "email", "employe@rh.com", "telephone", "+216 71 000 000",
                 "dateEmbauche", "2023-09-01", "salaire", 2500, "departementId", 1, "roleId", 1, "managerId", 3);
 
         assertThat(api.put("/api/employes/4", api.login("rh"), lina).statut()).isEqualTo(403);

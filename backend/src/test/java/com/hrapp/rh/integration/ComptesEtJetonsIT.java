@@ -98,11 +98,11 @@ class ComptesEtJetonsIT extends IntegrationTest {
     void employeeRules_shouldProtectRecords() {
         String rh = api.login("rh");
         String admin = api.login("admin");
-        Map<String, Object> sara = new HashMap<>(Map.of("nom", "Trabelsi", "prenom", "Sara", "email", "rh@rh.com",
+        Map<String, Object> sara = new HashMap<>(Map.of("nom", "Trabelsi", "prenom", "Sara", "email", "rh@rh.com", "telephone", "+216 71 000 000",
                 "dateEmbauche", "2022-03-01", "salaire", 9999, "departementId", 2, "roleId", 2));
         assertThat(api.put("/api/employes/2", rh, sara).statut()).isEqualTo(403);
 
-        Map<String, Object> amine = new HashMap<>(Map.of("nom", "Ben Salah", "prenom", "Amine", "email", "admin@rh.com",
+        Map<String, Object> amine = new HashMap<>(Map.of("nom", "Ben Salah", "prenom", "Amine", "email", "admin@rh.com", "telephone", "+216 71 000 000",
                 "dateEmbauche", "2022-01-10", "salaire", 5000, "departementId", 1, "roleId", 4));
         Api.Reponse retrogradation = api.put("/api/employes/1", admin, amine);
         assertThat(retrogradation.statut()).isEqualTo(409);
@@ -120,7 +120,7 @@ class ComptesEtJetonsIT extends IntegrationTest {
     @Test
     @DisplayName("Manager : un membre de son équipe dans un autre département reste visible (fiche et liste)")
     void manager_shouldSeeDirectReportInAnotherDepartment() {
-        Map<String, Object> linaEnFinance = new HashMap<>(Map.of("nom", "Gharbi", "prenom", "Lina", "email", "employe@rh.com",
+        Map<String, Object> linaEnFinance = new HashMap<>(Map.of("nom", "Gharbi", "prenom", "Lina", "email", "employe@rh.com", "telephone", "+216 71 000 000",
                 "dateEmbauche", "2023-09-01", "salaire", 2500, "departementId", 3, "roleId", 4, "managerId", 3));
         assertThat(api.put("/api/employes/4", api.login("rh"), linaEnFinance).statut()).isEqualTo(200);
         String karim = api.login("manager");

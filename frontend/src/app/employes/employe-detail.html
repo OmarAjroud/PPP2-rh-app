@@ -28,6 +28,8 @@
             <h2 id="fiche" class="card-h">Fiche</h2>
             <dl class="fiche">
               <dt>Email</dt><dd>{{ e.email }}</dd>
+              <dt>Téléphone</dt>
+              <dd>@if (e.telephone) { <a [href]="lienTelephone(e.telephone)">{{ e.telephone }}</a> } @else { <span class="hint">Non renseigné</span> }</dd>
               <dt>Département</dt><dd><a [routerLink]="['/departments', e.departementId]">{{ e.departementNom }}</a></dd>
               <dt>Manager</dt>
               <dd>@if (e.managerId) {
@@ -35,7 +37,7 @@
               } @else { <span class="hint">Aucun</span> }</dd>
               <dt>Date d'embauche</dt><dd>{{ e.dateEmbauche | date: 'longDate' }}</dd>
               <dt>Salaire mensuel</dt>
-              <dd>@if (e.salaire !== null) { <span class="mono">{{ e.salaire | currency: 'EUR' }}</span> }
+              <dd>@if (e.salaire !== null) { <span class="mono">{{ e.salaire | dinars }}</span> }
                 @else if (peutVoirSalaire()) { <span class="hint">Non renseigné</span> }
                 @else { <span class="hint">Non visible pour votre rôle</span> }</dd>
               <dt>N° employé</dt><dd class="mono">{{ e.id.toString().padStart(4, '0') }}</dd>

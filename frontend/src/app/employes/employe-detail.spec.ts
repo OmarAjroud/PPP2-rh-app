@@ -8,7 +8,7 @@ import { Role } from '../core/auth/auth.models';
 import { EmployeDetailPage } from './employe-detail';
 
 const api = `${environment.apiUrl}/api`;
-const fiche = { id: 4, prenom: 'Lina', nom: 'Gharbi', email: 'employe@rh.com', departementId: 1, departementNom: 'Informatique', roleId: 4, roleNom: 'EMPLOYE', dateEmbauche: '2023-09-01', salaire: null, managerId: 3, managerNomComplet: 'Karim Mansour' };
+const fiche = { id: 4, prenom: 'Lina', nom: 'Gharbi', email: 'employe@rh.com', telephone: '+216 98 562 114', departementId: 1, departementNom: 'Informatique', roleId: 4, roleNom: 'EMPLOYE', dateEmbauche: '2023-09-01', salaire: 2500, managerId: 3, managerNomComplet: 'Karim Mansour' };
 
 describe('Fiche employé : historique du solde', () => {
   let http: HttpTestingController;
@@ -65,6 +65,18 @@ describe('Fiche employé : historique du solde', () => {
     http.expectOne(r => r.url === `${api}/conges/soldes/4/mouvements`).flush([]);
     harness.detectChanges();
     expect(bouton()).toBeUndefined();
+  });
+
+  it('shows the phone number as a link to call, and the salary in Tunisian dinars', async () => {
+    await ouvrir('RH', 2, '/employees/4');
+    http.match(r => r.url.startsWith(`${api}/conges/soldes/4`)).forEach(r => r.flush([]));
+    harness.detectChanges();
+    const el = harness.routeNativeElement!;
+    const lien = el.querySelector<HTMLAnchorElement>('a[href^="tel:"]')!;
+    expect(lien.getAttribute('href')).toBe('tel:+21698562114');
+    expect(lien.textContent!.trim()).toBe('+216 98 562 114');
+    expect(el.textContent!.replace(/[  ]/g, ' ')).toContain('2 500,000 DT');
+    expect(el.textContent).not.toContain('€');
   });
 
   it('shows my own history on my profile, without adjustment', async () => {

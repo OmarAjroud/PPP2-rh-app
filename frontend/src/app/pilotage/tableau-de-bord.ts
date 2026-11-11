@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { CurrencyPipe } from '@angular/common';
+import { DinarsPipe } from '../core/api/dinar';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -25,7 +25,7 @@ const pluriel = (v: number, un: string, plusieurs: string) => `${new Intl.Number
  */
 @Component({
   selector: 'app-tableau-de-bord',
-  imports: [FormsModule, CurrencyPipe, SelectModule, Apparition, Compteur, Barres, Colonnes],
+  imports: [FormsModule, DinarsPipe, SelectModule, Apparition, Compteur, Barres, Colonnes],
   template: `
     <div class="page" rhApparition>
       <header class="entete">
@@ -71,7 +71,7 @@ const pluriel = (v: number, un: string, plusieurs: string) => `${new Intl.Number
                   <thead><tr><th scope="col">Département</th><th scope="col" class="num">Effectif</th><th scope="col" class="num">Total</th><th scope="col" class="num">Moyenne</th></tr></thead>
                   <tbody>
                     @for (m of d.masseSalariale; track m.departementId) {
-                      <tr><th scope="row">{{ m.departementNom }}</th><td class="num mono">{{ m.nombreEmployes }}</td><td class="num mono">{{ m.total | currency: 'EUR' }}</td><td class="num mono">{{ m.moyenne | currency: 'EUR' }}</td></tr>
+                      <tr><th scope="row">{{ m.departementNom }}</th><td class="num mono">{{ m.nombreEmployes }}</td><td class="num mono">{{ m.total | dinars: false }}</td><td class="num mono">{{ m.moyenne | dinars: false }}</td></tr>
                     } @empty {
                       <tr><td colspan="4" class="hint">Aucun salaire renseigné.</td></tr>
                     }

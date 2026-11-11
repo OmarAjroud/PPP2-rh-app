@@ -8,6 +8,7 @@ public record EmployeDetailResponse(
         String nom,
         String prenom,
         String email,
+        String telephone,
         LocalDate dateEmbauche,
         BigDecimal salaire,
         Long departementId,
@@ -19,7 +20,7 @@ public record EmployeDetailResponse(
 ) {
     /** Copie de cette réponse sans le salaire (profils non autorisés). */
     public EmployeDetailResponse withoutSalary() {
-        return new EmployeDetailResponse(id, nom, prenom, email, dateEmbauche, null,
+        return new EmployeDetailResponse(id, nom, prenom, email, telephone, dateEmbauche, null,
                 departementId, departementNom, roleId, roleNom, managerId, managerNomComplet);
     }
 }
