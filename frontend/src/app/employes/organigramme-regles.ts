@@ -46,7 +46,8 @@ export function construireArbre(noeuds: NoeudOrganigramme[]): Branche[] {
   const enfants = new Map<number | null, NoeudOrganigramme[]>();
   for (const p of noeuds) {
     const m = parent.get(p.id) ?? null;
-    enfants.set(m, [...(enfants.get(m) ?? []), p]);
+    const liste = enfants.get(m);
+    if (liste) liste.push(p); else enfants.set(m, [p]);
   }
   const branche = (p: NoeudOrganigramme): Branche => {
     const equipe = (enfants.get(p.id) ?? []).sort(parNom).map(branche);

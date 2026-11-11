@@ -2,7 +2,6 @@ package com.hrapp.rh.employe;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,11 +19,10 @@ import java.util.List;
 @PreAuthorize("hasAnyRole('ADMIN','RH')")
 public class OrganigrammeController {
 
-    private final EmployeRepository repository;
+    private final EmployeService service;
 
     @GetMapping
-    @Transactional(readOnly = true)
     public List<NoeudOrganigramme> organigramme() {
-        return repository.findOrganigramme();
+        return service.organigramme();
     }
 }

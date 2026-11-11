@@ -8,7 +8,7 @@ import { RhApi } from '../core/api/rh-api';
 import { NoeudOrganigramme } from '../core/api/models';
 import { messageErreur } from '../core/api/erreurs';
 import { initiales, libelleRole } from '../core/api/libelles';
-import { Apparition } from '../core/motion/motion';
+import { Apparition, mouvementAutorise } from '../core/motion/motion';
 import { Branche, chercher, cheminVers, construireArbre } from './organigramme-regles';
 
 type Etat = { statut: 'chargement' } | { statut: 'ok'; noeuds: NoeudOrganigramme[] } | { statut: 'erreur'; message: string };
@@ -33,20 +33,23 @@ const MAX_RESULTATS = 8;
         @case ('erreur') { <p class="alerte erreur" role="alert">{{ $any(etat()).message }}</p> }
         @case ('ok') {
           <div class="outils">
-            <div class="recherche">
+            <div class="recherche" (focusout)="quitterRecherche($event)">
               <label class="sr-only" for="organigramme-recherche">Trouver une personne</label>
               <i class="pi pi-search" aria-hidden="true"></i>
-              <input id="organigramme-recherche" class="p-inputtext" type="search" placeholder="Trouver une personne" autocomplete="off"
-                     [value]="recherche()" (input)="recherche.set($any($event.target).value)" (keydown.escape)="recherche.set('')"
-                     aria-describedby="organigramme-resultats">
-              @if (recherche().trim()) {
-                <div class="resultats" id="organigramme-resultats">
+              <input #champ id="organigramme-recherche" class="p-inputtext" type="search" placeholder="Trouver une personne" autocomplete="off"
+                     role="combobox" aria-autocomplete="list" [attr.aria-expanded]="listeOuverte()"
+                     [attr.aria-controls]="listeOuverte() ? 'organigramme-resultats' : null"
+                     [value]="recherche()" (input)="saisir($any($event.target).value)" (focus)="listeVisible.set(true)"
+                     (keydown.escape)="fermerRecherche()" (keydown.arrowdown)="$event.preventDefault(); allerResultat(0)">
+              <span class="sr-only" role="status">{{ annonceResultats() }}</span>
+              @if (listeOuverte()) {
+                <div class="resultats" id="organigramme-resultats" (keydown)="naviguer($event)">
                   @for (p of resultats(); track p.id) {
                     <button type="button" (click)="montrer(p.id)">
                       <b>{{ p.prenom }} {{ p.nom }}</b> <span>{{ libelleRole(p.roleNom) }} · {{ p.departementNom }}</span>
                     </button>
                   } @empty {
-                    <p class="hint" role="status">Aucune personne ne correspond.</p>
+                    <p class="hint">Aucune personne ne correspond.</p>
                   }
                 </div>
               }
@@ -79,7 +82,7 @@ const MAX_RESULTATS = 8;
             <span class="dept" [title]="b.personne.departementNom">{{ b.personne.departementNom }}</span>
           </span>
           @if (b.equipe.length) {
-            <button type="button" class="equipe" [attr.aria-expanded]="ouvert(b.personne.id)" [attr.aria-controls]="'equipe-' + b.personne.id"
+            <button type="button" class="equipe" [attr.aria-expanded]="ouvert(b.personne.id)" [attr.aria-controls]="ouvert(b.personne.id) ? 'equipe-' + b.personne.id : null"
                     [attr.aria-label]="'Équipe de ' + b.personne.prenom + ' ' + b.personne.nom + ' : ' + effectif(b)"
                     (click)="basculer(b.personne.id)">
               <i class="pi" [class.pi-chevron-down]="!ouvert(b.personne.id)" [class.pi-chevron-up]="ouvert(b.personne.id)" aria-hidden="true"></i>
@@ -168,6 +171,7 @@ export class Organigramme {
   private readonly hote = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
   private readonly cadre = viewChild<ElementRef<HTMLElement>>('cadre');
+  private readonly champ = viewChild<ElementRef<HTMLInputElement>>('champ');
   protected readonly initiales = initiales;
   protected readonly libelleRole = libelleRole;
 
@@ -187,11 +191,31 @@ export class Organigramme {
   private readonly ouvertsEffectifs = computed(() => this.ouverts() ?? new Set(this.arbre().map(b => b.personne.id)));
   protected readonly choisie = signal<number | null>(null);
   protected readonly recherche = signal('');
-  protected readonly resultats = computed(() => chercher(this.noeuds(), this.recherche()).slice(0, MAX_RESULTATS));
+  private readonly trouves = computed(() => chercher(this.noeuds(), this.recherche()));
+  protected readonly resultats = computed(() => this.trouves().slice(0, MAX_RESULTATS));
+  /** The results list shows while there is text and the search has the keyboard (closed by Escape, a pick, or leaving). */
+  protected readonly listeVisible = signal(true);
+  protected readonly listeOuverte = computed(() => !!this.recherche().trim() && this.listeVisible());
+  /** Read out as the text changes (live region), so a screen reader user knows there is something to pick. */
+  protected readonly annonceResultats = computed(() => {
+    if (!this.recherche().trim()) return '';
+    const n = this.trouves().length;
+    if (!n) return 'Aucune personne ne correspond.';
+    const montres = Math.min(n, MAX_RESULTATS);
+    return n > montres ? `${n} résultats, les ${montres} premiers sont proposés.` : `${n} ${n > 1 ? 'résultats' : 'résultat'}`;
+  });
+
+  /** Everyone who leads a team in the chart as drawn (unknown managers and loops already set aside). */
+  private readonly chefs = computed(() => {
+    const ids: number[] = [];
+    const parcourir = (b: Branche) => { if (b.equipe.length) { ids.push(b.personne.id); b.equipe.forEach(parcourir); } };
+    this.arbre().forEach(parcourir);
+    return ids;
+  });
 
   protected readonly resume = computed(() => {
     const n = this.noeuds().length;
-    const managers = new Set(this.noeuds().map(p => p.managerId).filter(m => m !== null)).size;
+    const managers = this.chefs().length;
     return `${n} ${n > 1 ? 'personnes' : 'personne'} · ${managers} ${managers > 1 ? 'équipes' : 'équipe'}`;
   });
 
@@ -210,6 +234,48 @@ export class Organigramme {
     }, { injector: this.injector });
   }
 
+  protected saisir(texte: string): void {
+    this.recherche.set(texte);
+    this.listeVisible.set(true);
+    this.choisie.set(null);
+  }
+
+  protected fermerRecherche(): void {
+    this.champ()?.nativeElement.focus(); // first: getting the focus reopens the list
+    this.listeVisible.set(false);
+  }
+
+  /** The keyboard left the search box and its results: the list closes (the text stays). */
+  protected quitterRecherche(e: FocusEvent): void {
+    const vers = e.relatedTarget as Node | null;
+    if (!vers || !(e.currentTarget as HTMLElement).contains(vers)) this.listeVisible.set(false);
+  }
+
+  protected allerResultat(i: number): void {
+    this.listeVisible.set(true);
+    this.boutonsResultats()[i]?.focus();
+  }
+
+  /** Up and down move through the results; up from the first goes back to the field; Escape closes. */
+  protected naviguer(e: KeyboardEvent): void {
+    const boutons = this.boutonsResultats();
+    const i = boutons.indexOf(document.activeElement as HTMLButtonElement);
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      boutons[Math.min(i + 1, boutons.length - 1)]?.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (i <= 0) this.champ()?.nativeElement.focus(); else boutons[i - 1].focus();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      this.fermerRecherche();
+    }
+  }
+
+  private boutonsResultats(): HTMLButtonElement[] {
+    return [...this.hote.nativeElement.querySelectorAll<HTMLButtonElement>('.resultats button')];
+  }
+
   protected ouvert(id: number): boolean {
     return this.ouvertsEffectifs().has(id);
   }
@@ -225,7 +291,7 @@ export class Organigramme {
   }
 
   protected toutOuvrir(): void {
-    this.ouverts.set(new Set(this.noeuds().filter(p => this.noeuds().some(q => q.managerId === p.id)).map(p => p.id)));
+    this.ouverts.set(new Set(this.chefs()));
     this.centrer();
   }
 
@@ -240,9 +306,10 @@ export class Organigramme {
     this.ouverts.set(s);
     this.choisie.set(id);
     this.recherche.set('');
+    this.listeVisible.set(false);
     afterNextRender(() => {
       const carte = this.hote.nativeElement.querySelector<HTMLElement>(`.carte[data-id="${id}"]`);
-      carte?.scrollIntoView?.({ block: 'center', inline: 'center', behavior: 'smooth' });
+      carte?.scrollIntoView?.({ block: 'center', inline: 'center', behavior: mouvementAutorise() ? 'smooth' : 'auto' });
       carte?.querySelector<HTMLElement>('a.nom')?.focus({ preventScroll: true });
     }, { injector: this.injector });
   }

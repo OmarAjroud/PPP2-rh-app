@@ -64,6 +64,12 @@ public class EmployeService {
                 .map(mapper::toResponse).getContent();
     }
 
+    /** Organigramme (ADMIN, RH) : chaque employé avec son manager, en une requête, sans salaire. */
+    @Transactional(readOnly = true)
+    public List<NoeudOrganigramme> organigramme() {
+        return repository.findOrganigramme();
+    }
+
     /** Les critères de recherche, restreints à ce que l'utilisateur a le droit de voir. */
     private Specification<Employe> filtreVisible(UtilisateurConnecte utilisateur, String recherche,
                                                  Long departementId, Long roleId) {

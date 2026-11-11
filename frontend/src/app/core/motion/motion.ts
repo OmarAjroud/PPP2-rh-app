@@ -2,7 +2,7 @@ import { AfterViewInit, Directive, ElementRef, OnDestroy, effect, inject, input 
 import { gsap } from 'gsap';
 
 /** GSAP motion is skipped entirely when the user asks for reduced motion, or where matchMedia is missing (tests). */
-function mouvementAutorise(): boolean {
+export function mouvementAutorise(): boolean {
   return typeof window.matchMedia === 'function' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
