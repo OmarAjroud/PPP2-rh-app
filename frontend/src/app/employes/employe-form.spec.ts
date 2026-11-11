@@ -74,4 +74,13 @@ describe('Employee form: phone and salary in dinars', () => {
     await harness.fixture.whenStable();
     expect(form().controls.telephone.value).toBe('+216 98 562 114');
   });
+
+  it('refuses a number with too few digits, and accepts spaces pasted from a document', async () => {
+    await ouvrir('/employees/new');
+    const tel = harness.routeDebugElement!.componentInstance.form.controls.telephone;
+    tel.setValue('1------2');
+    expect(tel.valid).toBe(false);
+    tel.setValue('+216 22 345 678');
+    expect(tel.valid).toBe(true);
+  });
 });

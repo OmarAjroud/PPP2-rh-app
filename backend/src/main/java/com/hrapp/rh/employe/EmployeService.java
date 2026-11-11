@@ -239,9 +239,9 @@ public class EmployeService {
         employe.setTelephone(normaliserTelephone(requete.telephone()));
     }
 
-    /** "  +216 22  345 678 " → "+216 22 345 678" : the number as typed, without stray spaces. */
+    /** "  +216 22  345 678 " → "+216 22 345 678" : the number as typed, without stray spaces (incl. non-breaking ones). */
     static String normaliserTelephone(String telephone) {
-        return telephone == null ? null : telephone.trim().replaceAll("\\s+", " ");
+        return telephone == null ? null : telephone.replaceAll("[\\s\\u00a0\\u202f]+", " ").trim();
     }
 
     private Employe findOrThrow(Long id) {

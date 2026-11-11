@@ -94,14 +94,14 @@ public class TableauDeBordService {
                 .toList();
     }
 
-    /** Moyenne calculée sur les seuls salaires renseignés (un salaire vide ne compte pas pour 0). */
+    /** Moyenne calculée sur les seuls salaires renseignés (un salaire vide ne compte pas pour 0). Dinars : 3 décimales. */
     private List<MasseSalarialeDepartement> payroll(Long perimetre) {
         return repository.payrollByDepartment(perimetre).stream().map(ligne -> {
-            BigDecimal total = toBigDecimal(ligne[3]).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal total = toBigDecimal(ligne[3]).setScale(3, RoundingMode.HALF_UP);
             long salairesRenseignes = toLong(ligne[4]);
             BigDecimal moyenne = salairesRenseignes == 0
-                    ? BigDecimal.ZERO.setScale(2)
-                    : total.divide(BigDecimal.valueOf(salairesRenseignes), 2, RoundingMode.HALF_UP);
+                    ? BigDecimal.ZERO.setScale(3)
+                    : total.divide(BigDecimal.valueOf(salairesRenseignes), 3, RoundingMode.HALF_UP);
             return new MasseSalarialeDepartement(toLong(ligne[0]), (String) ligne[1], toLong(ligne[2]),
                     total, moyenne);
         }).toList();

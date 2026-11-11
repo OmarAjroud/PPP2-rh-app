@@ -40,8 +40,9 @@ erDiagram
         varchar nom
         varchar prenom
         varchar email UK
+        varchar telephone "30 - obligatoire à la saisie depuis V10"
         date date_embauche
-        decimal salaire "10,2 - facultatif"
+        decimal salaire "11,3 - dinars tunisiens, facultatif"
         bigint departement_id FK
         bigint role_id FK
         bigint manager_id FK "facultatif"
