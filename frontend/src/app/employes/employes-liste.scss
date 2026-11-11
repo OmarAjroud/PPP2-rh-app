@@ -35,7 +35,8 @@
 td.mono, td.discret { color: var(--rh-muted); }
 
 .vide { display: grid; gap: var(--rh-space-1); padding: var(--rh-space-8) var(--rh-space-2); border-top: 1px solid var(--rh-line); }
-p-paginator { display: block; border-top: 1px solid var(--rh-line); }
+// The p-paginator element is the paginator itself (PrimeNG lays it out as one flex row): only add the top line
+p-paginator { border-top: 1px solid var(--rh-line); }
 
 // Name column takes the room; long names and emails truncate instead of widening the table
 :host ::ng-deep .table table { table-layout: fixed; width: 100%; }
