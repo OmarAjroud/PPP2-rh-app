@@ -148,14 +148,26 @@ class TableauDeBordServiceTest {
     }
 
     @Test
-    @DisplayName("Masse salariale : moyenne arrondie au centime")
-    void build_shouldRoundAverageToCents() {
+    @DisplayName("Masse salariale en dinars : les millimes sont gardés (3 décimales), jamais arrondis au centime")
+    void build_shouldKeepMillimes() {
+        given(repository.payrollByDepartment(null)).willReturn(List.<Object[]>of(
+                new Object[]{1L, "Informatique", 3L, new BigDecimal("7001.235"), 3L}));
+
+        MasseSalarialeDepartement m = service().build(user(Roles.ADMIN), null, null).masseSalariale().get(0);
+
+        assertThat(m.total()).isEqualTo(new BigDecimal("7001.235"));
+        assertThat(m.moyenne()).isEqualTo(new BigDecimal("2333.745"));   // 7001.235 / 3, to the millime
+    }
+
+    @Test
+    @DisplayName("Masse salariale : moyenne arrondie au millime (dinars)")
+    void build_shouldRoundAverageToMillimes() {
         given(repository.payrollByDepartment(null)).willReturn(List.<Object[]>of(
                 new Object[]{1L, "Informatique", 3L, new BigDecimal("10000.00"), 3L}));
 
         var moyenne = service().build(user(Roles.RH), null, null).masseSalariale().getFirst().moyenne();
 
-        assertThat(moyenne).isEqualTo(new BigDecimal("3333.33"));
+        assertThat(moyenne).isEqualTo(new BigDecimal("3333.333"));
     }
 
     @Test

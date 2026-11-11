@@ -15,8 +15,8 @@ import { appliquerErreursChamps, messageErreur } from '../core/api/erreurs';
 import { Apparition } from '../core/motion/motion';
 
 /** /employees/new and /employees/:id/edit (ADMIN, RH). */
-/** Digits with spaces, dots, dashes or brackets, an optional leading +: "+216 22 345 678", "22.345.678". Same rule as the API. */
-const TELEPHONE = /^\s*\+?[0-9][0-9 .()-]{6,24}[0-9]\s*$/;
+/** At least 8 digits, with spaces, dots, dashes or brackets and an optional leading +: "+216 22 345 678", "22.345.678". Same rule as the API. */
+const TELEPHONE = /^\s*\+?(?=(?:\D*\d){8})[0-9][0-9 .()\u00a0\u202f-]{6,24}[0-9]\s*$/;
 
 @Component({
   selector: 'app-employe-form',
@@ -73,7 +73,7 @@ export class EmployeForm {
     const c = this.form.controls.telephone;
     if (!c.invalid || !c.touched) return null;
     if (c.errors?.['serveur']) return c.errors['serveur'] as string;
-    return c.errors?.['required'] ? 'Indiquez un numéro de téléphone.' : 'Numéro non valide (ex. +216 22 345 678).';
+    return c.errors?.['required'] ? 'Indiquez un numéro de téléphone.' : 'Numéro non valide : au moins 8 chiffres (ex. +216 22 345 678).';
   }
 
   /** Field message: the server's when it sent one, else the local rule. */

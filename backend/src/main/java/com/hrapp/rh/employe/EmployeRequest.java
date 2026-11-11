@@ -21,8 +21,8 @@ public record EmployeRequest(
 
         @NotBlank(message = "Le téléphone est obligatoire")
         @Size(max = 30, message = "Le téléphone ne doit pas dépasser 30 caractères")
-        @Pattern(regexp = "^\\s*\\+?[0-9][0-9 .()\\-]{6,24}[0-9]\\s*$",
-                message = "Le téléphone n'est pas valide (ex. +216 22 345 678)")
+        @Pattern(regexp = "^[\\s\\u00a0\\u202f]*\\+?(?=(?:[^0-9]*[0-9]){8})[0-9][0-9 .()\\-\\u00a0\\u202f]{6,24}[0-9][\\s\\u00a0\\u202f]*$",
+                message = "Le téléphone n'est pas valide : au moins 8 chiffres (ex. +216 22 345 678)")
         String telephone,
 
         @NotNull(message = "La date d'embauche est obligatoire")

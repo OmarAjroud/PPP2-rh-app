@@ -43,7 +43,11 @@ class EmployeTelephoneEtDemoIT extends IntegrationTest {
         assertThat(invalide.statut()).isEqualTo(400);
         assertThat(invalide.get("erreursChamps").has("telephone")).isTrue();
 
-        Api.Reponse cree = api.post("/api/employes", rh, employe("sami.haddad@rh.com", "  +216 22  345 678 ", 2345.678));
+        // too few digits, even if the shape looks right
+        assertThat(api.post("/api/employes", rh, employe("court@rh.com", "1------2", 2000)).statut()).isEqualTo(400);
+
+        // a non-breaking space pasted from a document is accepted and cleaned
+        Api.Reponse cree = api.post("/api/employes", rh, employe("sami.haddad@rh.com", "  +216 22  345 678 ", 2345.678));
         assertThat(cree.statut()).isEqualTo(201);
         assertThat(cree.get("telephone").asString()).isEqualTo("+216 22 345 678");
         // dinars: 3 decimals (millimes) are kept

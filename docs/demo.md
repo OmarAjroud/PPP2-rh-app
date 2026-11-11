@@ -56,7 +56,7 @@ Lancer le dossier **0. Connexion**, puis montrer une à une les requêtes du dos
 | Requête | Ce qu'on voit |
 |---|---|
 | Employés vus par RH / par le manager / par l'employée | 4, puis 3 (son département), puis 1 (elle-même) |
-| Fiche de Lina vue par RH puis par le manager | salaire `2500.00`, puis `null` |
+| Fiche de Lina vue par RH puis par le manager | salaire `2500.000` (dinars), puis `null` |
 | Création d'un rôle par RH | `403` : seul l'ADMIN gère les rôles |
 | Tableau de bord RH puis manager | toute l'entreprise et la masse salariale ; puis son département, `masseSalariale: null` |
 | Journal d'audit par RH | `403` : réservé à l'ADMIN |
