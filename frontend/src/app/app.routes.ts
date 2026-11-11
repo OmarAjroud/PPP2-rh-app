@@ -27,6 +27,7 @@ export const routes: Routes = [
 
       { path: 'employees', title: 'Employés · RH App', canActivate: [listeEmployesGuard], loadComponent: () => import('./employes/employes-liste').then(m => m.EmployesListe) },
       { path: 'employees/new', title: 'Ajouter un employé · RH App', canActivate: [roleGuard('ADMIN', 'RH')], loadComponent: () => import('./employes/employe-form').then(m => m.EmployeForm) },
+      { path: 'org-chart', title: 'Organigramme · RH App', canActivate: [roleGuard('ADMIN', 'RH')], loadComponent: () => import('./employes/organigramme').then(m => m.Organigramme) },
       { path: 'employees/:id', title: 'Employé · RH App', loadComponent: () => import('./employes/employe-detail').then(m => m.EmployeDetailPage) },
       { path: 'employees/:id/edit', title: 'Modifier l’employé · RH App', canActivate: [roleGuard('ADMIN', 'RH')], loadComponent: () => import('./employes/employe-form').then(m => m.EmployeForm) },
 
