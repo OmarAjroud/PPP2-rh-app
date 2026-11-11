@@ -143,4 +143,15 @@ describe('Access per role', { timeout: 15000 }, () => {
     expect(r.url).toBe('/calendar');
     expect(r.nav).toContain('Calendrier');
   });
+  it('keeps the org chart for HR and admins', async () => {
+    connecter('MANAGER');
+    expect((await aller('/org-chart')).url).toBe('/');
+  });
+
+  it('lists the org chart for HR', async () => {
+    connecter('RH');
+    const r = await aller('/org-chart');
+    expect(r.url).toBe('/org-chart');
+    expect(r.nav).toContain('Organigramme');
+  });
 });

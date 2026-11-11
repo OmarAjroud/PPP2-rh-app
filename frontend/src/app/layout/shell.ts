@@ -47,6 +47,7 @@ function navigation(role: Role): Groupe[] {
       titre: 'Entreprise',
       liens: [
         ...(role === 'EMPLOYE' ? [] : [{ chemin: '/employees', libelle: role === 'MANAGER' ? 'Mon équipe' : 'Employés', icone: 'pi-users' }]),
+        ...(gestion ? [{ chemin: '/org-chart', libelle: 'Organigramme', icone: 'pi-sitemap' }] : []),
         { chemin: '/departments', libelle: 'Départements', icone: 'pi-building' },
         ...(gestion ? [{ chemin: '/roles', libelle: 'Rôles', icone: 'pi-id-card' }] : []),
       ],

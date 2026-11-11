@@ -37,6 +37,15 @@ public interface EmployeRepository
 
     boolean existsByManagerId(Long managerId);
 
+    /** Organigramme : tout le monde en une seule requête (projection, sans entité ni salaire). */
+    @Query("""
+            select new com.hrapp.rh.employe.NoeudOrganigramme(
+                e.id, e.nom, e.prenom, e.email, r.nom, d.id, d.nom, m.id)
+            from Employe e join e.role r join e.departement d left join e.manager m
+            order by e.nom, e.prenom, e.id
+            """)
+    List<NoeudOrganigramme> findOrganigramme();
+
     /** Recherche paginée avec chargement du département et du rôle en une seule requête. */
     @Override
     @EntityGraph(attributePaths = {"departement", "role"})

@@ -214,3 +214,15 @@ export interface JourFerie {
   date: string; // yyyy-MM-dd
   libelle: string;
 }
+
+/** One person in the org chart (no salary). managerId null: top of a branch. */
+export interface NoeudOrganigramme {
+  id: number;
+  nom: string;
+  prenom: string;
+  email: string;
+  roleNom: string;
+  departementId: number;
+  departementNom: string;
+  managerId: number | null;
+}

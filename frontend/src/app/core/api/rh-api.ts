@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   Compte, Departement, DepartementDetail, Employe, EmployeDetail, EmployeRequest,
-  DemandeConge, DemandeCongeRequest, JoursOuvrables, NomDescription, Notification, TableauDeBord, AuditEntree, StatutAssistant, ReponseAssistant, MouvementSolde, JourFerie, PageReponse, Role, Solde, StatutDemande, TypeConge,
+  DemandeConge, DemandeCongeRequest, JoursOuvrables, NomDescription, Notification, TableauDeBord, AuditEntree, StatutAssistant, ReponseAssistant, MouvementSolde, JourFerie, NoeudOrganigramme, PageReponse, Role, Solde, StatutDemande, TypeConge,
 } from './models';
 
 export interface RechercheAudit {
@@ -176,6 +176,9 @@ export class RhApi {
     }
     return this.http.get(`${this.api}/exports/${liste}`, { params, observe: 'response', responseType: 'blob' });
   }
+
+  /** ADMIN, RH: everyone with their manager; the page builds the tree. */
+  organigramme(): Observable<NoeudOrganigramme[]> { return this.http.get<NoeudOrganigramme[]>(`${this.api}/organigramme`); }
 
   // ---- Public holidays (read: everyone; write: ADMIN, RH) ----
   joursFeries(annee: number): Observable<JourFerie[]> { return this.http.get<JourFerie[]>(`${this.api}/jours-feries`, { params: { annee } }); }
